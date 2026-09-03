@@ -74,6 +74,10 @@ def main() -> int:
     default_out = Path(__file__).resolve().parents[1] / "mca.duckdb"
     ap.add_argument("--out", default=str(default_out),
                     help=f"output database path (default: {default_out})")
+    ap.add_argument("--snapshot-date", default=None,
+                    help="the dataset's snapshot date (YYYY-MM-DD) as shown "
+                         "on data.gov.in; stored as DB metadata and quoted "
+                         "in registry findings")
     args = ap.parse_args()
 
     csv_path = Path(args.csv)
@@ -140,6 +144,17 @@ def main() -> int:
     con.execute("DROP TABLE IF EXISTS gst_state")
     con.execute("CREATE TABLE gst_state (code VARCHAR, state_name VARCHAR)")
     con.executemany("INSERT INTO gst_state VALUES (?, ?)", GST_STATES)
+
+    print("[3b] Recording metadata…")
+    con.execute("DROP TABLE IF EXISTS meta")
+    con.execute("CREATE TABLE meta (key VARCHAR, value VARCHAR)")
+    if args.snapshot_date:
+        con.execute("INSERT INTO meta VALUES ('snapshot_date', ?)",
+                    [args.snapshot_date])
+        print(f"    snapshot_date = {args.snapshot_date}")
+    else:
+        print("    no --snapshot-date given; registry.py will use its "
+              "documented fallback date")
 
     print("[4] Dropping the raw staging table and compacting…")
     con.execute("DROP TABLE mca_raw")

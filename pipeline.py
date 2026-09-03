@@ -47,7 +47,8 @@ def analyze(dossier: dict, rules_only: bool = False,
     case_id = dossier.get("case_id", "unknown")
 
     # stage 1 — extraction (with injection hygiene)
-    assertions, injection_flags = extract_assertions(dossier, llm)
+    assertions, injection_flags, extraction_meta = \
+        extract_assertions(dossier, llm)
 
     # stage 2 + 3 — deterministic validators fill the ledger
     led = validators.run_all(assertions)
@@ -78,8 +79,10 @@ def analyze(dossier: dict, rules_only: bool = False,
         led, reasoning, rules_only=rules_only,
         registry_row_found=row is not None,
         has_identifier=cin_assert is not None,
+        registry_status=(row or {}).get("status"),
     )
     result["case_id"] = case_id
+    result["extraction"] = extraction_meta
     result["assertions"] = [a.to_dict() for a in assertions]
     result["injection_flags"] = injection_flags
     result["registry_row"] = row

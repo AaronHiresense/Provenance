@@ -44,7 +44,11 @@ CIN_STATE_CODES = {
 }
 
 # NIC prefixes (first two digits of the 5-digit code in the CIN / registry).
-NIC_MANUFACTURING_PREFIXES = ("29", "34")   # NIC-2008 29xx and NIC-2004 34xx
+# Auto components file under more divisions than motor vehicles proper:
+# 22 rubber (brake linings, hoses), 25 fabricated metal, 27 electrical
+# equipment, 28 machinery, 30 other transport equipment — plus the core
+# NIC-2008 29xx and NIC-2004 34xx vehicle codes.
+NIC_MANUFACTURING_PREFIXES = ("29", "34", "22", "25", "27", "28", "30")
 NIC_TRADING_PREFIXES = ("45",)              # wholesale/retail of vehicles & parts
 
 # Stub BIS licence table — replace with the live BIS lookup when available.
@@ -120,19 +124,25 @@ def gstin_checksum(gstin: str) -> Finding:
     )
 
 
-def gstin_state_matches_claim(gstin: str, claimed_state: str) -> Finding:
+def gstin_state_matches_claim(gstin: str, claimed_state: str,
+                              claimed_from: str = "the documents") -> Finding:
     g = gstin.strip().upper()
     code = g[:2]
     gst_state = registry.state_name_for_code(code)
     assertion = (f"GSTIN state code {code} matches the claimed state "
                  f"'{claimed_state}'")
     if gst_state is None:
+        # Our lookup table failing to recognise a code is OUR gap, not
+        # evidence against the document — abstain rather than fabricate
+        # suspicion from an incomplete table.
         return Finding(
             assertion=assertion, check="gstin_state_matches_claim",
-            result=f"fail (unknown state code {code})",
-            direction="supports_suspect", strength="strong",
+            result=f"unavailable (state code {code} not in our table)",
+            direction="neutral", strength="weak",
             source_tier="derived", dimension="identity",
-            detail=f"'{code}' is not an issued GST state code.",
+            detail=f"'{code}' is not in our GST state-code table (which "
+                   "includes legacy codes 25 and 28); cannot verify the "
+                   "state claim offline.",
         )
     if registry.states_equivalent(gst_state, claimed_state):
         return Finding(
@@ -148,8 +158,8 @@ def gstin_state_matches_claim(gstin: str, claimed_state: str) -> Finding:
         result="fail",
         direction="supports_suspect", strength="strong",
         source_tier="derived", dimension="identity",
-        detail=f"GSTIN is registered in {gst_state} (code {code}) but the "
-               f"documents claim {claimed_state}.",
+        detail=f"GSTIN is registered in {gst_state} (code {code}) but "
+               f"{claimed_from} put the company in {claimed_state}.",
     )
 
 
@@ -246,15 +256,32 @@ def cin_decode(cin: str) -> tuple:
     ), decoded)
 
 
-def registry_exists(identifier: str, row: Optional[dict]) -> Finding:
+def registry_exists(identifier: str, row: Optional[dict],
+                    claimed_incorporation=None) -> Finding:
+    snap = registry.snapshot_date()
     if row is None:
+        # A company claiming incorporation AFTER our snapshot date cannot be
+        # in the snapshot — its absence is our data's age, not their fraud.
+        claimed = _parse_date(claimed_incorporation)
+        snap_d = _parse_date(snap)
+        if claimed and snap_d and claimed > snap_d:
+            return Finding(
+                assertion=f"'{identifier}' exists in the MCA registry",
+                check="registry_exists",
+                result="unavailable (postdates registry snapshot)",
+                direction="neutral", strength="weak",
+                source_tier="authoritative", dimension="identity",
+                detail=f"Claimed incorporation {claimed} is after our MCA "
+                       f"snapshot ({snap}); absence from the snapshot proves "
+                       "nothing either way. Verify on the MCA portal.",
+            )
         return Finding(
             assertion=f"'{identifier}' exists in the MCA registry",
             check="registry_exists", result="fail (not found)",
             direction="supports_suspect", strength="strong",
             source_tier="authoritative", dimension="identity",
-            detail="No company or LLP with this identifier in the MCA "
-                   "registry snapshot (3.67M records).",
+            detail=f"No company or LLP with this identifier in the MCA "
+                   f"registry snapshot of {snap} (3.67M records).",
         )
     return Finding(
         assertion=f"'{identifier}' exists in the MCA registry",
@@ -262,7 +289,8 @@ def registry_exists(identifier: str, row: Optional[dict]) -> Finding:
         direction="supports_genuine", strength="moderate",
         source_tier="authoritative", dimension="identity",
         detail=f"Registered as '{row['name']}' "
-               f"({row.get('state_name')}, {row.get('registration_date')}).",
+               f"({row.get('state_name')}, {row.get('registration_date')}); "
+               f"registry snapshot: {snap}.",
     )
 
 
@@ -318,7 +346,8 @@ def cin_vs_registry(identifier: str, claims: dict, row: Optional[dict]) -> list:
     return out
 
 
-def cert_date_after_incorporation(cert_date, incorporation_date) -> Finding:
+def cert_date_after_incorporation(cert_date, incorporation_date,
+                                  corroborating_doc_date=None) -> Finding:
     cd, idate = _parse_date(cert_date), _parse_date(incorporation_date)
     assertion = (f"Certificate date {cert_date} falls after the company's "
                  f"incorporation ({incorporation_date})")
@@ -331,13 +360,25 @@ def cert_date_after_incorporation(cert_date, incorporation_date) -> Finding:
             detail=f"Could not parse cert={cert_date!r} inc={incorporation_date!r}.",
         )
     if cd < idate:
+        # Dispositive is the system's maximum severity — it must not hang on
+        # a single extraction read. Emit dispositive only when the document's
+        # own date field independently corroborates the extracted certificate
+        # date; otherwise strong (still SUSPECT-driving, but survivable by
+        # a re-extraction).
+        doc_d = _parse_date(corroborating_doc_date)
+        corroborated = doc_d is not None and abs((doc_d - cd).days) <= 3
         return Finding(
             assertion=assertion, check="cert_date_after_incorporation",
             result="fail",
-            direction="supports_suspect", strength="dispositive",
+            direction="supports_suspect",
+            strength="dispositive" if corroborated else "strong",
             source_tier="authoritative", dimension="certification",
             detail=f"Certificate dated {cd} predates incorporation on {idate}: "
-                   "the issuing company did not exist yet.",
+                   "the issuing company did not exist yet."
+                   + ("" if corroborated else
+                      " (Downgraded from dispositive to strong: the date "
+                      "rests on a single extracted field without a "
+                      "corroborating document date.)"),
         )
     return Finding(
         assertion=assertion, check="cert_date_after_incorporation",
@@ -433,12 +474,14 @@ def nic_is_manufacturing(identifier: str, nic_code: Optional[str]) -> Finding:
         )
     nic = str(nic_code).strip()
     if nic.startswith(NIC_MANUFACTURING_PREFIXES):
-        scheme = "NIC-2008 29xx" if nic.startswith("29") else "NIC-2004 34xx"
+        scheme = ("NIC-2008 29xx" if nic.startswith("29")
+                  else "NIC-2004 34xx" if nic.startswith("34")
+                  else "manufacturing division " + nic[:2] + "xx")
         return Finding(
             assertion=assertion, check="nic_is_manufacturing", result="pass",
             direction="supports_genuine", strength="moderate",
             source_tier="authoritative", dimension="identity",
-            detail=f"NIC {nic} ({scheme}) = motor vehicle / component "
+            detail=f"NIC {nic} ({scheme}) is consistent with auto-component "
                    "manufacturing.",
         )
     if nic.startswith(NIC_TRADING_PREFIXES):
@@ -450,13 +493,17 @@ def nic_is_manufacturing(identifier: str, nic_code: Optional[str]) -> Finding:
                    "company presenting itself as the manufacturer is a "
                    "classic counterfeit-paperwork pattern.",
         )
+    # An NIC outside the known auto ranges is not, by itself, evidence of
+    # forgery — NIC classification is coarse and companies diversify. Abstain
+    # with a note instead of manufacturing suspicion from our own whitelist.
     return Finding(
         assertion=assertion, check="nic_is_manufacturing",
-        result=f"fail (NIC {nic} unrelated)",
-        direction="supports_suspect", strength="moderate",
+        result=f"abstain (NIC {nic} outside known auto ranges)",
+        direction="neutral", strength="weak",
         source_tier="authoritative", dimension="identity",
-        detail=f"NIC {nic} is neither vehicle manufacturing (29xx/34xx) nor "
-               "even parts trading.",
+        detail=f"NIC {nic} is neither a recognised manufacturing division "
+               "(22/25/27/28/29/30/34) nor parts trading (45xxx); the "
+               "classification alone cannot confirm or deny manufacturing.",
     )
 
 
@@ -644,17 +691,26 @@ def dispatch_state_matches_origin(dispatch_state: str,
     )
 
 
-def cross_doc_field_drift(assertions: list) -> list:
-    """Same attribute asserted with different values across documents.
+def _norm_entity(entity: str) -> str:
+    """Normalize an entity name so 'X PVT LTD' and 'X Private Limited' group
+    together, while genuinely different parties stay apart."""
+    s = re.sub(r"[^A-Z0-9 ]", "", str(entity).upper())
+    s = re.sub(r"\b(PRIVATE|PVT|LIMITED|LTD|LLP|COMPANY|CO)\b", "", s)
+    return re.sub(r"\s+", " ", s).strip() or "SUBJECT"
 
-    Assumes a single-subject dossier, so grouping is by attribute only.
+
+def cross_doc_field_drift(assertions: list) -> list:
+    """Same attribute asserted with different values across documents, for
+    the SAME entity. Grouping by (entity, attribute) prevents a two-party
+    dossier (manufacturer certificate + distributor invoice) from falsely
+    pairing one party's field against the other's.
     Returns one Finding per drifting attribute (empty list if none drift).
     """
     by_attr = {}
     for a in assertions:
-        by_attr.setdefault(a.attribute, []).append(a)
+        by_attr.setdefault((_norm_entity(a.entity), a.attribute), []).append(a)
     out = []
-    for attr, group in by_attr.items():
+    for (_entity, attr), group in by_attr.items():
         values = {}
         for a in group:
             key = re.sub(r"\s+", " ", str(a.value).strip().upper())
@@ -684,9 +740,26 @@ def _first(assertions: list, attribute: str) -> Optional[Assertion]:
 
 
 def run_all(assertions: list) -> Ledger:
-    """Map extracted assertions onto every applicable validator."""
+    """Map extracted assertions onto every applicable validator.
+
+    Identifier assertions are picked from the manufacturer-role entity when
+    one is declared (falling back to any entity), so a two-party dossier
+    doesn't cross-pair one party's CIN with another's GSTIN.
+    """
     led = Ledger()
-    get = lambda attr: _first(assertions, attr)
+
+    # find the entity that claims the manufacturer role, if any
+    role_a = next((a for a in assertions
+                   if a.attribute == "role"
+                   and "manufactur" in str(a.value).lower()), None)
+    preferred = _norm_entity(role_a.entity) if role_a else None
+
+    def get(attr):
+        if preferred:
+            for a in assertions:
+                if a.attribute == attr and _norm_entity(a.entity) == preferred:
+                    return a
+        return _first(assertions, attr)
 
     a_cin = get("cin")
     a_gstin = get("gstin")
@@ -695,13 +768,29 @@ def run_all(assertions: list) -> Ledger:
     a_pan = get("pan")
     a_inc = get("incorporation_date")
 
+    if role_a:
+        # the dossier's own role claim, recorded at the self_reported tier —
+        # a self-description is a claim to corroborate, not evidence
+        led.add(Finding(
+            assertion=f"'{role_a.entity}' describes itself as the manufacturer",
+            check="role_claim_recorded", result="recorded",
+            direction="neutral", strength="weak",
+            source_tier="self_reported", dimension="identity",
+            detail="The dossier's own role claim carries no evidentiary "
+                   "weight until the registry NIC / certification checks "
+                   "corroborate it.",
+            source_doc=role_a.source_doc,
+        ))
+
     row = None
     decoded = None
     if a_cin:
         row = registry.lookup_cin(a_cin.value)
         fnd, decoded = cin_decode(a_cin.value)
+        fnd.source_doc = a_cin.source_doc
         led.add(fnd)
-        led.add(registry_exists(a_cin.value, row))
+        led.add(registry_exists(a_cin.value, row,
+                                a_inc.value if a_inc else None))
         claims = {}
         if a_name:
             claims["company_name"] = a_name.value
@@ -715,28 +804,44 @@ def run_all(assertions: list) -> Ledger:
         led.add(nic_is_manufacturing(a_cin.value, nic))
 
     if a_gstin:
-        led.add(gstin_checksum(a_gstin.value))
-        claimed_state = (a_state.value if a_state
-                         else (row or {}).get("state_name"))
+        f = gstin_checksum(a_gstin.value)
+        f.source_doc = a_gstin.source_doc
+        led.add(f)
+        if a_state:
+            claimed_state, claimed_from = a_state.value, "the documents"
+        else:
+            claimed_state = (row or {}).get("state_name")
+            claimed_from = "the registry records"
         if claimed_state:
-            led.add(gstin_state_matches_claim(a_gstin.value, claimed_state))
-        led.add(gstin_embedded_pan(a_gstin.value,
-                                   a_pan.value if a_pan else None))
+            f = gstin_state_matches_claim(a_gstin.value, claimed_state,
+                                          claimed_from)
+            f.source_doc = a_gstin.source_doc
+            led.add(f)
+        f = gstin_embedded_pan(a_gstin.value, a_pan.value if a_pan else None)
+        f.source_doc = a_gstin.source_doc
+        led.add(f)
 
     # incorporation date: prefer the authoritative registry over the dossier
     inc_date = (row or {}).get("registration_date") or \
                (a_inc.value if a_inc else None)
     a_cert = get("cert_date")
     if a_cert and inc_date:
-        led.add(cert_date_after_incorporation(a_cert.value, inc_date))
+        f = cert_date_after_incorporation(a_cert.value, inc_date,
+                                          corroborating_doc_date=a_cert.date)
+        f.source_doc = a_cert.source_doc
+        led.add(f)
 
     a_ship, a_mfg = get("ship_date"), get("mfg_date")
     if a_ship and a_mfg:
-        led.add(ship_date_after_mfg_date(a_ship.value, a_mfg.value))
+        f = ship_date_after_mfg_date(a_ship.value, a_mfg.value)
+        f.source_doc = a_ship.source_doc
+        led.add(f)
 
     a_recv = get("receive_date")
     if a_recv and a_ship:
-        led.add(receive_date_after_ship_date(a_recv.value, a_ship.value))
+        f = receive_date_after_ship_date(a_recv.value, a_ship.value)
+        f.source_doc = a_recv.source_doc
+        led.add(f)
 
     a_dispatch_state = get("dispatch_state")
     origin = (row or {}).get("state_name") or (a_state.value if a_state else None)

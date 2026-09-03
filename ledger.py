@@ -46,6 +46,7 @@ class Finding:
     source_tier: str        # authoritative | derived | self_reported | heuristic
     dimension: str          # identity | certification | provenance | custody
     detail: str = ""        # free-text explanation for the UI / reasoning stage
+    source_doc: str = ""    # the document whose assertion this check consumed
 
     def __post_init__(self) -> None:
         if self.direction not in DIRECTIONS:

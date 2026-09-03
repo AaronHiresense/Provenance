@@ -93,12 +93,20 @@ class LLMClient:
 
         if self._client is None:
             self._client = anthropic.Anthropic()
+        kwargs = {}
+        # Determinism on reruns of the same jury case. Only for compatible
+        # third-party endpoints (custom base URL): current first-party Claude
+        # models reject sampling parameters, and the SDK no longer exposes
+        # them as named arguments — so send via extra_body.
+        if os.environ.get("ANTHROPIC_BASE_URL"):
+            kwargs["extra_body"] = {"temperature": 0.0}
         try:
             resp = self._client.messages.create(
                 model=self.model,
                 max_tokens=16000,
                 system=system,
                 messages=[{"role": "user", "content": user}],
+                **kwargs,
             )
         except anthropic.APIError:
             return None  # degrade to the deterministic fallback
@@ -116,6 +124,7 @@ class LLMClient:
             f"{base}/chat/completions",
             data=json.dumps({
                 "model": model,
+                "temperature": 0,  # deterministic reruns of the same case
                 "messages": [{"role": "system", "content": system},
                              {"role": "user", "content": user}],
             }).encode("utf-8"),

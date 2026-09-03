@@ -66,9 +66,18 @@ def test_alias_merged_ut_code_26():
     assert registry.code_for_state_name("Dadra & Nagar Haveli") == "26"
     assert registry.code_for_state_name("Daman and Diu") == "26"
 
-def test_unknown_state_code_flagged():
+def test_unknown_state_code_abstains():
+    # our own incomplete table must not fabricate evidence
     f = v.gstin_state_matches_claim("99AABCH4501R1ZK", "Karnataka")
-    assert f.direction == "supports_suspect"
+    assert f.direction == "neutral" and "not in our table" in f.result
+
+
+def test_legacy_state_codes_resolve():
+    # 25 = pre-merger Daman & Diu, 28 = undivided Andhra Pradesh
+    assert registry.state_name_for_code("25") == "daman and diu"
+    assert registry.state_name_for_code("28") == "andhra pradesh"
+    f = v.gstin_state_matches_claim("28AABCH4501R1ZK", "Andhra Pradesh")
+    assert f.result == "pass"
 
 
 # -- gstin_embedded_pan ------------------------------------------------------
@@ -139,10 +148,18 @@ def test_cin_vs_registry_name_mismatch():
 
 # -- temporal checks ---------------------------------------------------------
 
-def test_cert_before_incorporation_dispositive():
+def test_cert_before_incorporation_dispositive_when_corroborated():
     row = registry.lookup_cin(TRADER_CIN)   # registered 2026-06-01
-    f = v.cert_date_after_incorporation("2025-11-02", row["registration_date"])
+    f = v.cert_date_after_incorporation("2025-11-02", row["registration_date"],
+                                        corroborating_doc_date="2025-11-02")
     assert f.result == "fail" and f.strength == "dispositive"
+
+
+def test_cert_before_incorporation_strong_without_corroboration():
+    # maximum severity must not hang on a single extracted field
+    row = registry.lookup_cin(TRADER_CIN)
+    f = v.cert_date_after_incorporation("2025-11-02", row["registration_date"])
+    assert f.result == "fail" and f.strength == "strong"
 
 def test_cert_after_incorporation_ok():
     row = registry.lookup_cin(MFG_CIN)      # registered 1997-11-21
@@ -224,6 +241,18 @@ def test_nic_llp_abstains():
     assert f.result == "abstain" and f.direction == "neutral"
 
 
+def test_nic_rubber_products_is_manufacturing():
+    # brake linings file under rubber (22xxx) — must not read as suspect
+    f = v.nic_is_manufacturing("U22193TN1990PTC000001", "22193")
+    assert f.result == "pass"
+
+
+def test_nic_unrelated_abstains_not_fails():
+    # NIC outside auto ranges is classification noise, not forgery evidence
+    f = v.nic_is_manufacturing("U71100TZ2026PTC039367", "71100")
+    assert f.direction == "neutral" and "abstain" in f.result
+
+
 # -- bis / tac / lot code ----------------------------------------------------
 
 def test_bis_stub_known_licence():
@@ -279,3 +308,31 @@ def test_no_drift_when_consistent():
         Assertion("X", "gstin", "33aabch4501r1zk ", "DOC-2"),
     ]
     assert v.cross_doc_field_drift(assertions) == []
+
+
+def test_drift_is_entity_scoped():
+    # two different parties in one dossier must not be cross-paired
+    assertions = [
+        Assertion("ALPHA COMPONENTS PRIVATE LIMITED", "gstin",
+                  "33AABCH4501R1ZK", "DOC-1"),
+        Assertion("BETA LOGISTICS PVT LTD", "gstin",
+                  "27AABCB9302F1ZZ", "DOC-2"),
+    ]
+    assert v.cross_doc_field_drift(assertions) == []
+
+
+def test_drift_ignores_pvt_ltd_variants():
+    # 'PVT LTD' vs 'PRIVATE LIMITED' is the same entity — drift SHOULD fire
+    assertions = [
+        Assertion("ALPHA COMPONENTS PRIVATE LIMITED", "lot_code",
+                  "AAA-240101-001", "DOC-1"),
+        Assertion("ALPHA COMPONENTS PVT LTD", "lot_code",
+                  "BBB-240202-002", "DOC-2"),
+    ]
+    assert len(v.cross_doc_field_drift(assertions)) == 1
+
+
+def test_registry_absence_neutral_when_postdates_snapshot():
+    f = v.registry_exists("U99999XX2027PTC000000", None,
+                          claimed_incorporation="2027-01-15")
+    assert f.direction == "neutral" and "postdates" in f.result

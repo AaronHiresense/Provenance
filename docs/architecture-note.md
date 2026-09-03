@@ -31,9 +31,12 @@ strength, dimension — and whether the reasoner overrode it, and why.
 
 UNVERIFIABLE is a work order, not a shrug: it names the **single decisive
 missing artefact** (e.g. the NCLT amalgamation order), an interim action, and
-a directional lean at explicit low confidence. On our 11-case pack:
-**abstention rate 36%, accuracy-when-committed 100%** (`python eval.py`).
-A "what this system cannot determine" block ships with every verdict.
+a directional lean at explicit low confidence. On our 12-case adversarial
+regression suite: **12/12 exact, abstention 33%, accuracy-when-committed
+100%** (`python eval.py`) — a design-verification claim, not a field-accuracy
+claim; the real eval is the jury's unseen case. A "what this system cannot
+determine" block ships with every verdict, and it is case-aware: it lists
+the static system limits that apply plus this case's own abstentions.
 
 ## Data
 

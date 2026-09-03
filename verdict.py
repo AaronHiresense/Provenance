@@ -10,35 +10,65 @@ from __future__ import annotations
 
 from ledger import Ledger, STRENGTH_RANK
 
-CANNOT_DETERMINE = [
+# System-wide limits: always true of this system, shipped with every verdict.
+STATIC_LIMITS = [
     "Whether the physical part in the box matches these documents — this "
     "system reads paper, not parts. Metallurgy, holograms, and markings need "
     "physical inspection.",
     "Whether a document image was doctored — inputs arrive as text; pixel- "
     "level forensics (fonts, scan artefacts, seal geometry) are out of scope.",
-    "Live BIS licence status — the BIS check runs against a local stub "
-    "table, not the live BIS portal.",
+    "A byte-perfect clone of a genuine, current dossier attached to "
+    "counterfeit goods — detecting dossier reuse needs a seen-lots archive "
+    "(roadmap), not contradiction analysis.",
     "GSTIN active/cancelled status — the checksum and state code are "
     "verified offline; whether GSTN has since cancelled the registration "
     "is not.",
     "Events after the registry snapshot date — a company registered or "
-    "struck off after the MCA snapshot will be mis-assessed.",
+    "struck off after the MCA snapshot is assessed as unknown, not guessed.",
+    "Multi-party dossiers — checks are anchored to the entity claiming the "
+    "manufacturer role; secondary parties (carriers, distributors) are not "
+    "independently verified.",
     "Intent — a failed check proves an inconsistency, not who created it "
     "or why.",
-    "Registry data quality — the authoritative MCA registry itself contained "
-    "~3,132 rows with impossible registration dates (years like 1111 or "
-    "9076); those were set to 'date unknown' during indexing rather than "
-    "trusted or rejected, so date checks abstain on them.",
-    "NIC scheme ambiguity — the registry mixes two incompatible "
-    "classification schemes (NIC-2004 and NIC-2008); the activity check "
-    "accepts both automotive ranges (29xx and 34xx) and may under-flag "
-    "codes outside them.",
 ]
+
+# Limits that only apply when the relevant check actually featured this case.
+_CONDITIONAL_LIMITS = {
+    "bis_licence_valid": (
+        "Live BIS licence status — the BIS check ran against a local stub "
+        "table, not the live BIS portal."),
+    "nic_is_manufacturing": (
+        "NIC scheme ambiguity — the registry mixes NIC-2004 and NIC-2008 "
+        "classification schemes; the activity check accepts the known "
+        "automotive divisions and abstains outside them."),
+    "cert_date_after_incorporation": (
+        "Registry data quality — the MCA registry itself contained ~3,132 "
+        "rows with impossible registration dates; those are treated as "
+        "'date unknown' and date checks abstain on them."),
+}
+
+
+def _cannot_determine(led: Ledger) -> list:
+    """Static system limits + limits conditioned on this case's checks +
+    this case's own abstentions — so the block changes with the evidence
+    instead of reading as a fixed disclaimer."""
+    ran = {f.check for f in led.findings}
+    out = list(STATIC_LIMITS)
+    for check, text in _CONDITIONAL_LIMITS.items():
+        if check in ran:
+            out.append(text)
+    for f in led.findings:
+        r = f.result.lower()
+        if "abstain" in r or "unavailable" in r:
+            out.append(f"In this case: {f.check} produced no signal "
+                       f"({f.result}).")
+    return out
 
 
 def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
            registry_row_found: bool = True,
-           has_identifier: bool = True) -> dict:
+           has_identifier: bool = True,
+           registry_status: str = None) -> dict:
     """Combine the ledger (always) and the reasoning stage (unless
     rules_only) into exactly one verdict."""
     directional = [f for f in led.findings if f.direction != "neutral"]
@@ -49,10 +79,17 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
     auth_suspect = [f for f in suspect if f.source_tier == "authoritative"
                     and STRENGTH_RANK[f.strength] >= 2]
     auth_contradiction = _authoritative_contradiction(led)
+    # The governance floor: strong-or-better suspect evidence from a
+    # non-heuristic tier. Neither a missing identifier nor a lenient
+    # reasoner can dissolve it — otherwise withholding a document would
+    # earn a softer verdict than forging one.
+    strong_suspect = [f for f in suspect
+                     if STRENGTH_RANK[f.strength] >= 2
+                     and f.source_tier in ("authoritative", "derived")]
 
     verdict, subtype, missing_artefact, interim_action = None, None, None, None
 
-    if not has_identifier:
+    if not has_identifier and not strong_suspect:
         verdict, subtype = "UNVERIFIABLE", "missing"
         missing_artefact = ("A company identifier (CIN or LLPIN) for the "
                            "claimed manufacturer — without it no registry "
@@ -60,11 +97,13 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         interim_action = ("Quarantine the lot and request the supplier's "
                           "certificate of incorporation before any further "
                           "movement.")
-    elif not registry_row_found and not any(
-            f.check != "registry_exists" for f in suspect):
+    elif not registry_row_found and not [
+            f for f in suspect if f.check != "registry_exists"
+            and f.source_tier != "heuristic"]:
         # identifier given but absent from the registry, with nothing else
-        # suspicious (the registry_exists failure itself doesn't count —
-        # an absent record alone is a gap, not proof of forgery)
+        # non-heuristically suspicious (the registry_exists failure itself
+        # doesn't count — an absent record alone is a gap, not proof of
+        # forgery, and heuristics alone can't upgrade it)
         verdict, subtype = "UNVERIFIABLE", "missing"
         missing_artefact = ("An MCA registry record matching the quoted "
                            "CIN/LLPIN — the decisive artefact that would "
@@ -102,16 +141,15 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
     elif suspect and rules_only:
         # deterministic tiebreak without the reasoner: strong derived-tier
         # failures decide; heuristics alone cannot override support
-        strong_suspect = [f for f in suspect
-                          if STRENGTH_RANK[f.strength] >= 2
-                          and f.source_tier in ("authoritative", "derived")]
         verdict = "SUSPECT" if strong_suspect else "GENUINE"
     elif suspect:
         # reasoner saw the conflicts and did not call it SUSPECT
         if reasoning.get("recommended_verdict") == "UNVERIFIABLE":
             verdict, subtype = "UNVERIFIABLE", "contradictory"
-            amalgamated = any("amalgamat" in (f.result + f.detail).lower()
-                              for f in led.findings)
+            # branch on the registry's structured status field, not on
+            # substrings in free text
+            amalgamated = (registry_status or "").strip().lower() in (
+                "amalgamated", "converted to llp")
             if amalgamated:
                 missing_artefact = ("The NCLT scheme-of-amalgamation order "
                                    "naming the successor entity — it either "
@@ -127,7 +165,11 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
                 interim_action = ("Hold the lot pending one corroborating "
                                   "document.")
         else:
-            verdict = "GENUINE"
+            # governance floor: the reasoner may soften strong suspect
+            # evidence to UNVERIFIABLE (caution, with a work order) but can
+            # never wash it all the way to GENUINE — the LLM path must never
+            # be more permissive than rules-only mode
+            verdict = "SUSPECT" if strong_suspect else "GENUINE"
     else:
         verdict = "GENUINE"
 
@@ -162,7 +204,7 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         "reasoning": (None if rules_only else reasoning),
         "rules_only": rules_only,
         "actions": _actions(verdict, subtype),
-        "cannot_determine": list(CANNOT_DETERMINE),
+        "cannot_determine": _cannot_determine(led),
         "counts": {
             "supports_suspect": len(suspect),
             "supports_genuine": len(genuine),
@@ -176,7 +218,22 @@ def _directional_lean(led: Ledger) -> dict:
     """Which way the evidence leans when it can't decide. Resolved at the
     highest tier that has directional findings — never averaged across
     tiers — and always reported at low confidence (else it would be a
-    verdict, not a lean)."""
+    verdict, not a lean).
+
+    One override, per the never-average doctrine's own logic: a strong-or-
+    better suspect finding at ANY non-heuristic tier caps the lean — the
+    lean must never read 'genuine' beside, say, a GSTIN that failed its own
+    checksum, no matter how much support sits at a higher tier."""
+    strong_suspect = [f for f in led.findings
+                      if f.direction == "supports_suspect"
+                      and STRENGTH_RANK[f.strength] >= 2
+                      and f.source_tier != "heuristic"]
+    if strong_suspect:
+        f = strong_suspect[0]
+        return {"direction": "suspect", "confidence": "low",
+                "basis": f"A {f.strength} {f.source_tier}-tier suspect "
+                         f"finding ({f.check}) stands unresolved; the lean "
+                         "cannot point genuine past it."}
     top = led.highest_tier_with_signal()
     if top is None:
         return {"direction": "none", "confidence": "none",

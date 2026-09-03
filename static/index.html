@@ -289,7 +289,8 @@ footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;fon
 </div>
 
 <div class="card" id="railCard">
-  <div class="card-title">Agent pipeline <span class="mini" id="railNote">idle — awaiting a case</span></div>
+  <div class="card-title">Agent pipeline <span class="mini" id="railNote">idle — awaiting a case</span>
+    <span class="mini" style="margin-left:auto">pacing illustrative · stages &amp; results real</span></div>
   <div class="rail" id="rail">
     <div class="stage" data-stage="extract"><div class="node">1</div><div class="lbl">Extract</div><div class="sub"></div></div>
     <div class="connector"></div>
@@ -320,6 +321,7 @@ footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;fon
   <div class="vh-top">
     <div>
       <div class="vh-word" id="verdictWord"></div>
+      <div id="verdictPlain" style="font-size:15px;margin-top:6px;max-width:52ch"></div>
       <div class="vh-sub" id="verdictSub"></div>
     </div>
     <div class="stat-row">
@@ -338,6 +340,18 @@ footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;fon
     </div>
     <div class="actions-grid" id="actionRows"></div>
   </div>
+</div>
+
+<div class="card hidden" id="assertPanel">
+  <details>
+    <summary class="card-title" style="cursor:pointer;margin-bottom:0">Extracted assertions <span class="mini" id="assertCount"></span></summary>
+    <div style="overflow-x:auto;margin-top:12px">
+    <table style="min-width:640px">
+      <thead><tr><th>Attribute</th><th>Value</th><th>Entity</th><th>Source</th></tr></thead>
+      <tbody id="assertBody"></tbody>
+    </table>
+    </div>
+  </details>
 </div>
 
 <div class="card hidden" id="ledgerPanel">
@@ -363,7 +377,7 @@ footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;fon
   </div>
 </div>
 
-<footer>PROVENANCE · fully offline · MCA registry snapshot 2026-07-22 · every verdict ships with its evidence</footer>
+<footer id="foot">PROVENANCE · offline MCA registry (snapshot 2026-07-22) · every verdict ships with its evidence</footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -468,7 +482,7 @@ async function analyze(body){
   for(const b of ["runBtn","runPasteBtn","runRawBtn"]) $(b).disabled = true;
   $("status").textContent = "investigating…";
   $("verdictCard").className = "verdict-hero";
-  for(const id of ["ledgerPanel","reasonPanel","limitsPanel"]) $(id).classList.add("hidden");
+  for(const id of ["ledgerPanel","reasonPanel","limitsPanel","assertPanel"]) $(id).classList.add("hidden");
   for(const id of ["injectionPanel","aliasPanel"]) $(id).classList.remove("show");
   railStart(!!body.rules_only);
   try{
@@ -487,11 +501,25 @@ async function analyze(body){
 /* ---------- rendering ---------- */
 let allRows = [];
 function render(r){
-  $("status").textContent = `case ${r.case_id}` + (r.rules_only ? " · rules-only" : "");
+  const dropped = r.extraction?.dropped_assertions || 0;
+  $("status").textContent = `case ${r.case_id}` + (r.rules_only ? " · rules-only" : "") +
+    (dropped ? ` · ${dropped} unrecognized assertion(s) dropped` : "");
   $("enginePill").innerHTML = `<span class="dot ${r.llm_provider === "mock" ? "amber" : "blue"}"></span>` +
     ` ENGINE: ${esc(r.llm_provider.toUpperCase())}` +
     (r.llm_model ? ` · ${esc(r.llm_model.toUpperCase())}` : "");
+  $("foot").textContent = "PROVENANCE · offline MCA registry (snapshot 2026-07-22) · " +
+    (r.llm_provider === "mock" ? "no network used" : `reasoning via ${r.llm_provider} (network)`) +
+    " · every verdict ships with its evidence";
   railFinish(r);
+
+  // extracted assertions — what stage 1 actually read
+  $("assertPanel").classList.remove("hidden");
+  $("assertCount").textContent = `${(r.assertions || []).length} typed claims` +
+    (dropped ? ` · ${dropped} dropped (unrecognized attribute)` : "");
+  $("assertBody").innerHTML = (r.assertions || []).map(a =>
+    `<tr><td class="check-name">${esc(a.attribute)}</td><td>${esc(a.value)}</td>`+
+    `<td class="dim-txt">${esc(a.entity)}</td>`+
+    `<td class="result-txt">${esc(a.source_doc)}</td></tr>`).join("");
   $("aliasPanel").classList.toggle("show", !!r.aliased);
 
   // map contradiction resolutions back onto ledger rows
@@ -525,7 +553,7 @@ function render(r){
     tr.dataset.dimension = f.dimension;
     tr.dataset.direction = f.direction;
     tr.innerHTML =
-      `<td class="check-name">${esc(f.check)}</td>`+
+      `<td class="check-name">${esc(f.check)}${f.source_doc ? `<div class="detail">src ${esc(f.source_doc)}</div>` : ""}</td>`+
       `<td>${esc(f.assertion)}<div class="detail">${esc(f.detail)}</div></td>`+
       `<td class="result-txt">${esc(f.result)}</td>`+
       `<td><span class="chip ${f.direction}">${f.direction.replace("supports_","")}</span></td>`+
@@ -551,7 +579,17 @@ function render(r){
     const card = $("verdictCard");
     card.className = "verdict-hero show " + r.verdict;
     $("verdictWord").textContent = r.verdict;
+    const strong = r.ledger.findings.filter(f => f.direction === "supports_suspect" &&
+      (f.strength === "strong" || f.strength === "dispositive")).length;
+    const disp = r.ledger.findings.filter(f => f.direction === "supports_suspect" &&
+      f.strength === "dispositive").length;
+    $("verdictPlain").textContent =
+      r.verdict === "GENUINE" ? "Release: the registry and every deterministic check support this paper trail." :
+      r.verdict === "SUSPECT" ? `Quarantine this lot: ${r.counts.supports_suspect} finding(s) contradict the records` +
+        (disp ? `, ${disp} of them dispositive.` : strong ? `, ${strong} of them strong.` : ".") :
+      "Hold: one named document decides this case — see the work order below.";
     $("verdictSub").textContent = (r.subtype ? `subtype: ${r.subtype} · ` : "") +
+      (r.verdict === "SUSPECT" ? `triage: ${disp} dispositive / ${strong - disp} strong · ` : "") +
       (r.rules_only ? "deterministic rules only — reasoning agent bypassed"
                     : "full pipeline — deterministic checks + reasoning agent");
     $("nSuspect").textContent = r.counts.supports_suspect;

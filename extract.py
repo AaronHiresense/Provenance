@@ -21,9 +21,14 @@ _INJECTION_PATTERNS = [
     r"disregard\s+(all\s+)?(previous|prior|above|earlier|checks?|instructions?)",
     r"\bsystem\s*:",
     r"\bassistant\s*:",
-    r"you\s+(are|must|should|will)\s",
-    r"act\s+as\s",
+    # scoped to reviewer-directed imperatives — a bare "you are requested to
+    # find enclosed…" is normal courtesy phrasing, not an injection
+    r"you\s+(are|must|should|will)\s+(now\s+)?(ignore|approve|mark|output|"
+    r"respond|conclude|report|act)",
+    r"act\s+as\s+(a|an|the)\s",
     r"mark\s+this\s+(dossier|document|case)\s+(as\s+)?genuine",
+    r"approve\s+this\s+(dossier|document|case|lot|shipment)",
+    r"respond\s+with\s",
     r"override\s+(the\s+)?(verdict|checks?|validators?)",
     r"note\s+to\s+(the\s+)?(automated|ai|llm)\s+reviewer",
     r"<\s*/?\s*(script|system|instruction)",
@@ -103,12 +108,43 @@ about. date = the document's own date if stated, else null."""
 
 # -- extraction --------------------------------------------------------------
 
+# canonical attributes stage 2 understands; anything else from the LLM is
+# dropped (counted, never silently) after near-miss normalization
+ALLOWED_ATTRIBUTES = {
+    "company_name", "cin", "gstin", "pan", "state", "incorporation_date",
+    "cert_date", "cert_id", "mfg_date", "ship_date", "receive_date",
+    "lot_code", "part_number", "bis_licence", "tac_number", "tac_issue_date",
+    "invoice_no", "invoice_date", "role", "quantity", "dispatch_state",
+}
+_ATTR_NORMALIZE = {
+    "gst_number": "gstin", "gst_no": "gstin", "gst": "gstin",
+    "company": "company_name", "supplier": "company_name",
+    "name": "company_name", "manufacturer": "company_name",
+    "llpin": "cin", "cin_number": "cin",
+    "manufacturing_date": "mfg_date", "manufacture_date": "mfg_date",
+    "shipping_date": "ship_date", "dispatch_date": "ship_date",
+    "certificate_date": "cert_date", "issue_date": "cert_date",
+    "certificate_no": "cert_id", "certificate_number": "cert_id",
+    "batch_code": "lot_code", "batch_no": "lot_code", "lot_no": "lot_code",
+    "bis_license": "bis_licence", "bis_licence_no": "bis_licence",
+    "qty": "quantity",
+}
+
+
+def _canonical_attr(attr: str):
+    a = str(attr).strip().lower().replace(" ", "_").replace("-", "_")
+    a = _ATTR_NORMALIZE.get(a, a)
+    return a if a in ALLOWED_ATTRIBUTES else None
+
+
 def extract_assertions(dossier: dict, llm: Optional[LLMClient] = None) -> tuple:
-    """Returns (assertions: [Assertion], injection_flags: [dict]).
+    """Returns (assertions: [Assertion], injection_flags: [dict], meta: dict).
 
     Tries the LLM first (real provider, or cached mock JSON keyed by
     extract_<case_id>); falls back to a deterministic label parser so the
     pipeline works on brand-new pasted dossiers with no key and no cache.
+    meta reports engine used and how many LLM assertions were dropped for
+    unrecognized attributes — signal loss is surfaced, never silent.
     """
     llm = llm or LLMClient()
     injection_flags = []
@@ -127,22 +163,30 @@ def extract_assertions(dossier: dict, llm: Optional[LLMClient] = None) -> tuple:
         cache_key=f"extract_{case_id}",
     )
 
+    dropped = 0
     if payload and isinstance(payload.get("assertions"), list):
-        assertions = [
-            Assertion(
+        assertions = []
+        for a in payload["assertions"]:
+            if not a.get("attribute") or a.get("value") is None:
+                dropped += 1
+                continue
+            attr = _canonical_attr(a["attribute"])
+            if attr is None:
+                dropped += 1
+                continue
+            assertions.append(Assertion(
                 entity=str(a.get("entity", "subject")),
-                attribute=str(a.get("attribute", "")),
+                attribute=attr,
                 value=str(a.get("value", "")),
                 source_doc=str(a.get("source_doc", "?")),
                 date=a.get("date"),
-            )
-            for a in payload["assertions"]
-            if a.get("attribute") and a.get("value") is not None
-        ]
+            ))
+        meta = {"engine": "llm", "dropped_assertions": dropped}
     else:
         assertions = _fallback_extract(clean_docs)
+        meta = {"engine": "fallback_parser", "dropped_assertions": 0}
 
-    return assertions, injection_flags
+    return assertions, injection_flags, meta
 
 
 def _build_user_prompt(docs: list) -> str:

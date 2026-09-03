@@ -1,6 +1,6 @@
 {
   "case_id": "contrast_cascade",
-  "title": "Brake shoe lot BS-7702 — Cascade Brake Systems (merged supplier — try the rules-only toggle)",
+  "title": "Brake shoe lot BS-7702 — Cascade Brake Systems (merged supplier)",
   "display_aliases": {"UNIVERSAL BRAKES": "CASCADE BRAKE SYSTEMS"},
   "expected": {"verdict": "UNVERIFIABLE", "subtype": "contradictory"},
   "part": {

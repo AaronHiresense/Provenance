@@ -103,6 +103,12 @@ def _norm(name: str) -> str:
 
 _state_maps = None
 
+# Legacy GST state codes that were issued historically but are absent from the
+# current table: 25 = Daman & Diu (pre-merger into UT 26), 28 = undivided
+# Andhra Pradesh (pre-Telangana). A genuine old GSTIN may carry them — they
+# must resolve, not read as fabricated codes.
+_LEGACY_CODES = {"25": "daman and diu", "28": "andhra pradesh"}
+
 
 def _load_states() -> tuple:
     global _state_maps
@@ -110,6 +116,8 @@ def _load_states() -> tuple:
         with _lock:
             rows = _con().execute("SELECT code, state_name FROM gst_state").fetchall()
         code_to_name = {c: n for c, n in rows}
+        for code, name in _LEGACY_CODES.items():
+            code_to_name.setdefault(code, name)
         name_to_code = {_norm(n): c for c, n in rows}
         for alias, target in _NAME_ALIASES.items():
             canon = _norm(target)
@@ -117,6 +125,28 @@ def _load_states() -> tuple:
                 name_to_code[_norm(alias)] = name_to_code[canon]
         _state_maps = (code_to_name, name_to_code)
     return _state_maps
+
+
+_SNAPSHOT_FALLBACK = "2026-07-22"  # date of the dev snapshot, used when the
+                                   # DB predates the meta table
+
+
+def snapshot_date() -> str:
+    """The MCA snapshot date this registry was built from (ISO string)."""
+    try:
+        with _lock:
+            row = _con().execute(
+                "SELECT value FROM meta WHERE key = 'snapshot_date'"
+            ).fetchone()
+        if row and row[0]:
+            return row[0]
+    except duckdb.Error:
+        pass
+    return _SNAPSHOT_FALLBACK
+
+
+def db_path() -> str:
+    return _find_db()
 
 
 def state_name_for_code(code: str) -> Optional[str]:

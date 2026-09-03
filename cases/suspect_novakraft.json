@@ -1,0 +1,30 @@
+{
+  "case_id": "suspect_novakraft",
+  "title": "Wheel hub lot WH-5521 — Novakraft Industries (geography mismatch)",
+  "display_aliases": {"SUJANA UNIVERSAL": "NOVAKRAFT"},
+  "expected": {"verdict": "SUSPECT", "subtype": null},
+  "part": {
+    "description": "Wheel hub assemblies, commercial vehicle, pack of 30",
+    "part_number": "WH-5521"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2025-04-18",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: SUJANA UNIVERSAL INDUSTRIES PRIVATE LIMITED\nCIN: U29309TG1986PTC006714\nState: Telangana\nRole: manufacturer\nPart Number: WH-5521\nCertificate No: SU-COC-20916\nCertificate Date: 2025-04-18\nWe certify these wheel hub assemblies conform to IS 11829 and were produced at our Hyderabad plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2025-05-02",
+      "text": "TAX INVOICE\nSupplier: SUJANA UNIVERSAL INDUSTRIES PRIVATE LIMITED\nCIN: U29309TG1986PTC006714\nGSTIN: 06AABCS7712Q1ZX\nState: Telangana\nInvoice No: SU/2025/04471\nInvoice Date: 2025-05-02\nPart Number: WH-5521\nLot Code: HYD-250412-00318\nQty: 30 units wheel hub assemblies"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2025-05-02",
+      "text": "DISPATCH NOTE\nCompany: SUJANA UNIVERSAL INDUSTRIES PRIVATE LIMITED\nPart Number: WH-5521\nLot Code: HYD-250412-00318\nManufacturing Date: 2025-04-12\nShip Date: 2025-05-02\nDispatch From: Haryana\nCarrier: NorthSpan Freight, Gurugram hub"
+    }
+  ]
+}

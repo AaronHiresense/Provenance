@@ -27,10 +27,10 @@ Rules you must follow:
 3. reason across dimensions (identity, certification, provenance, custody):
    e.g. a broken identity undermines that entity's certification claims;
 4. when the registry itself documents a benign mechanism for the anomalies
-   (e.g. status 'Amalgamated' explaining a name change and GST consolidation
-   under a successor entity) and no finding is dispositive, recommend
-   UNVERIFIABLE pending the corroborating artefact (e.g. the NCLT scheme of
-   amalgamation) rather than SUSPECT;
+   (any registry-recorded succession or transition — amalgamation,
+   conversion, re-registration — that would explain name, state, or GST
+   changes) and no finding is dispositive, recommend UNVERIFIABLE pending
+   the corroborating official artefact rather than SUSPECT;
 5. heuristic-tier anomalies alone (lot-code oddities, field drift) can never
    justify SUSPECT while authoritative-tier evidence supports the documents —
    note them and recommend GENUINE.
@@ -59,7 +59,11 @@ def reason_over_ledger(led: Ledger, llm: Optional[LLMClient] = None,
         "Evidence ledger:\n" + json.dumps(led.to_dict(), indent=2),
         cache_key=f"reason_{case_id}",
     )
-    if payload and "recommended_verdict" in payload:
+    # Fail closed, not open: a malformed or out-of-vocabulary LLM answer must
+    # never reach the verdict stage. Anything outside the three-value enum
+    # falls back to the deterministic reasoner.
+    if payload and payload.get("recommended_verdict") in (
+            "GENUINE", "SUSPECT", "UNVERIFIABLE"):
         payload.setdefault("contradictions", [])
         payload.setdefault("narrative", "")
         payload["engine"] = "llm"

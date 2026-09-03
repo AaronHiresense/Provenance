@@ -21,6 +21,23 @@ CASES_DIR = BASE / "cases"
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 
 
+@app.on_event("startup")
+def _banner() -> None:
+    """Operator visibility: exactly which brain and which data are live."""
+    import registry
+    from llm import LLMClient
+    c = LLMClient()
+    print("=" * 62)
+    print("PROVENANCE")
+    print(f"  LLM engine : {c.provider}"
+          + (f" ({c.model})" if c.provider != "mock" else
+             " (offline — cached JSON + deterministic fallbacks)"))
+    print(f"  Registry   : {registry.db_path()}")
+    print(f"  Snapshot   : {registry.snapshot_date()}")
+    print(f"  Cases      : {len(list(CASES_DIR.glob('*.json')))} in cases/")
+    print("=" * 62)
+
+
 class AnalyzeRequest(BaseModel):
     case: Optional[str] = None       # filename in cases/, e.g. "suspect_velomax"
     dossier: Optional[dict] = None   # or a raw dossier pasted in the UI
