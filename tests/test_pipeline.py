@@ -226,6 +226,31 @@ def test_cannot_determine_is_case_aware():
     assert r_bis["cannot_determine"] != r_hsi["cannot_determine"]
 
 
+def test_spec_validator():
+    import validators as v
+    assert v.spec_matches_oem_sheet("BC-2209", "IS 15100").result == "pass"
+    f = v.spec_matches_oem_sheet("BC-2209", "IS 14449")
+    assert f.result == "fail" and f.strength == "strong"
+    assert v.spec_matches_oem_sheet("ZZ-0000", "IS 1").direction == "neutral"
+
+
+def test_cloned_spec_case():
+    """The cloned-paperwork answer: identity checks all pass (borrowed from
+    a genuine supplier), but the claimed spec contradicts the OEM sheet."""
+    r = _run("suspect_cloned_spec")
+    assert r["verdict"] == "SUSPECT"
+    checks = {f["check"]: f for f in r["ledger"]["findings"]}
+    assert checks["spec_matches_oem_sheet"]["result"] == "fail"
+    assert checks["registry_exists"]["result"] == "pass"
+    assert checks["gstin_checksum"]["result"] == "pass"
+
+
+def test_typolot_spec_passes():
+    r = _run("genuine_hsi_typolot")
+    checks = {f["check"]: f for f in r["ledger"]["findings"]}
+    assert checks["spec_matches_oem_sheet"]["result"] == "pass"
+
+
 def test_identifier_extraction_survives_decoration():
     import validators as v
     assert v.extract_identifier("ACY-8928 (LLPIN)") == "ACY-8928"

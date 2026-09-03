@@ -1,4 +1,4 @@
-# AGENTS.md — working on PROVENANCE
+﻿# AGENTS.md — working on PROVENANCE
 
 Guidance for coding agents (and humans) working in this repository.
 
@@ -47,7 +47,7 @@ This writes `mca.duckdb` into the project root with two tables:
 
 ```bash
 python -m uvicorn app:app --port 8321     # then open http://localhost:8321
-python -m pytest tests/ -q                # 63 tests, all offline/mock
+python -m pytest tests/ -q                # 83 tests, all offline/mock
 python eval.py                            # calibration over cases/ (mock)
 python eval.py --live                     # same, with the configured LLM
 ```
@@ -123,14 +123,14 @@ that in any new test file (that env var beats the `.env` file's key).
 app.py           FastAPI: /, /api/cases, /api/analyze (case | dossier | raw_text)
 pipeline.py      stage glue + display aliasing + dossier_from_raw_text
 extract.py       stage 1 (LLM extraction, injection hygiene, label-parser fallback)
-validators.py    stage 2 (17 pure checks) + run_all orchestrator
+validators.py    stage 2 (18 pure checks) + run_all orchestrator
 ledger.py        stage 3 (Assertion, Finding, Ledger, tier/strength ranks)
 reason.py        stage 4 (LLM benign-vs-malicious, deterministic fallback)
 verdict.py       stage 5 (verdict + subtype + work order + actions + limits)
 llm.py           provider wrapper (anthropic-compatible | openai_compat | mock) + .env loader
 registry.py      DuckDB access + GST state alias map
 static/index.html   the whole UI (vanilla, offline, dark)
-cases/           11 demo dossiers with expected verdicts
+cases/           13 demo dossiers with expected verdicts
 mocks/           cached LLM JSON for mock mode (extract_<case>, reason_<case>)
 tests/           pytest suites (validators + end-to-end pipeline)
 scripts/build_db.py  CSV → mca.duckdb (the only data-setup step)

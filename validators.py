@@ -51,6 +51,23 @@ CIN_STATE_CODES = {
 NIC_MANUFACTURING_PREFIXES = ("29", "34", "22", "25", "27", "28", "30")
 NIC_TRADING_PREFIXES = ("45",)              # wholesale/retail of vehicles & parts
 
+# OEM published spec sheets (stub): part number -> the standard the OEM
+# certifies that part to. Mentors confirmed spec-on-paper checks are in
+# scope: a certificate claiming a different standard than the OEM's
+# published sheet is a document inconsistency, not a physical measurement.
+OEM_SPEC_STUB = {
+    "BC-2209": "IS 15100",   # front brake caliper assemblies
+    "BC-2231": "IS 15100",
+    "BC-3310": "IS 15100",
+    "CP-4417": "IS 4076",    # clutch friction plates
+    "BS-7702": "IS 2742",    # drum brake shoes
+    "WH-5521": "IS 11829",   # wheel hub assemblies
+    "GK-118": "IS 4253",     # engine gaskets
+    "BL-4407": "IS 2742",    # brake linings
+    "CH-0912": "IS 2465",    # cable harnesses
+}
+
+
 # Stub BIS licence table — replace with the live BIS lookup when available.
 BIS_STUB = {
     "CM/L-7411032": {"holder": "HSI AUTOMOTIVES PRIVATE LIMITED",
@@ -647,6 +664,45 @@ def lot_code_grammar(lot_code: str, reference_date=None) -> Finding:
     )
 
 
+def spec_matches_oem_sheet(part_number: str,
+                           claimed_standard: str) -> Finding:
+    """Claimed spec on the certificate vs the OEM's published spec sheet —
+    a documents check (mentor-confirmed in scope); physical measurement
+    stays out of scope."""
+    part = str(part_number).strip().upper()
+    published = OEM_SPEC_STUB.get(part)
+    claimed = str(claimed_standard).strip().upper().replace("  ", " ")
+    assertion = (f"Certificate's claimed standard '{claimed_standard}' "
+                 f"matches the OEM's published sheet for part {part}")
+    if published is None:
+        return Finding(
+            assertion=assertion, check="spec_matches_oem_sheet",
+            result="unavailable (part not in OEM sheet stub)",
+            direction="neutral", strength="weak",
+            source_tier="derived", dimension="certification",
+            detail=f"No published OEM sheet for {part} in the local stub; "
+                   "cannot compare specs offline.",
+        )
+    if claimed.replace(" ", "") == published.upper().replace(" ", ""):
+        return Finding(
+            assertion=assertion, check="spec_matches_oem_sheet",
+            result="pass",
+            direction="supports_genuine", strength="moderate",
+            source_tier="derived", dimension="certification",
+            detail=f"OEM sheet for {part}: {published}.",
+        )
+    return Finding(
+        assertion=assertion, check="spec_matches_oem_sheet",
+        result="fail",
+        direction="supports_suspect", strength="strong",
+        source_tier="derived", dimension="certification",
+        detail=f"The OEM's published sheet certifies {part} to {published}, "
+               f"but the certificate claims '{claimed_standard}'. A forger "
+               "cloning paperwork without the OEM's spec sheet gets exactly "
+               "this wrong.",
+    )
+
+
 def receive_date_after_ship_date(receive_date, ship_date) -> Finding:
     rd, sd = _parse_date(receive_date), _parse_date(ship_date)
     assertion = (f"Goods-receipt date {receive_date} is on/after the ship "
@@ -870,6 +926,12 @@ def run_all(assertions: list) -> Ledger:
         ref = (a_ship.value if a_ship else None) or \
               (a_cert.value if a_cert else None)
         led.add(tac_within_5_years(a_tac.value, ref))
+
+    a_part, a_spec = get("part_number"), get("spec_standard")
+    if a_part and a_spec:
+        f = spec_matches_oem_sheet(a_part.value, a_spec.value)
+        f.source_doc = a_spec.source_doc
+        led.add(f)
 
     a_lot = get("lot_code")
     if a_lot:

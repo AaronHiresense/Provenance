@@ -1,4 +1,4 @@
-# PROVENANCE
+﻿# PROVENANCE
 
 Counterfeit auto-parts **documents & records** investigator. Reads a dossier
 of supply-chain documents (certificates, invoices, dispatch notes), checks
@@ -22,7 +22,7 @@ python -m uvicorn app:app --port 8321
 # open http://localhost:8321
 ```
 
-Tests (offline, no key needed): `python -m pytest tests/ -q` · 63 passing.
+Tests (offline, no key needed): `python -m pytest tests/ -q` · 83 passing.
 
 ## Data setup — where the registry comes from
 
@@ -107,17 +107,17 @@ the Known Limits panel.
 the abstention rate and accuracy-when-committed (add `--live` for the real
 LLM, `--rules-only` to skip stage 4).
 
-**What the numbers are — and aren't.** The 12-case pack is our *adversarial
+**What the numbers are — and aren't.** The 13-case pack is our *adversarial
 regression suite*: self-authored, deliberately loaded with abstention
 demonstrations and near-miss traps (a typo'd lot code that must NOT flag, an
-injection dossier, a merger where the scary reading is wrong). 12/12 exact
-(verdict + subtype), 33% abstention, 100% accuracy-when-committed shows the
+injection dossier, a merger where the scary reading is wrong). 13/13 exact
+(verdict + subtype), 31% abstention, 100% accuracy-when-committed shows the
 pipeline matches its stated policy precisely — it is a design-verification
 claim, not a field-accuracy claim (no labeled corpus of counterfeit
 dossiers exists; that absence is part of this problem). Rules-only mode
-scores 11/12: the one divergence is the merged-supplier case, where rules
+scores 12/13: the one divergence is the merged-supplier case, where rules
 alone over-accuse — which is precisely the demo of what stage 4 adds. The
-**live-LLM run scores the same 12/12** (`eval.py --live`, DeepSeek,
+**live-LLM run scores the same 13/13** (`eval.py --live`, DeepSeek,
 temperature 0), so the quoted numbers cover the exact code path that runs
 on stage. The real eval is the case the jury feeds it.
 

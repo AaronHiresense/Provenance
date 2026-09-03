@@ -81,6 +81,9 @@ _LABEL_MAP = {
     "invoice no": "invoice_no", "invoice number": "invoice_no",
     "invoice date": "invoice_date",
     "role": "role",
+    "standard": "spec_standard", "spec": "spec_standard",
+    "specification": "spec_standard", "conforms to": "spec_standard",
+    "certified to": "spec_standard",
     "receive date": "receive_date", "received on": "receive_date",
     "grn date": "receive_date", "goods receipt date": "receive_date",
     "qty": "quantity", "quantity": "quantity",
@@ -101,7 +104,8 @@ Return ONLY a JSON object:
 Allowed attributes: company_name, cin, gstin, pan, state, incorporation_date,
 cert_date, cert_id, mfg_date, ship_date, receive_date, lot_code, part_number,
 bis_licence, tac_number, tac_issue_date, invoice_no, invoice_date, role,
-quantity, dispatch_state.
+quantity, dispatch_state, spec_standard (the standard the certificate
+claims the part conforms to, e.g. "IS 15100").
 Use ISO dates (YYYY-MM-DD) where possible. entity = the company the claim is
 about. date = the document's own date if stated, else null."""
 
@@ -115,6 +119,7 @@ ALLOWED_ATTRIBUTES = {
     "cert_date", "cert_id", "mfg_date", "ship_date", "receive_date",
     "lot_code", "part_number", "bis_licence", "tac_number", "tac_issue_date",
     "invoice_no", "invoice_date", "role", "quantity", "dispatch_state",
+    "spec_standard",
 }
 _ATTR_NORMALIZE = {
     "gst_number": "gstin", "gst_no": "gstin", "gst": "gstin",

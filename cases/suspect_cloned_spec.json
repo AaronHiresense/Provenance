@@ -1,0 +1,29 @@
+{
+  "case_id": "suspect_cloned_spec",
+  "title": "Brake caliper lot BC-2209 — cloned paperwork, wrong spec",
+  "expected": {"verdict": "SUSPECT", "subtype": null},
+  "part": {
+    "description": "Front brake caliper assemblies, pack of 24 — documents clone a genuine supplier's identity",
+    "part_number": "BC-2209"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2025-07-14",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BC-2209\nCertificate No: HSI-COC-36112\nCertificate Date: 2025-07-14\nStandard: IS 14449\nBIS Licence: CM/L-7411032\nWe certify these brake caliper assemblies were produced at our Sriperumbudur plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2025-07-20",
+      "text": "TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\nState: Tamil Nadu\nInvoice No: HSI/2025/04220\nInvoice Date: 2025-07-20\nPart Number: BC-2209\nLot Code: SPB-250705-00141\nQty: 24 units front brake caliper assemblies"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2025-07-20",
+      "text": "DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nPart Number: BC-2209\nLot Code: SPB-250705-00141\nManufacturing Date: 2025-07-05\nShip Date: 2025-07-20\nDispatch From: Tamil Nadu\nCarrier: BlueDart Surface, Chennai hub"
+    }
+  ]
+}
