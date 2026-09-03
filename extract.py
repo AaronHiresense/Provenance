@@ -26,13 +26,23 @@ _INJECTION_PATTERNS = [
     r"you\s+(are|must|should|will)\s+(now\s+)?(ignore|approve|mark|output|"
     r"respond|conclude|report|act)",
     r"act\s+as\s+(a|an|the)\s",
-    r"mark\s+this\s+(dossier|document|case)\s+(as\s+)?genuine",
-    r"approve\s+this\s+(dossier|document|case|lot|shipment)",
+    r"(mark|conclude|treat|consider|classify|deem|declare|grade|rate|label)"
+    r"\s+(this|the|it)?\s*(dossier|document|case|lot|shipment|consignment)?"
+    r"\s*(as\s+)?(genuine|authentic|verified|legitimate|clean)",
+    r"approve\s+(this|the)\s+(dossier|document|case|lot|shipment)",
     r"respond\s+with\s",
-    r"override\s+(the\s+)?(verdict|checks?|validators?)",
-    r"note\s+to\s+(the\s+)?(automated|ai|llm)\s+reviewer",
-    r"<\s*/?\s*(script|system|instruction)",
-    r"do\s+not\s+(flag|report|check)",
+    r"final\s+verdict",
+    r"verdict\s*[:=]\s*genuine",
+    r"output\s+(genuine|only|the\s+word)",
+    r"pretend\s+(to|you|that)",
+    r"role.?play",
+    r"new\s+instructions?\b",
+    r"as\s+(an?\s+)?(ai|llm|language\s+model|automated\s+system)",
+    r"override\s+(the\s+)?(verdict|checks?|validators?|findings?)",
+    r"note\s+to\s+(the\s+)?(automated|ai|llm|reviewing)\s+(reviewer|system)",
+    r"<\s*/?\s*(script|system|instruction|prompt)",
+    r"do\s+not\s+(flag|report|check|raise|record)",
+    r"[A-Za-z0-9+/]{60,}={0,2}",  # long base64-ish runs hide encoded payloads
 ]
 _INJECTION_RE = re.compile("|".join(_INJECTION_PATTERNS), re.IGNORECASE)
 
@@ -81,6 +91,20 @@ _LABEL_MAP = {
     "invoice no": "invoice_no", "invoice number": "invoice_no",
     "invoice date": "invoice_date",
     "role": "role",
+    "eway validity": "eway_validity_days", "validity days": "eway_validity_days",
+    "e-way validity": "eway_validity_days", "valid for": "eway_validity_days",
+    "eway bill validity": "eway_validity_days",
+    "route from": "route_from", "origin city": "route_from",
+    "dispatch city": "route_from",
+    "route to": "route_to", "destination": "route_to",
+    "destination city": "route_to",
+    "distance": "route_distance_km", "route distance": "route_distance_km",
+    "approx distance": "route_distance_km",
+    "hsn": "hsn_code", "hsn code": "hsn_code", "hsn/sac": "hsn_code",
+    "port of entry": "entry_port", "entry port": "entry_port",
+    "customs station": "entry_port",
+    "entry mode": "entry_mode", "mode of entry": "entry_mode",
+    "import mode": "entry_mode",
     "standard": "spec_standard", "spec": "spec_standard",
     "specification": "spec_standard", "conforms to": "spec_standard",
     "certified to": "spec_standard",
@@ -105,9 +129,12 @@ Allowed attributes: company_name, cin, gstin, pan, state, incorporation_date,
 cert_date, cert_id, mfg_date, ship_date, receive_date, lot_code, part_number,
 bis_licence, tac_number, tac_issue_date, invoice_no, invoice_date, role,
 quantity, dispatch_state, spec_standard (the standard the certificate
-claims the part conforms to, e.g. "IS 15100").
+claims the part conforms to, e.g. "IS 15100"), eway_validity_days,
+route_from, route_to, route_distance_km, hsn_code, entry_port, entry_mode.
 Use ISO dates (YYYY-MM-DD) where possible. entity = the company the claim is
-about. date = the document's own date if stated, else null."""
+about. date = the document's own date if stated, else null.
+Copy identifier values (CIN, LLPIN, GSTIN, PAN, licence numbers) EXACTLY as
+printed — no annotations, no reformatting, never omit them."""
 
 
 # -- extraction --------------------------------------------------------------
@@ -119,7 +146,8 @@ ALLOWED_ATTRIBUTES = {
     "cert_date", "cert_id", "mfg_date", "ship_date", "receive_date",
     "lot_code", "part_number", "bis_licence", "tac_number", "tac_issue_date",
     "invoice_no", "invoice_date", "role", "quantity", "dispatch_state",
-    "spec_standard",
+    "spec_standard", "eway_validity_days", "route_from", "route_to",
+    "route_distance_km", "hsn_code", "entry_port", "entry_mode",
 }
 _ATTR_NORMALIZE = {
     "gst_number": "gstin", "gst_no": "gstin", "gst": "gstin",

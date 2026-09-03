@@ -68,6 +68,48 @@ OEM_SPEC_STUB = {
 }
 
 
+# ---- logistics physics reference tables (published rules, offline) --------
+# CGST Rule 138(10): an e-way bill is valid one day per 200 km (or part
+# thereof) for normal cargo. Lawful extensions exist — the validator's
+# benign path says so — but forged paperwork rarely does the arithmetic.
+EWAY_KM_PER_DAY = 200
+
+# Part number -> expected HSN heading (4-digit) on the invoice.
+# 8708 = parts & accessories of motor vehicles; 8484 = gaskets;
+# 8544 = insulated wire/cable harnesses.
+PART_HSN_STUB = {
+    "BC-2209": "8708", "BC-2231": "8708", "BC-3310": "8708",
+    "CP-4417": "8708", "BS-7702": "8708", "WH-5521": "8708",
+    "BL-4407": "8708", "GK-118": "8484", "CH-0912": "8544",
+}
+
+# Customs station -> mode of entry. Two conflicting first-entry claims on
+# one consignment are impossible; sea-then-inland movement is not (framed
+# accordingly in the validator).
+PORT_MODES = {
+    "NHAVA SHEVA": "sea", "MUNDRA": "sea", "CHENNAI PORT": "sea",
+    "KOLKATA PORT": "sea", "COCHIN PORT": "sea", "TUTICORIN": "sea",
+    "DELHI AIR CARGO": "air", "MUMBAI AIR CARGO": "air",
+    "CHENNAI AIR CARGO": "air", "BANGALORE AIR CARGO": "air",
+    "ATTARI": "land", "PETRAPOLE": "land", "RAXAUL": "land",
+}
+
+# Approximate road distances (km) between major city pairs, order-free.
+CITY_KM = {
+    frozenset(("CHENNAI", "DELHI")): 2200,
+    frozenset(("CHENNAI", "MUMBAI")): 1330,
+    frozenset(("CHENNAI", "KOLKATA")): 1670,
+    frozenset(("CHENNAI", "BANGALORE")): 350,
+    frozenset(("BANGALORE", "DELHI")): 2150,
+    frozenset(("COIMBATORE", "DELHI")): 2400,
+    frozenset(("HYDERABAD", "DELHI")): 1580,
+    frozenset(("HYDERABAD", "GURUGRAM")): 1550,
+    frozenset(("MUMBAI", "DELHI")): 1420,
+    frozenset(("AHMEDABAD", "CHENNAI")): 1840,
+    frozenset(("KOLKATA", "DELHI")): 1500,
+}
+
+
 # Stub BIS licence table — replace with the live BIS lookup when available.
 BIS_STUB = {
     "CM/L-7411032": {"holder": "HSI AUTOMOTIVES PRIVATE LIMITED",
@@ -703,6 +745,178 @@ def spec_matches_oem_sheet(part_number: str,
     )
 
 
+def _norm_city(name: str) -> str:
+    return re.sub(r"[^A-Z]", "", str(name).upper().split(",")[0].strip()
+                  .replace("GURGAON", "GURUGRAM"))
+
+
+def _route_km(route_from, route_to, claimed_km=None):
+    """Best distance estimate: claimed value if parseable, else city table."""
+    if claimed_km is not None:
+        try:
+            return float(str(claimed_km).lower().replace("km", "").strip()), "claimed"
+        except ValueError:
+            pass
+    if route_from and route_to:
+        km = CITY_KM.get(frozenset((_norm_city(route_from), _norm_city(route_to))))
+        if km:
+            return float(km), "city table"
+    return None, None
+
+
+def eway_validity_vs_distance(validity_days, route_from=None, route_to=None,
+                              claimed_km=None) -> Finding:
+    """CGST Rule 138(10) physics: one validity day per 200 km (or part).
+    An e-way bill whose stated validity cannot cover its own journey was
+    papered by someone who never intended the truck to exist."""
+    km, src = _route_km(route_from, route_to, claimed_km)
+    assertion = (f"E-way bill validity ({validity_days} day(s)) covers the "
+                 f"declared journey"
+                 + (f" {route_from} → {route_to}" if route_from else ""))
+    try:
+        days = float(str(validity_days).lower().replace("days", "")
+                     .replace("day", "").strip())
+    except (ValueError, TypeError):
+        days = None
+    if days is None or km is None:
+        return Finding(
+            assertion=assertion, check="eway_validity_vs_distance",
+            result="abstain (validity or distance unavailable)",
+            direction="neutral", strength="weak",
+            source_tier="derived", dimension="custody",
+            detail=f"validity={validity_days!r}, distance "
+                   f"{'unknown route' if km is None else km}.",
+        )
+    import math
+    required = math.ceil(km / EWAY_KM_PER_DAY)
+    if days < required:
+        return Finding(
+            assertion=assertion, check="eway_validity_vs_distance",
+            result="fail",
+            direction="supports_suspect", strength="strong",
+            source_tier="derived", dimension="custody",
+            detail=f"Rule 138(10): {km:.0f} km ({src}) needs "
+                   f"{required} validity day(s) at {EWAY_KM_PER_DAY} km/day; "
+                   f"the bill grants {days:.0f}. Lawful extensions exist and "
+                   "would appear on the bill — none is cited. As papered, "
+                   "the goods travel faster than the rule allows.",
+        )
+    return Finding(
+        assertion=assertion, check="eway_validity_vs_distance", result="pass",
+        direction="supports_genuine", strength="weak",
+        source_tier="derived", dimension="custody",
+        detail=f"{km:.0f} km ({src}) needs {required} day(s); bill grants "
+               f"{days:.0f}.",
+    )
+
+
+def hsn_matches_part(part_number: str, claimed_hsn: str) -> Finding:
+    """Invoice HSN heading vs the expected heading for this part family —
+    mis-declared HSN is a customs / anti-dumping-evasion signature."""
+    part = str(part_number).strip().upper()
+    expected = PART_HSN_STUB.get(part)
+    claimed4 = re.sub(r"[^0-9]", "", str(claimed_hsn))[:4]
+    assertion = (f"Invoice HSN '{claimed_hsn}' matches the expected heading "
+                 f"for part {part}")
+    if expected is None or len(claimed4) < 4:
+        return Finding(
+            assertion=assertion, check="hsn_matches_part",
+            result="abstain (part or HSN not classifiable offline)",
+            direction="neutral", strength="weak",
+            source_tier="derived", dimension="certification",
+            detail=f"expected heading {'unknown' if expected is None else expected}, "
+                   f"claimed {claimed_hsn!r}.",
+        )
+    if claimed4 == expected:
+        return Finding(
+            assertion=assertion, check="hsn_matches_part", result="pass",
+            direction="supports_genuine", strength="weak",
+            source_tier="derived", dimension="certification",
+            detail=f"Heading {claimed4} is the expected classification.",
+        )
+    return Finding(
+        assertion=assertion, check="hsn_matches_part", result="fail",
+        direction="supports_suspect", strength="strong",
+        source_tier="derived", dimension="certification",
+        detail=f"Part family {part} belongs under heading {expected}; the "
+               f"invoice declares {claimed4}. Mis-declared HSN is how "
+               "counterfeit consignments dodge duty scrutiny and "
+               "anti-dumping checks.",
+    )
+
+
+def entry_port_mode_consistent(entry_port: str, entry_mode: str) -> Finding:
+    """The declared FIRST customs entry: the named station and the declared
+    mode must agree. (Sea arrival followed by inland road movement is
+    lawful — this checks the entry claim against itself, not the journey.)"""
+    port = str(entry_port).strip().upper()
+    known = PORT_MODES.get(port)
+    mode = str(entry_mode).strip().lower()
+    assertion = (f"Declared entry mode '{entry_mode}' is consistent with "
+                 f"entry station '{entry_port}'")
+    if known is None or not mode:
+        return Finding(
+            assertion=assertion, check="entry_port_mode_consistent",
+            result="abstain (station not in offline table)",
+            direction="neutral", strength="weak",
+            source_tier="derived", dimension="custody",
+            detail=f"'{entry_port}' is not in the local customs-station table.",
+        )
+    if known in mode:
+        return Finding(
+            assertion=assertion, check="entry_port_mode_consistent",
+            result="pass",
+            direction="supports_genuine", strength="weak",
+            source_tier="derived", dimension="custody",
+            detail=f"{port} is a {known} station.",
+        )
+    return Finding(
+        assertion=assertion, check="entry_port_mode_consistent",
+        result="fail",
+        direction="supports_suspect", strength="strong",
+        source_tier="derived", dimension="custody",
+        detail=f"{port} is a {known} station, but the documents declare "
+               f"'{entry_mode}' for the same first entry — one consignment "
+               "cannot enter the country two different ways.",
+    )
+
+
+def route_distance_sanity(route_from: str, route_to: str,
+                          claimed_km) -> Finding:
+    """Claimed route distance vs the city-pair table, ±20% tolerance."""
+    table_km = CITY_KM.get(frozenset((_norm_city(route_from),
+                                      _norm_city(route_to))))
+    assertion = (f"Claimed distance {claimed_km} for {route_from} → "
+                 f"{route_to} is plausible")
+    try:
+        claimed = float(str(claimed_km).lower().replace("km", "").strip())
+    except (ValueError, TypeError):
+        claimed = None
+    if table_km is None or claimed is None:
+        return Finding(
+            assertion=assertion, check="route_distance_sanity",
+            result="abstain (route not in offline table)",
+            direction="neutral", strength="weak",
+            source_tier="heuristic", dimension="custody",
+            detail="City pair or claimed distance not comparable offline.",
+        )
+    if abs(claimed - table_km) <= 0.2 * table_km:
+        return Finding(
+            assertion=assertion, check="route_distance_sanity", result="pass",
+            direction="supports_genuine", strength="weak",
+            source_tier="heuristic", dimension="custody",
+            detail=f"Reference ≈{table_km} km; claimed {claimed:.0f} km.",
+        )
+    return Finding(
+        assertion=assertion, check="route_distance_sanity", result="fail",
+        direction="supports_suspect", strength="moderate",
+        source_tier="heuristic", dimension="custody",
+        detail=f"Reference distance ≈{table_km} km; the documents claim "
+               f"{claimed:.0f} km — outside ±20%. Benign reroutes happen; "
+               "invented logistics paperwork guesses distances.",
+    )
+
+
 def receive_date_after_ship_date(receive_date, ship_date) -> Finding:
     rd, sd = _parse_date(receive_date), _parse_date(ship_date)
     assertion = (f"Goods-receipt date {receive_date} is on/after the ship "
@@ -926,6 +1140,34 @@ def run_all(assertions: list) -> Ledger:
         ref = (a_ship.value if a_ship else None) or \
               (a_cert.value if a_cert else None)
         led.add(tac_within_5_years(a_tac.value, ref))
+
+    # logistics physics
+    a_validity = get("eway_validity_days")
+    a_rfrom, a_rto = get("route_from"), get("route_to")
+    a_rkm = get("route_distance_km")
+    if a_validity:
+        f = eway_validity_vs_distance(
+            a_validity.value,
+            a_rfrom.value if a_rfrom else None,
+            a_rto.value if a_rto else None,
+            a_rkm.value if a_rkm else None)
+        f.source_doc = a_validity.source_doc
+        led.add(f)
+    if a_rfrom and a_rto and a_rkm:
+        f = route_distance_sanity(a_rfrom.value, a_rto.value, a_rkm.value)
+        f.source_doc = a_rkm.source_doc
+        led.add(f)
+    a_hsn = get("hsn_code")
+    a_part0 = get("part_number")
+    if a_hsn and a_part0:
+        f = hsn_matches_part(a_part0.value, a_hsn.value)
+        f.source_doc = a_hsn.source_doc
+        led.add(f)
+    a_eport, a_emode = get("entry_port"), get("entry_mode")
+    if a_eport and a_emode:
+        f = entry_port_mode_consistent(a_eport.value, a_emode.value)
+        f.source_doc = a_eport.source_doc
+        led.add(f)
 
     a_part, a_spec = get("part_number"), get("spec_standard")
     if a_part and a_spec:

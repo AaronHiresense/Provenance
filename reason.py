@@ -205,6 +205,18 @@ def _benign_story(f) -> str:
                             "grammar on file is stale.",
         "cross_doc_field_drift": "Different departments filled the forms "
                                  "from memory rather than copying.",
+        "eway_validity_vs_distance": "The transporter lawfully extended the "
+                                     "bill under Rule 138(10) and the "
+                                     "extension record wasn't attached.",
+        "hsn_matches_part": "A billing clerk reused a template line with "
+                            "last consignment's HSN code.",
+        "entry_port_mode_consistent": "A freight forwarder's template "
+                                      "carried a stale port field.",
+        "route_distance_sanity": "The truck took a genuine diversion "
+                                 "(floods, tolls) and the paperwork "
+                                 "recorded the odometer honestly.",
+        "spec_matches_oem_sheet": "The OEM revised the applicable standard "
+                                  "and the sheet on file is stale.",
     }
     return stories.get(f.check, "An innocent clerical error in document "
                                 "preparation.")
@@ -242,6 +254,21 @@ def _malicious_story(f) -> str:
         "cross_doc_field_drift": "The documents were forged separately and "
                                  "the forger failed to keep details "
                                  "consistent.",
+        "eway_validity_vs_distance": "The e-way bill was fabricated after "
+                                     "the fact by someone who never ran "
+                                     "the Rule 138(10) arithmetic — the "
+                                     "goods never made this journey.",
+        "hsn_matches_part": "The HSN was deliberately mis-declared to dodge "
+                            "duty scrutiny or anti-dumping checks on this "
+                            "part family.",
+        "entry_port_mode_consistent": "Two import stories were papered for "
+                                      "one consignment — the entry record "
+                                      "is invented.",
+        "route_distance_sanity": "The logistics leg was invented and the "
+                                 "forger guessed the distance.",
+        "spec_matches_oem_sheet": "The certificate was cloned without the "
+                                  "OEM's spec sheet, and the forger "
+                                  "guessed the standard wrong.",
     }
     return stories.get(f.check, "The document was fabricated and the "
                                 "inconsistency is a forgery artefact.")
