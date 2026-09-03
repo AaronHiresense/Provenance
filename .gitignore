@@ -1,0 +1,17 @@
+# secrets — never commit API keys
+.env
+
+# the registry database is ~1.5 GB; rebuild it with scripts/build_db.py
+mca.duckdb
+*.duckdb
+*.duckdb.wal
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# OS / editor noise
+Thumbs.db
+.DS_Store

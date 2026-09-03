@@ -1,0 +1,30 @@
+{
+  "case_id": "contrast_cascade",
+  "title": "Brake shoe lot BS-7702 — Cascade Brake Systems (merged supplier — try the rules-only toggle)",
+  "display_aliases": {"UNIVERSAL BRAKES": "CASCADE BRAKE SYSTEMS"},
+  "expected": {"verdict": "UNVERIFIABLE", "subtype": "contradictory"},
+  "part": {
+    "description": "Drum brake shoe sets, commercial vehicle, pack of 40",
+    "part_number": "BS-7702"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2024-09-15",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: UNIVERSAL BRAKES PRIVATE LIMITED\nCIN: U34300TZ1972PTC000642\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BS-7702\nCertificate No: UB-COC-51228\nCertificate Date: 2024-09-15\nWe certify these drum brake shoe sets conform to IS 2742 and were produced at our Coimbatore plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2024-10-03",
+      "text": "TAX INVOICE\nSupplier: ORVETO DRIVELINES PRIVATE LIMITED\nCIN: U34300TZ1972PTC000642\nGSTIN: 24AAFCO4412Q1Z8\nState: Tamil Nadu\nInvoice No: OD/2024/03318\nInvoice Date: 2024-10-03\nPart Number: BS-7702\nLot Code: CBT-240902-00177\nQty: 40 sets drum brake shoes\nNote: Billing entity Orveto Drivelines Private Limited, GST registration consolidated at Vadodara following the scheme of amalgamation sanctioned by the NCLT (2023); production continues at the Coimbatore plant."
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2024-10-03",
+      "text": "DISPATCH NOTE\nCompany: UNIVERSAL BRAKES PRIVATE LIMITED\nPart Number: BS-7702\nLot Code: CBT-240902-00177\nManufacturing Date: 2024-09-02\nShip Date: 2024-10-03\nCarrier: SafeWheel Logistics, Coimbatore hub"
+    }
+  ]
+}

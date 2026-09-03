@@ -1,0 +1,27 @@
+{
+  "assertions": [
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "company_name", "value": "HSI AUTOMOTIVES PRIVATE LIMITED", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "cin", "value": "U29309TN1997PTC039462", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "state", "value": "Tamil Nadu", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "role", "value": "manufacturer", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "part_number", "value": "BC-2209", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "cert_id", "value": "HSI-COC-33108", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "cert_date", "value": "2024-05-10", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "bis_licence", "value": "CM/L-7411032", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "tac_number", "value": "TAC-ARAI-2023-1187", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "tac_issue_date", "value": "2023-08-12", "source_doc": "DOC-1", "date": "2024-05-10"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "company_name", "value": "HSI AUTOMOTIVES PRIVATE LIMITED", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "cin", "value": "U29309TN1997PTC039462", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "gstin", "value": "33AABCH4501R1ZK", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "state", "value": "Tamil Nadu", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "invoice_no", "value": "HSI/2024/07751", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "invoice_date", "value": "2024-05-15", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "part_number", "value": "BC-2209", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "lot_code", "value": "SPB-240420-00412", "source_doc": "DOC-2", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "company_name", "value": "HSI AUTOMOTIVES PRIVATE LIMITED", "source_doc": "DOC-3", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "part_number", "value": "BC-2209", "source_doc": "DOC-3", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "lot_code", "value": "SPB-240420-00412", "source_doc": "DOC-3", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "mfg_date", "value": "2024-04-20", "source_doc": "DOC-3", "date": "2024-05-15"},
+    {"entity": "HSI AUTOMOTIVES PRIVATE LIMITED", "attribute": "ship_date", "value": "2024-05-15", "source_doc": "DOC-3", "date": "2024-05-15"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "case_id": "unverifiable_falconridge_bis",
+  "title": "Brake lining lot BL-4407 — Falconridge Automobiles LLP (unverifiable BIS licence)",
+  "display_aliases": {"KHETAN AUTOMOBILES": "FALCONRIDGE AUTOMOBILES"},
+  "expected": {"verdict": "UNVERIFIABLE", "subtype": "inaccessible"},
+  "part": {
+    "description": "Brake lining sets, pack of 50",
+    "part_number": "BL-4407"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "bis_conformity_certificate",
+      "date": null,
+      "text": "CERTIFICATE OF BIS CONFORMITY\nIssued By: KHETAN AUTOMOBILES LLP\nLLPIN: ACY-8243\nState: Jharkhand\nPart Number: BL-4407\nBIS Licence: CM/L-1112223\nThese brake lining sets are certified under the above BIS licence to IS 2742."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "case_id": "genuine_bonfiglioli",
+  "title": "Gearbox housing lot GH-3341 — Bonfiglioli Transmissions",
+  "expected": {
+    "verdict": "GENUINE",
+    "subtype": null
+  },
+  "part": {
+    "description": "Gearbox housings, pack of 12",
+    "part_number": "GH-3341"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2024-09-05",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: BONFIGLIOLI TRANSMISSIONS LIMITED\nCIN: U29309TN1998PLC040717\nState: Tamil Nadu\nRole: manufacturer\nPart Number: GH-3341\nCertificate No: BTL-COC-11873\nCertificate Date: 2024-09-05\nBIS Licence: CM/L-6620148\nTAC Number: TAC-ARAI-2022-0644\nTAC Issue Date: 2022-04-18\nWe certify these gearbox housings conform to IS 2062 and were produced at our Chennai plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2024-09-12",
+      "text": "TAX INVOICE\nSupplier: BONFIGLIOLI TRANSMISSIONS LIMITED\nCIN: U29309TN1998PLC040717\nGSTIN: 33AABCB6604L1ZU\nState: Tamil Nadu\nInvoice No: BTL/2024/09114\nInvoice Date: 2024-09-12\nPart Number: GH-3341\nLot Code: BTL-240825-01120\nQty: 12 units gearbox housings"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2024-09-12",
+      "text": "DISPATCH NOTE\nCompany: BONFIGLIOLI TRANSMISSIONS LIMITED\nPart Number: GH-3341\nLot Code: BTL-240825-01120\nManufacturing Date: 2024-08-25\nShip Date: 2024-09-12\nCarrier: Southern Roadways, Chennai hub"
+    }
+  ]
+}

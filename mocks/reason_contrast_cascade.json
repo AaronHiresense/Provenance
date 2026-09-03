@@ -1,0 +1,27 @@
+{
+  "contradictions": [
+    {
+      "topic": "company_status_active: registry status is Amalgamated, not Active",
+      "benign": "The company was lawfully merged into a successor entity; certificates and dispatch notes in the old name are transition paperwork during the changeover.",
+      "malicious": "A defunct company's letterhead and identity are being used as a shell to certify counterfeit goods.",
+      "resolution": "The registry itself documents the succession mechanism (status 'Amalgamated'), which is exactly the benign explanation — but only the NCLT scheme order can confirm the invoicing entity is the lawful successor. Unresolvable from this dossier alone.",
+      "resolved_direction": "unresolved"
+    },
+    {
+      "topic": "gstin_state_matches_claim: GSTIN registered in Gujarat, documents claim Tamil Nadu",
+      "benign": "Post-merger GST consolidation at the successor's Vadodara head office while production continues at the Coimbatore plant — the invoice says exactly this.",
+      "malicious": "A real GSTIN was lifted from an unrelated Gujarat firm to dress up forged Tamil Nadu paperwork.",
+      "resolution": "The benign mechanism is the same amalgamation the authoritative registry documents; the two anomalies share one explanation. The successor's GST registration certificate would settle it. Not resolvable from this dossier.",
+      "resolved_direction": "unresolved"
+    },
+    {
+      "topic": "cross_doc_field_drift: company name differs between certificate and invoice",
+      "benign": "Certificate issued in the manufacturing entity's name, invoice in the successor's billing name — normal during an amalgamation transition.",
+      "malicious": "Documents forged separately with inconsistent identities.",
+      "resolution": "Heuristic-tier drift is subsumed by the amalgamation explanation above; it cannot outweigh authoritative-tier context. Follows the same unresolved conflict.",
+      "resolved_direction": "unresolved"
+    }
+  ],
+  "narrative": "Every anomaly in this dossier — the non-Active status, the out-of-state GSTIN, the name drift between certificate and invoice — is consistent with one benign mechanism that the authoritative registry itself documents: the company was amalgamated into a successor. But the same pattern is also how a defunct identity gets misused. No finding is dispositive, and the tie sits at the authoritative tier, so it cannot be resolved by lower-tier evidence. One artefact decides it: the NCLT scheme-of-amalgamation order naming the successor entity.",
+  "recommended_verdict": "UNVERIFIABLE"
+}

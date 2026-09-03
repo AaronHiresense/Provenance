@@ -1,0 +1,25 @@
+{
+  "assertions": [
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "company_name", "value": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "cin", "value": "U45200KA2026PTC221821", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "state", "value": "Karnataka", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "role", "value": "manufacturer", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "part_number", "value": "CP-4417", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "cert_id", "value": "BM-COC-8871", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "cert_date", "value": "2025-11-02", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "bis_licence", "value": "CM/L-9990001", "source_doc": "DOC-1", "date": "2025-11-02"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "company_name", "value": "BIKEBLOOM MOTORWORKS PVT LTD", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "cin", "value": "U45200KA2026PTC221821", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "gstin", "value": "27AABCB9302F1ZZ", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "state", "value": "Karnataka", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "invoice_no", "value": "BB/2026/0142", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "invoice_date", "value": "2026-07-25", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "part_number", "value": "CP-4417", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "lot_code", "value": "CLP-2607-XX", "source_doc": "DOC-2", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "company_name", "value": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "source_doc": "DOC-3", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "part_number", "value": "CP-4417", "source_doc": "DOC-3", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "lot_code", "value": "CLP-2607-XX", "source_doc": "DOC-3", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "mfg_date", "value": "2026-07-30", "source_doc": "DOC-3", "date": "2026-07-25"},
+    {"entity": "BIKEBLOOM MOTORWORKS PRIVATE LIMITED", "attribute": "ship_date", "value": "2026-07-25", "source_doc": "DOC-3", "date": "2026-07-25"}
+  ]
+}

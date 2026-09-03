@@ -1,0 +1,32 @@
+{
+  "case_id": "unverifiable_ghost",
+  "title": "Brake pad lot BP-7754 — Ghostline Auto Parts (no registry record)",
+  "expected": {
+    "verdict": "UNVERIFIABLE",
+    "subtype": "missing"
+  },
+  "part": {
+    "description": "Brake pad sets, pack of 80",
+    "part_number": "BP-7754"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2026-02-10",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: GHOSTLINE AUTO PARTS PRIVATE LIMITED\nCIN: U29100MH2015PTC999999\nState: Maharashtra\nIncorporated: 2015-06-15\nRole: manufacturer\nPart Number: BP-7754\nCertificate No: GAP-COC-2210\nCertificate Date: 2026-02-10\nWe certify these brake pad sets conform to IS 2742 and were manufactured at our Pune plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2026-02-15",
+      "text": "TAX INVOICE\nSupplier: GHOSTLINE AUTO PARTS PRIVATE LIMITED\nCIN: U29100MH2015PTC999999\nGSTIN: 27AABCG7701H1ZR\nState: Maharashtra\nInvoice No: GAP/2026/0088\nInvoice Date: 2026-02-15\nPart Number: BP-7754\nLot Code: GAP-260120-00077\nQty: 80 units brake pad sets"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2026-02-15",
+      "text": "DISPATCH NOTE\nCompany: GHOSTLINE AUTO PARTS PRIVATE LIMITED\nPart Number: BP-7754\nLot Code: GAP-260120-00077\nManufacturing Date: 2026-01-20\nShip Date: 2026-02-15\nCarrier: Deccan Freight, Pune"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "case_id": "suspect_zephyr",
+  "title": "Wheel bearing lot WB-1180 — Zephyr Auto Components (activity mismatch)",
+  "expected": {
+    "verdict": "SUSPECT",
+    "subtype": null
+  },
+  "display_aliases": {
+    "ZELIO AUTO COMPONENTS": "ZEPHYR AUTO COMPONENTS"
+  },
+  "part": {
+    "description": "Wheel bearing kits, pack of 40",
+    "part_number": "WB-1180"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2025-08-10",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: ZELIO AUTO COMPONENTS LIMITED\nCIN: U45300HR2025PLC132004\nState: Haryana\nRole: manufacturer\nPart Number: WB-1180\nCertificate No: ZAC-COC-0231\nCertificate Date: 2025-08-10\nWe certify these wheel bearing kits were manufactured at our Gurugram facility to IS 3090."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2025-08-01",
+      "text": "TAX INVOICE\nSupplier: ZELIO AUTO COMPONENTS LIMITED\nCIN: U45300HR2025PLC132004\nGSTIN: 06AACCZ8801R1ZN\nState: Haryana\nInvoice No: ZAC/2025/0512\nInvoice Date: 2025-08-01\nPart Number: WB-1180\nLot Code: ZAC-250720-00088\nQty: 40 units wheel bearing kits"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2025-08-01",
+      "text": "DISPATCH NOTE\nCompany: ZELIO AUTO COMPONENTS LIMITED\nPart Number: WB-1180\nLot Code: ZAC-250720-00088\nManufacturing Date: 2025-07-20\nShip Date: 2025-08-01\nCarrier: NH8 Freight, Gurugram"
+    }
+  ]
+}

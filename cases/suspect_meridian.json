@@ -1,0 +1,35 @@
+{
+  "case_id": "suspect_meridian",
+  "title": "Suspension arm lot SA-0663 — Meridian Auto India (struck-off issuer)",
+  "expected": {
+    "verdict": "SUSPECT",
+    "subtype": null
+  },
+  "display_aliases": {
+    "MONARCH AUTO INDIA": "MERIDIAN AUTO INDIA"
+  },
+  "part": {
+    "description": "Lower suspension arms, pack of 20",
+    "part_number": "SA-0663"
+  },
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2026-01-15",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: MONARCH AUTO INDIA PRIVATE LIMITED\nCIN: U74900DL1994PTC057980\nState: Delhi\nRole: manufacturer\nPart Number: SA-0663\nCertificate No: MAI-COC-4402\nCertificate Date: 2026-01-15\nWe certify these suspension arms conform to AIS-041 and were manufactured at our Okhla plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2026-01-20",
+      "text": "TAX INVOICE\nSupplier: MONARCH AUTO INDIA PRIVATE LIMITED\nCIN: U74900DL1994PTC057980\nGSTIN: 07AAACM3302K1ZS\nState: Delhi\nInvoice No: MAI/2026/0031\nInvoice Date: 2026-01-20\nPart Number: SA-0663\nLot Code: MAI-251210-00305\nQty: 20 units lower suspension arms"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2026-01-20",
+      "text": "DISPATCH NOTE\nCompany: MONARCH AUTO INDIA PRIVATE LIMITED\nPart Number: SA-0663\nLot Code: MAI-251210-00305\nManufacturing Date: 2025-12-10\nShip Date: 2026-01-20\nCarrier: Capital Cargo, New Delhi"
+    }
+  ]
+}
