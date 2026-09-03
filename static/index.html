@@ -1,661 +1,759 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROVENANCE — counterfeit parts document investigator</title>
+<title>PROVENANCE — Counterfeit Document & Record Investigator</title>
+
+<!-- Tailwind CSS 3 -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          slate: {
+            850: '#0f172a',
+            950: '#090d16',
+          },
+          indigo: {
+            500: '#6366f1',
+            600: '#4f46e5',
+            700: '#4338ca',
+          },
+          emerald: {
+            500: '#10b981',
+            600: '#059669',
+          },
+          rose: {
+            500: '#f43f5e',
+            600: '#e11d48',
+          },
+          amber: {
+            500: '#f59e0b',
+            600: '#d97706',
+          }
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- React 18 & ReactDOM 18 -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 <style>
-:root{
-  --bg:#0b0e14; --bg-glow:#101726;
-  --panel:#12161f; --panel2:#171d29; --elev:#1c2432;
-  --border:#232b3a; --border-soft:#1b2230;
-  --text:#e8ecf1; --muted:#8b94a3; --faint:#5c6470;
-  --accent:#4d9fff; --accent-soft:#193052;
-  --genuine:#3fb950; --genuine-bg:#0f2617;
-  --suspect:#f85149; --suspect-bg:#2b1214;
-  --unverif:#d9a23c; --unverif-bg:#2a2110;
-  --mono:"Cascadia Code",ui-monospace,Consolas,monospace;
-  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
-  --r:10px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scrollbar-color:#2a3444 var(--bg)}
-body{
-  background:
-    radial-gradient(1200px 500px at 50% -200px, var(--bg-glow), transparent),
-    var(--bg);
-  color:var(--text);font:14px/1.55 var(--sans);
-  padding:0 28px 60px;max-width:1280px;margin:0 auto;
-}
-::selection{background:var(--accent-soft)}
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  * {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
 
-/* ---------- header ---------- */
-header{
-  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
-  padding:22px 0 18px;border-bottom:1px solid var(--border-soft);margin-bottom:20px;
-}
-.brand{display:flex;align-items:baseline;gap:12px}
-.wordmark{font:800 22px/1 var(--mono);letter-spacing:5px}
-.wordmark b{color:var(--accent);font-weight:800}
-.tagline{color:var(--muted);font-size:12.5px;letter-spacing:.4px}
-.header-pills{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-.pill{
-  display:inline-flex;align-items:center;gap:6px;
-  font:600 11px/1 var(--mono);letter-spacing:.5px;color:var(--muted);
-  background:var(--panel);border:1px solid var(--border);border-radius:99px;
-  padding:6px 11px;white-space:nowrap;
-}
-.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--genuine)}
-.pill .dot.blue{background:var(--accent)}
-.pill .dot.amber{background:var(--unverif)}
-
-/* ---------- cards ---------- */
-.card{
-  background:linear-gradient(180deg, var(--panel2), var(--panel));
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:18px 20px;margin-bottom:16px;
-}
-.card-title{
-  font:700 11px/1 var(--sans);text-transform:uppercase;letter-spacing:1.4px;
-  color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;
-}
-.card-title .mini{font:500 11px var(--mono);text-transform:none;letter-spacing:0;color:var(--faint)}
-
-/* ---------- command bar ---------- */
-.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border-soft)}
-.tab{
-  background:none;border:none;color:var(--muted);font:600 12.5px var(--sans);
-  padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;
-}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-select,textarea{
-  background:var(--elev);color:var(--text);border:1px solid var(--border);
-  border-radius:8px;padding:9px 12px;font-size:13.5px;font-family:var(--sans);
-}
-select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent-soft);outline-offset:1px}
-select{min-width:340px;cursor:pointer}
-textarea{width:100%;min-height:150px;font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical}
-button.run{
-  background:linear-gradient(180deg,#5aa7ff,#3c8ef2);color:#04101f;
-  border:1px solid #3c8ef2;border-radius:8px;padding:9px 20px;
-  font:700 13.5px var(--sans);cursor:pointer;letter-spacing:.2px;
-  box-shadow:0 2px 10px rgba(77,159,255,.25);transition:filter .15s;
-}
-button.run:hover{filter:brightness(1.08)}
-button:disabled{opacity:.45;cursor:wait;box-shadow:none}
-.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;color:var(--muted);font-size:13px}
-.switch input{display:none}
-.switch .track{
-  width:34px;height:19px;border-radius:99px;background:var(--elev);
-  border:1px solid var(--border);position:relative;transition:background .15s;
-}
-.switch .track::after{
-  content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;
-  background:var(--muted);transition:all .15s;
-}
-.switch input:checked + .track{background:var(--accent-soft);border-color:var(--accent)}
-.switch input:checked + .track::after{left:17px;background:var(--accent)}
-#status{font:500 12px var(--mono);color:var(--faint);margin-left:auto}
-.hint{color:var(--faint);font-size:12px;margin-top:8px}
-
-/* ---------- pipeline rail ---------- */
-.rail{display:flex;align-items:center;gap:0;padding:6px 0 2px}
-.stage{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:96px;flex:1}
-.node{
-  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
-  background:var(--elev);border:2px solid var(--border);color:var(--faint);
-  font:700 13px var(--mono);transition:all .3s;position:relative;
-}
-.stage .lbl{font:600 11px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);transition:color .3s}
-.stage .sub{font:500 10px var(--mono);color:var(--faint);height:12px}
-.connector{flex:1;height:2px;background:var(--border);margin:0 -30px 34px;min-width:20px;transition:background .3s}
-.stage.active .node{
-  border-color:var(--accent);color:var(--accent);
-  box-shadow:0 0 0 5px rgba(77,159,255,.12);animation:pulse 1.4s ease-in-out infinite;
-}
-.stage.active .lbl{color:var(--accent)}
-.stage.done .node{border-color:var(--genuine);color:var(--genuine);background:var(--genuine-bg)}
-.stage.done .lbl{color:var(--muted)}
-.stage.skipped .node{border-style:dashed;opacity:.55}
-.stage.verdict-G .node{border-color:var(--genuine);color:var(--genuine);background:var(--genuine-bg)}
-.stage.verdict-S .node{border-color:var(--suspect);color:var(--suspect);background:var(--suspect-bg)}
-.stage.verdict-U .node{border-color:var(--unverif);color:var(--unverif);background:var(--unverif-bg)}
-.connector.done{background:var(--genuine)}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(77,159,255,.10)}50%{box-shadow:0 0 0 8px rgba(77,159,255,.20)}}
-
-/* ---------- verdict hero ---------- */
-.verdict-hero{display:none;border-radius:var(--r);border:1px solid var(--border);
-  overflow:hidden;margin-bottom:16px}
-.verdict-hero.show{display:block}
-.vh-top{display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:24px 26px;
-  border-left:4px solid var(--border)}
-.verdict-hero.GENUINE .vh-top{border-left-color:var(--genuine);background:linear-gradient(90deg,var(--genuine-bg),var(--panel))}
-.verdict-hero.SUSPECT .vh-top{border-left-color:var(--suspect);background:linear-gradient(90deg,var(--suspect-bg),var(--panel))}
-.verdict-hero.UNVERIFIABLE .vh-top{border-left-color:var(--unverif);background:linear-gradient(90deg,var(--unverif-bg),var(--panel))}
-.vh-word{font:800 34px/1.05 var(--mono);letter-spacing:2px}
-.GENUINE .vh-word{color:var(--genuine)} .SUSPECT .vh-word{color:var(--suspect)}
-.UNVERIFIABLE .vh-word{color:var(--unverif)}
-.vh-sub{font:600 12.5px var(--mono);color:var(--muted);margin-top:5px;letter-spacing:.5px}
-.stat-row{margin-left:auto;display:flex;gap:12px}
-.stat{
-  background:rgba(0,0,0,.22);border:1px solid var(--border);border-radius:8px;
-  padding:10px 16px;text-align:center;min-width:88px;
-}
-.stat .n{font:700 22px/1.1 var(--mono);font-variant-numeric:tabular-nums}
-.stat .l{font:600 10px var(--sans);text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:3px}
-.stat.suspect .n{color:var(--suspect)} .stat.genuine .n{color:var(--genuine)} .stat.neutral .n{color:var(--muted)}
-.vh-body{padding:16px 26px 20px;background:var(--panel)}
-.workorder{
-  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;
-}
-@media(max-width:860px){.workorder{grid-template-columns:1fr}}
-.wo-box{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--unverif);
-  border-radius:8px;padding:12px 14px;font-size:13px}
-.wo-box .k{font:700 10.5px var(--sans);text-transform:uppercase;letter-spacing:1.2px;color:var(--unverif);margin-bottom:5px}
-.lean-line{font:500 12.5px var(--mono);color:var(--muted);margin-bottom:14px}
-.actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:860px){.actions-grid{grid-template-columns:1fr}}
-.action-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
-.action-box .k{font:700 10.5px var(--sans);text-transform:uppercase;letter-spacing:1.2px;color:var(--accent);margin-bottom:5px}
-.action-box p{font-size:12.5px;color:var(--text)}
-
-/* ---------- banners ---------- */
-.banner{border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:13px;display:none}
-.banner.show{display:block}
-.banner.alert{background:var(--suspect-bg);border:1px solid #5c2a2c}
-.banner.alert .k{color:var(--suspect);font-weight:700;letter-spacing:.6px;font-size:11.5px;text-transform:uppercase;display:block;margin-bottom:6px}
-.banner.info{background:var(--accent-soft);border:1px solid #2a4a7a;color:var(--muted)}
-.injection{background:rgba(0,0,0,.25);border:1px solid #5c2a2c;border-radius:6px;
-  padding:8px 12px;margin-top:6px;font:12px var(--mono);color:#f0a9a5}
-
-/* ---------- audit trail ---------- */
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.fchip{
-  background:var(--elev);border:1px solid var(--border);color:var(--muted);
-  border-radius:99px;padding:4px 12px;font:600 11.5px var(--sans);cursor:pointer;transition:all .12s;
-}
-.fchip:hover{color:var(--text)}
-.fchip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-table{width:100%;min-width:1080px;border-collapse:collapse;font-size:12.5px}
-th{color:var(--faint);text-align:left;font:700 10.5px var(--sans);text-transform:uppercase;
-  letter-spacing:1px;padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:9px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top}
-tr.finding{opacity:0;transform:translateY(-5px);transition:all .3s ease}
-tr.finding.shown{opacity:1;transform:none}
-tr.finding:hover td{background:rgba(77,159,255,.03)}
-.check-name{font:600 12px var(--mono);white-space:nowrap;color:var(--text)}
-.detail{color:var(--muted);font-size:11.5px;margin-top:3px;max-width:520px}
-.result-txt{font:12px var(--mono);color:var(--muted)}
-.chip{
-  display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;
-  font:700 10.5px var(--mono);letter-spacing:.3px;white-space:nowrap;
-}
-.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
-.chip.supports_genuine{background:var(--genuine-bg);color:var(--genuine)}
-.chip.supports_suspect{background:var(--suspect-bg);color:var(--suspect)}
-.chip.neutral{background:#20252f;color:var(--muted)}
-.chip.unresolved{background:var(--unverif-bg);color:var(--unverif)}
-.chip.tier{background:#1b2230;color:#9fb6d4}
-.chip.tier.authoritative{background:var(--accent-soft);color:var(--accent)}
-.chip.tier.heuristic{background:var(--unverif-bg);color:var(--unverif)}
-.dim-txt{font:600 11px var(--sans);color:var(--muted);text-transform:capitalize}
-
-/* ---------- deliberation ---------- */
-.grid2{display:grid;grid-template-columns:3fr 2fr;gap:16px}
-@media(max-width:980px){.grid2{grid-template-columns:1fr}}
-.narrative{
-  background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent);
-  border-radius:8px;padding:12px 15px;font-size:13px;color:var(--text);margin-bottom:14px;
-}
-.delib{border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden}
-.delib .topic{
-  background:var(--panel2);padding:9px 13px;font:600 12px var(--mono);
-  border-bottom:1px solid var(--border-soft);display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-}
-.delib .hypos{display:grid;grid-template-columns:1fr 1fr;gap:0}
-@media(max-width:700px){.delib .hypos{grid-template-columns:1fr}}
-.hypo{padding:10px 13px;font-size:12.5px}
-.hypo .k{font:700 10px var(--sans);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px}
-.hypo.benign{border-right:1px solid var(--border-soft)}
-.hypo.benign .k{color:var(--genuine)} .hypo.malicious .k{color:var(--suspect)}
-.resolution{padding:9px 13px;background:rgba(0,0,0,.18);border-top:1px solid var(--border-soft);
-  font-size:12px;color:var(--muted)}
-.resolution b{color:var(--text)}
-.engine-badge{font:600 10.5px var(--mono);color:var(--accent);background:var(--accent-soft);
-  border-radius:99px;padding:3px 10px}
-
-/* ---------- limits ---------- */
-ol.limits{padding-left:0;counter-reset:lim;list-style:none}
-ol.limits li{
-  counter-increment:lim;position:relative;padding:7px 0 7px 34px;
-  font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--border-soft);
-}
-ol.limits li:last-child{border-bottom:none}
-ol.limits li::before{
-  content:counter(lim,decimal-leading-zero);position:absolute;left:0;top:8px;
-  font:700 11px var(--mono);color:var(--unverif);
-}
-.hidden{display:none}
-footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:30px;font-family:var(--mono)}
+  /* Custom scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 99px; }
+  
+  .glass-card-dark {
+    background: rgba(17, 23, 38, 0.75);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  }
 </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 light:bg-slate-50 light:text-slate-900 min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-indigo-200">
 
-<header>
-  <div class="brand">
-    <div class="wordmark">PROVE<b>NANCE</b></div>
-    <div class="tagline">Counterfeit auto-parts · documents &amp; records investigator</div>
-  </div>
-  <div class="header-pills">
-    <span class="pill"><span class="dot"></span> OFFLINE REGISTRY · 3.67M COMPANIES</span>
-    <span class="pill"><span class="dot blue"></span> 17 DETERMINISTIC VALIDATORS</span>
-    <span class="pill" id="enginePill"><span class="dot amber"></span> ENGINE: —</span>
-  </div>
-</header>
+<div id="root"></div>
 
-<div class="card">
-  <div class="tabs">
-    <button class="tab active" data-tab="library">Case library</button>
-    <button class="tab" data-tab="live">Live case — paste documents</button>
-    <button class="tab" data-tab="json">Dossier JSON</button>
-  </div>
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
 
-  <div id="tab-library">
-    <div class="controls">
-      <select id="caseSelect"><option value="">Select a prepared case…</option></select>
-      <label class="switch"><input type="checkbox" id="rulesOnly"><span class="track"></span>
-        rules-only <span style="color:var(--faint)">(amputate the reasoning agent)</span></label>
-      <button class="run" id="runBtn">Run investigation</button>
-      <span id="status"></span>
-    </div>
-  </div>
+function App() {
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [cases, setCases] = useState([]);
+  const [selectedCase, setSelectedCase] = useState('');
+  const [activeTab, setActiveTab] = useState('library'); // 'library' | 'live' | 'json'
+  const [rulesOnly, setRulesOnly] = useState(false);
+  const [rawText, setRawText] = useState('');
+  const [jsonText, setJsonText] = useState('');
+  
+  const [status, setStatus] = useState('Ready');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [pipelineStage, setPipelineStage] = useState(0); // 0..5
+  const [result, setResult] = useState(null);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeDim, setActiveDim] = useState('all');
+  const [activeDir, setActiveDir] = useState('all');
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
 
-  <div id="tab-live" class="hidden">
-    <textarea id="rawBox" placeholder="Paste the documents exactly as handed to you — plain text. Separate documents with a line containing only ---&#10;&#10;CERTIFICATE OF CONFORMITY&#10;Manufacturer: ...&#10;CIN: ...&#10;---&#10;TAX INVOICE&#10;GSTIN: ...&#10;State: ..."></textarea>
-    <div class="controls" style="margin-top:10px">
-      <button class="run" id="runRawBtn">Run investigation</button>
-      <span class="hint">No formatting needed — the extraction agent handles raw text.</span>
-    </div>
-  </div>
+  // Apply Theme
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
-  <div id="tab-json" class="hidden">
-    <textarea id="pasteBox" placeholder='{"case_id":"jury-1","documents":[{"doc_id":"DOC-1","doc_type":"tax_invoice","date":"2026-08-01","text":"TAX INVOICE\nSupplier: ...\nCIN: ...\nGSTIN: ...\nState: ..."}]}'></textarea>
-    <div class="controls" style="margin-top:10px">
-      <button class="run" id="runPasteBtn">Run investigation</button>
-    </div>
-  </div>
-</div>
+  // Load Cases
+  useEffect(() => {
+    fetch('/api/cases')
+      .then(res => res.json())
+      .then(data => {
+        setCases(data);
+        if (data.length > 0) setSelectedCase(data[0].file);
+      })
+      .catch(err => console.error('Failed to load cases:', err));
+  }, []);
 
-<div class="card" id="railCard">
-  <div class="card-title">Agent pipeline <span class="mini" id="railNote">idle — awaiting a case</span>
-    <span class="mini" style="margin-left:auto">pacing illustrative · stages &amp; results real</span></div>
-  <div class="rail" id="rail">
-    <div class="stage" data-stage="extract"><div class="node">1</div><div class="lbl">Extract</div><div class="sub"></div></div>
-    <div class="connector"></div>
-    <div class="stage" data-stage="validate"><div class="node">2</div><div class="lbl">Validate</div><div class="sub"></div></div>
-    <div class="connector"></div>
-    <div class="stage" data-stage="ledger"><div class="node">3</div><div class="lbl">Ledger</div><div class="sub"></div></div>
-    <div class="connector"></div>
-    <div class="stage" data-stage="reason"><div class="node">4</div><div class="lbl">Reason</div><div class="sub"></div></div>
-    <div class="connector"></div>
-    <div class="stage" data-stage="verdict"><div class="node">5</div><div class="lbl">Verdict</div><div class="sub"></div></div>
-  </div>
-</div>
+  // Run Investigation Analysis
+  const runAnalysis = async (payload) => {
+    setIsAnalyzing(true);
+    setStatus('Investigating dossier...');
+    setResult(null);
+    setPipelineStage(1);
 
-<div class="banner info" id="aliasPanel">
-  🛈 Display names in this case are <b>aliased</b>. The pipeline runs on real MCA
-  registry records (CINs shown are real and independently verifiable); findings
-  state that a record's attributes do not support the document's claims — never
-  an accusation against any real company.
-</div>
+    const timer1 = setTimeout(() => setPipelineStage(2), 1000);
+    const timer2 = setTimeout(() => setPipelineStage(3), 2000);
+    const timer3 = setTimeout(() => setPipelineStage(4), 3000);
 
-<div class="banner alert" id="injectionPanel">
-  <span class="k">⚠ Injection attempt neutralised — document tried to instruct the reviewer</span>
-  <span style="color:var(--muted);font-size:12px">Stripped before the model saw it, and logged as evidence of tampering:</span>
-  <div id="injectionList"></div>
-</div>
-
-<div class="verdict-hero" id="verdictCard">
-  <div class="vh-top">
-    <div>
-      <div class="vh-word" id="verdictWord"></div>
-      <div id="verdictPlain" style="font-size:15px;margin-top:6px;max-width:52ch"></div>
-      <div class="vh-sub" id="verdictSub"></div>
-    </div>
-    <div class="stat-row">
-      <div class="stat suspect"><div class="n" id="nSuspect">0</div><div class="l">Suspect</div></div>
-      <div class="stat genuine"><div class="n" id="nGenuine">0</div><div class="l">Genuine</div></div>
-      <div class="stat neutral"><div class="n" id="nNeutral">0</div><div class="l">Neutral</div></div>
-    </div>
-  </div>
-  <div class="vh-body">
-    <div id="missingBlock" class="hidden">
-      <div class="workorder">
-        <div class="wo-box"><div class="k">Decisive missing artefact</div><div id="missingArtefact"></div></div>
-        <div class="wo-box"><div class="k">Interim action</div><div id="interimAction"></div></div>
-      </div>
-      <div class="lean-line" id="leanRow"></div>
-    </div>
-    <div class="actions-grid" id="actionRows"></div>
-  </div>
-</div>
-
-<div class="card hidden" id="assertPanel">
-  <details>
-    <summary class="card-title" style="cursor:pointer;margin-bottom:0">Extracted assertions <span class="mini" id="assertCount"></span></summary>
-    <div style="overflow-x:auto;margin-top:12px">
-    <table style="min-width:640px">
-      <thead><tr><th>Attribute</th><th>Value</th><th>Entity</th><th>Source</th></tr></thead>
-      <tbody id="assertBody"></tbody>
-    </table>
-    </div>
-  </details>
-</div>
-
-<div class="card hidden" id="ledgerPanel">
-  <div class="card-title">Evidence audit trail <span class="mini" id="ledgerCount"></span></div>
-  <div class="filters" id="filters"></div>
-  <div style="overflow-x:auto">
-  <table>
-    <thead><tr><th>Check</th><th>Assertion</th><th>Result</th><th>Direction</th><th>Strength</th><th>Tier</th><th>Dimension</th><th>Reasoner ruling</th></tr></thead>
-    <tbody id="ledgerBody"></tbody>
-  </table>
-  </div>
-</div>
-
-<div class="grid2">
-  <div class="card hidden" id="reasonPanel">
-    <div class="card-title">Agent deliberation <span class="engine-badge" id="reasonEngine"></span></div>
-    <div class="narrative" id="narrative"></div>
-    <div id="contradictions"></div>
-  </div>
-  <div class="card hidden" id="limitsPanel">
-    <div class="card-title">Known limits — what this system cannot determine</div>
-    <ol class="limits" id="limitsList"></ol>
-  </div>
-</div>
-
-<footer id="foot">PROVENANCE · offline MCA registry (snapshot 2026-07-22) · every verdict ships with its evidence</footer>
-
-<script>
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-/* ---------- tabs ---------- */
-document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
-  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
-  for(const name of ["library","live","json"])
-    $("tab-" + name).classList.toggle("hidden", t.dataset.tab !== name);
-});
-
-/* ---------- pipeline rail ---------- */
-const STAGES = ["extract","validate","ledger","reason","verdict"];
-let railTimers = [];
-const stageEl = s => document.querySelector(`.stage[data-stage="${s}"]`);
-function railReset(){
-  railTimers.forEach(clearTimeout); railTimers = [];
-  document.querySelectorAll(".stage").forEach(el => {
-    el.className = "stage"; el.querySelector(".sub").textContent = "";
-    el.querySelector(".node").textContent = el.dataset.stage === "extract" ? 1 :
-      el.dataset.stage === "validate" ? 2 : el.dataset.stage === "ledger" ? 3 :
-      el.dataset.stage === "reason" ? 4 : 5;
-  });
-  document.querySelectorAll(".connector").forEach(c => c.classList.remove("done"));
-}
-function railStart(rulesOnly){
-  railReset();
-  $("railNote").textContent = "running…";
-  const plan = [
-    [0, "extract", "reading documents"],
-    [2000, "validate", "17 checks vs registry"],
-    [3400, "ledger", "writing findings"],
-    [4200, "reason", rulesOnly ? "" : "weighing evidence"],
-  ];
-  for(const [t, s, note] of plan){
-    railTimers.push(setTimeout(() => {
-      STAGES.slice(0, STAGES.indexOf(s)).forEach(p => markDone(p));
-      if(s === "reason" && rulesOnly){ stageEl(s).classList.add("skipped");
-        stageEl(s).querySelector(".sub").textContent = "skipped"; return; }
-      stageEl(s).classList.add("active");
-      stageEl(s).querySelector(".sub").textContent = note;
-    }, t));
-  }
-}
-function markDone(s){
-  const el = stageEl(s);
-  if(el.classList.contains("skipped")) return;
-  el.className = "stage done";
-  el.querySelector(".node").textContent = "✓";
-  el.querySelector(".sub").textContent = "";
-  const idx = STAGES.indexOf(s);
-  const conns = document.querySelectorAll(".connector");
-  if(conns[idx]) conns[idx].classList.add("done");
-}
-function railFinish(r){
-  railTimers.forEach(clearTimeout); railTimers = [];
-  STAGES.slice(0, 4).forEach(s => {
-    if(r.rules_only && s === "reason"){ stageEl(s).classList.add("skipped");
-      stageEl(s).querySelector(".sub").textContent = "skipped"; return; }
-    markDone(s);
-  });
-  const v = stageEl("verdict");
-  v.className = "stage verdict-" + r.verdict[0];
-  v.querySelector(".node").textContent = r.verdict === "GENUINE" ? "✓" :
-    r.verdict === "SUSPECT" ? "✗" : "?";
-  v.querySelector(".sub").textContent = r.verdict.toLowerCase();
-  $("railNote").textContent = `case ${r.case_id} · ` +
-    `${(r.ledger.findings || []).length} findings` + (r.rules_only ? " · rules-only" : "");
-}
-
-/* ---------- data loading ---------- */
-async function loadCases(){
-  const cases = await (await fetch("/api/cases")).json();
-  for(const c of cases){
-    const o = document.createElement("option");
-    o.value = c.file; o.textContent = `${c.title} (${c.documents} docs)`;
-    $("caseSelect").appendChild(o);
-  }
-}
-loadCases();
-
-$("runBtn").onclick = () => {
-  const f = $("caseSelect").value;
-  if(!f){ $("status").textContent = "pick a case first"; return; }
-  analyze({case: f, rules_only: $("rulesOnly").checked});
-};
-$("runRawBtn").onclick = () => {
-  const text = $("rawBox").value.trim();
-  if(!text){ $("status").textContent = "paste some document text first"; return; }
-  analyze({raw_text: text, case_id: "live-" + Date.now().toString(36),
-           rules_only: $("rulesOnly").checked});
-};
-$("runPasteBtn").onclick = () => {
-  let dossier;
-  try{ dossier = JSON.parse($("pasteBox").value); }
-  catch(e){ $("status").textContent = "invalid JSON: " + e.message; return; }
-  analyze({dossier, rules_only: $("rulesOnly").checked});
-};
-
-async function analyze(body){
-  for(const b of ["runBtn","runPasteBtn","runRawBtn"]) $(b).disabled = true;
-  $("status").textContent = "investigating…";
-  $("verdictCard").className = "verdict-hero";
-  for(const id of ["ledgerPanel","reasonPanel","limitsPanel","assertPanel"]) $(id).classList.add("hidden");
-  for(const id of ["injectionPanel","aliasPanel"]) $(id).classList.remove("show");
-  railStart(!!body.rules_only);
-  try{
-    const res = await fetch("/api/analyze", {method:"POST",
-      headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
-    if(!res.ok){ throw new Error((await res.json()).detail || res.statusText); }
-    render(await res.json());
-  }catch(e){
-    $("status").textContent = "error: " + e.message;
-    railReset(); $("railNote").textContent = "failed";
-  }finally{
-    for(const b of ["runBtn","runPasteBtn","runRawBtn"]) $(b).disabled = false;
-  }
-}
-
-/* ---------- rendering ---------- */
-let allRows = [];
-function render(r){
-  const dropped = r.extraction?.dropped_assertions || 0;
-  $("status").textContent = `case ${r.case_id}` + (r.rules_only ? " · rules-only" : "") +
-    (dropped ? ` · ${dropped} unrecognized assertion(s) dropped` : "");
-  $("enginePill").innerHTML = `<span class="dot ${r.llm_provider === "mock" ? "amber" : "blue"}"></span>` +
-    ` ENGINE: ${esc(r.llm_provider.toUpperCase())}` +
-    (r.llm_model ? ` · ${esc(r.llm_model.toUpperCase())}` : "");
-  $("foot").textContent = "PROVENANCE · offline MCA registry (snapshot 2026-07-22) · " +
-    (r.llm_provider === "mock" ? "no network used" : `reasoning via ${r.llm_provider} (network)`) +
-    " · every verdict ships with its evidence";
-  railFinish(r);
-
-  // extracted assertions — what stage 1 actually read
-  $("assertPanel").classList.remove("hidden");
-  $("assertCount").textContent = `${(r.assertions || []).length} typed claims` +
-    (dropped ? ` · ${dropped} dropped (unrecognized attribute)` : "");
-  $("assertBody").innerHTML = (r.assertions || []).map(a =>
-    `<tr><td class="check-name">${esc(a.attribute)}</td><td>${esc(a.value)}</td>`+
-    `<td class="dim-txt">${esc(a.entity)}</td>`+
-    `<td class="result-txt">${esc(a.source_doc)}</td></tr>`).join("");
-  $("aliasPanel").classList.toggle("show", !!r.aliased);
-
-  // map contradiction resolutions back onto ledger rows
-  const contras = (r.reasoning?.contradictions || []).map(c => ({...c, used: false}));
-  const findResolution = f => {
-    let c = contras.find(c => !c.used && c.topic === `${f.check}: ${f.assertion}`);
-    if(!c) c = contras.find(c => !c.used && c.topic.startsWith(f.check));
-    if(c) c.used = true;
-    return c;
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || res.statusText);
+      }
+      const data = await res.json();
+      
+      setPipelineStage(5);
+      setResult(data);
+      setStatus(`Case ${data.case_id} completed`);
+    } catch (err) {
+      setStatus(`Error: ${err.message}`);
+      setPipelineStage(0);
+    } fontally: {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      setIsAnalyzing(false);
+    }
   };
 
-  // audit trail, row by row
-  const body = $("ledgerBody"); body.innerHTML = "";
-  $("ledgerPanel").classList.remove("hidden");
-  const findings = r.ledger.findings;
-  $("ledgerCount").textContent = `${findings.length} findings · every row is a receipt`;
-  allRows = [];
-  findings.forEach((f, i) => {
-    const c = f.direction === "supports_suspect" ? findResolution(f) : null;
-    let ruling = '<span style="color:var(--faint)">—</span>';
-    if(c){
-      const word = c.resolved_direction === "unresolved" ? "unresolved"
-                 : c.resolved_direction === f.direction ? "upheld" : "overridden";
-      const cls = word === "overridden" ? "supports_genuine"
-                : word === "upheld" ? "supports_suspect" : "unresolved";
-      ruling = `<span class="chip ${cls}">${word}</span>`+
-               `<div class="detail">${esc(c.resolution)}</div>`;
+  const handleRunSelectCase = () => {
+    if (!selectedCase) return;
+    runAnalysis({ case: selectedCase, rules_only: rulesOnly });
+  };
+
+  const handleRunRawText = () => {
+    if (!rawText.trim()) return;
+    runAnalysis({
+      raw_text: rawText.trim(),
+      case_id: `live-${Date.now().toString(36)}`,
+      rules_only: rulesOnly
+    });
+  };
+
+  const handleRunJson = () => {
+    try {
+      const dossier = JSON.parse(jsonText);
+      runAnalysis({ dossier, rules_only: rulesOnly });
+    } catch (e) {
+      alert(`Invalid JSON format: ${e.message}`);
     }
-    const tr = document.createElement("tr");
-    tr.className = "finding";
-    tr.dataset.dimension = f.dimension;
-    tr.dataset.direction = f.direction;
-    tr.innerHTML =
-      `<td class="check-name">${esc(f.check)}${f.source_doc ? `<div class="detail">src ${esc(f.source_doc)}</div>` : ""}</td>`+
-      `<td>${esc(f.assertion)}<div class="detail">${esc(f.detail)}</div></td>`+
-      `<td class="result-txt">${esc(f.result)}</td>`+
-      `<td><span class="chip ${f.direction}">${f.direction.replace("supports_","")}</span></td>`+
-      `<td class="dim-txt">${esc(f.strength)}</td>`+
-      `<td><span class="chip tier ${esc(f.source_tier)}">${esc(f.source_tier)}</span></td>`+
-      `<td class="dim-txt">${esc(f.dimension)}</td>`+
-      `<td style="min-width:150px">${ruling}</td>`;
-    body.appendChild(tr);
-    allRows.push(tr);
-    setTimeout(() => tr.classList.add("shown"), 110 * i);
-  });
-  buildFilters(findings);
+  };
 
-  const delay = 110 * findings.length + 250;
+  // Filtered findings for ledger
+  const filteredFindings = useMemo(() => {
+    if (!result || !result.ledger || !result.ledger.findings) return [];
+    return result.ledger.findings.filter(f => {
+      const matchesDim = activeDim === 'all' || f.dimension === activeDim;
+      const matchesDir = activeDir === 'all' || f.direction === activeDir;
+      const q = searchQuery.toLowerCase().trim();
+      const matchesQuery = !q || (
+        f.check.toLowerCase().includes(q) ||
+        f.assertion.toLowerCase().includes(q) ||
+        f.detail.toLowerCase().includes(q) ||
+        f.result.toLowerCase().includes(q) ||
+        f.dimension.toLowerCase().includes(q)
+      );
+      return matchesDim && matchesDir && matchesQuery;
+    });
+  }, [result, activeDim, activeDir, searchQuery]);
 
-  if(r.injection_flags?.length){
-    $("injectionPanel").classList.add("show");
-    $("injectionList").innerHTML = r.injection_flags.map(f =>
-      `<div class="injection">${esc(f.source_doc)} › "${esc(f.content)}"</div>`).join("");
-  }
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-8">
+      
+      {/* ---------- HEADER ---------- */}
+      <header className="flex items-center justify-between pb-6 border-b border-slate-800 dark:border-slate-800 light:border-slate-200">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-indigo-600/25">
+            P
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">PROVENANCE</h1>
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 dark:text-indigo-400 light:text-indigo-700 border border-indigo-500/20">
+                Document Investigator
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Counterfeit Auto-Parts & Registry Verification System</p>
+          </div>
+        </div>
 
-  setTimeout(() => {
-    const card = $("verdictCard");
-    card.className = "verdict-hero show " + r.verdict;
-    $("verdictWord").textContent = r.verdict;
-    const strong = r.ledger.findings.filter(f => f.direction === "supports_suspect" &&
-      (f.strength === "strong" || f.strength === "dispositive")).length;
-    const disp = r.ledger.findings.filter(f => f.direction === "supports_suspect" &&
-      f.strength === "dispositive").length;
-    $("verdictPlain").textContent =
-      r.verdict === "GENUINE" ? "Release: the registry and every deterministic check support this paper trail." :
-      r.verdict === "SUSPECT" ? `Quarantine this lot: ${r.counts.supports_suspect} finding(s) contradict the records` +
-        (disp ? `, ${disp} of them dispositive.` : strong ? `, ${strong} of them strong.` : ".") :
-      "Hold: one named document decides this case — see the work order below.";
-    $("verdictSub").textContent = (r.subtype ? `subtype: ${r.subtype} · ` : "") +
-      (r.verdict === "SUSPECT" ? `triage: ${disp} dispositive / ${strong - disp} strong · ` : "") +
-      (r.rules_only ? "deterministic rules only — reasoning agent bypassed"
-                    : "full pipeline — deterministic checks + reasoning agent");
-    $("nSuspect").textContent = r.counts.supports_suspect;
-    $("nGenuine").textContent = r.counts.supports_genuine;
-    $("nNeutral").textContent = r.counts.neutral;
-    const missing = r.verdict === "UNVERIFIABLE";
-    $("missingBlock").classList.toggle("hidden", !missing);
-    if(missing){
-      $("missingArtefact").textContent = r.missing_artefact || "—";
-      $("interimAction").textContent = r.interim_action || "—";
-      $("leanRow").textContent = r.lean && r.lean.direction !== "none"
-        ? `▸ leans ${r.lean.direction} · ${r.lean.confidence} confidence · ${r.lean.basis}`
-        : `▸ no directional lean · ${r.lean ? r.lean.basis : "no directional evidence"}`;
-    }
-    $("actionRows").innerHTML = Object.entries(r.actions).map(([k,v]) =>
-      `<div class="action-box"><div class="k">${esc(k)}</div><p>${esc(v)}</p></div>`).join("");
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-600 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            MCA Registry · 3.67M Records
+          </div>
 
-    if(r.reasoning && !r.rules_only){
-      $("reasonPanel").classList.remove("hidden");
-      $("reasonEngine").textContent = r.reasoning.engine === "llm"
-        ? "LLM reasoner" : "deterministic fallback";
-      $("narrative").textContent = r.reasoning.narrative || "";
-      $("contradictions").innerHTML = (r.reasoning.contradictions || []).map(c =>
-        `<div class="delib">
-           <div class="topic">${esc(c.topic)}
-             <span class="chip ${esc(c.resolved_direction) === "unresolved" ? "unresolved" : esc(c.resolved_direction)}" style="margin-left:auto">${esc(c.resolved_direction).replace("supports_","")}</span></div>
-           <div class="hypos">
-             <div class="hypo benign"><span class="k">Benign hypothesis</span>${esc(c.benign)}</div>
-             <div class="hypo malicious"><span class="k">Malicious hypothesis</span>${esc(c.malicious)}</div>
-           </div>
-           <div class="resolution"><b>Resolution:</b> ${esc(c.resolution)}</div>
-         </div>`).join("") ||
-        '<p style="color:var(--muted);font-size:13px">No contradictions — nothing for the reasoner to argue about.</p>';
-    }
+          <div className="px-3 py-1.5 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs font-mono text-amber-400 dark:text-amber-400 light:text-amber-600 flex items-center gap-2 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            ENGINE: {result ? result.llm_provider.toUpperCase() : 'READY'}
+          </div>
 
-    $("limitsPanel").classList.remove("hidden");
-    $("limitsList").innerHTML = r.cannot_determine.map(x => `<li>${esc(x)}</li>`).join("");
-  }, delay);
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 rounded-xl bg-slate-900 dark:bg-slate-900 light:bg-white hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-600 transition-colors shadow-sm"
+            title="Toggle Light/Dark Theme"
+          >
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </button>
+        </div>
+      </header>
+
+      {/* ---------- WORKBENCH CONTAINER ---------- */}
+      <section className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
+        
+        {/* Tab Controls */}
+        <div className="flex items-center gap-2 border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-4">
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'library'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
+            }`}
+          >
+            Prepared Case Studies
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('live')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'live'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
+            }`}
+          >
+            Paste Document Text
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('json')}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'json'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
+            }`}
+          >
+            Raw Dossier JSON
+          </button>
+        </div>
+
+        {/* Tab 1: Library */}
+        {activeTab === 'library' && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex-1 space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Select Investigation Dossier</label>
+              <select
+                value={selectedCase}
+                onChange={e => setSelectedCase(e.target.value)}
+                className="w-full bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all cursor-pointer"
+              >
+                {cases.map(c => (
+                  <option key={c.file} value={c.file}>
+                    {c.title} ({c.documents} documents)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-5 pt-2 sm:pt-6">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rulesOnly}
+                  onChange={e => setRulesOnly(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-10 h-6 bg-slate-800 dark:bg-slate-800 light:bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                <span className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700">Rules-Only Mode</span>
+              </label>
+
+              <button
+                onClick={handleRunSelectCase}
+                disabled={isAnalyzing || !selectedCase}
+                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Investigating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⚡ Run Investigation</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Raw Text */}
+        {activeTab === 'live' && (
+          <div className="space-y-4">
+            <textarea
+              value={rawText}
+              onChange={e => setRawText(e.target.value)}
+              placeholder="Paste unformatted document text here... Separate multiple documents with lines containing ---"
+              className="w-full h-36 bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl p-4 font-mono text-xs outline-none focus:border-indigo-500"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Autonomous extraction agent will parse and normalize factual assertions.</span>
+              <button
+                onClick={handleRunRawText}
+                disabled={isAnalyzing || !rawText.trim()}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
+              >
+                Analyze Raw Text
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: JSON */}
+        {activeTab === 'json' && (
+          <div className="space-y-4">
+            <textarea
+              value={jsonText}
+              onChange={e => setJsonText(e.target.value)}
+              placeholder='{"case_id": "custom", "documents": [{"doc_id": "DOC-1", "doc_type": "tax_invoice", "text": "..."}]}'
+              className="w-full h-36 bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl p-4 font-mono text-xs outline-none focus:border-indigo-500"
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={handleRunJson}
+                disabled={isAnalyzing || !jsonText.trim()}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
+              >
+                Analyze JSON Dossier
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 pt-2 border-t border-slate-800/60 dark:border-slate-800/60 light:border-slate-200">
+          Status: {status}
+        </div>
+      </section>
+
+      {/* ---------- PIPELINE STEPPER ---------- */}
+      <section className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Pipeline Progress</h3>
+          <span className="text-xs font-mono text-indigo-400 dark:text-indigo-400 light:text-indigo-600">
+            {pipelineStage === 0 ? 'idle' : `stage ${pipelineStage}/5`}
+          </span>
+        </div>
+
+        <div className="relative flex items-center justify-between px-4 pt-2">
+          {/* Rail Track */}
+          <div className="absolute left-10 right-10 top-6 h-0.5 bg-slate-800 dark:bg-slate-800 light:bg-slate-200 z-0">
+            <div
+              className="h-full bg-indigo-500 transition-all duration-500"
+              style={{ width: `${Math.max(0, (pipelineStage - 1) * 25)}%` }}
+            ></div>
+          </div>
+
+          {/* Step Nodes */}
+          {[
+            { num: 1, label: 'Extract' },
+            { num: 2, label: 'Validate' },
+            { num: 3, label: 'Ledger' },
+            { num: 4, label: 'Reason' },
+            { num: 5, label: 'Verdict' },
+          ].map(step => {
+            const isDone = pipelineStage > step.num || (pipelineStage === 5 && result);
+            const isActive = pipelineStage === step.num && !result;
+
+            return (
+              <div key={step.num} className="flex flex-col items-center gap-2 z-10">
+                <div
+                  className={`w-8 h-8 rounded-full border-2 font-mono text-xs font-bold flex items-center justify-center transition-all ${
+                    isDone
+                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                      : isActive
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30 animate-pulse'
+                      : 'bg-slate-950 dark:bg-slate-950 light:bg-white border-slate-800 dark:border-slate-800 light:border-slate-300 text-slate-400'
+                  }`}
+                >
+                  {isDone ? '✓' : step.num}
+                </div>
+                <span className={`text-xs font-medium ${
+                  isDone || isActive ? 'text-slate-200 dark:text-slate-200 light:text-slate-900 font-semibold' : 'text-slate-400 dark:text-slate-400 light:text-slate-500'
+                }`}>
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ---------- BANNERS ---------- */}
+      {result && result.aliased && (
+        <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 dark:text-indigo-300 light:text-indigo-800">
+          ℹ️ <b>Aliased Entities Notice:</b> Display names in this case study are aliased for privacy. Verification runs against authentic MCA company registry records.
+        </div>
+      )}
+
+      {result && result.injection_flags?.length > 0 && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400 dark:text-rose-400 light:text-rose-700 space-y-2">
+          <b>⚠️ Prompt Injection Attempt Blocked & Logged as Tamper Evidence</b>
+          <div className="space-y-1 font-mono text-[11px]">
+            {result.injection_flags.map((f, i) => (
+              <div key={i}><b>{f.source_doc}</b>: "{f.content}"</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ---------- VERDICT HERO ---------- */}
+      {result && (
+        <section className="space-y-6">
+          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl overflow-hidden shadow-xl transition-all">
+            {/* Verdict Header */}
+            <div className={`p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-800 dark:border-slate-800 light:border-slate-200 ${
+              result.verdict === 'GENUINE' ? 'bg-emerald-500/10' : result.verdict === 'SUSPECT' ? 'bg-rose-500/10' : 'bg-amber-500/10'
+            }`}>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h2 className={`text-4xl font-black font-mono tracking-wider ${
+                    result.verdict === 'GENUINE' ? 'text-emerald-500' : result.verdict === 'SUSPECT' ? 'text-rose-500' : 'text-amber-500'
+                  }`}>
+                    {result.verdict}
+                  </h2>
+                </div>
+                <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-2">
+                  {result.subtype ? `subtype: ${result.subtype} · ` : ''}
+                  {result.rules_only ? 'deterministic rules-only execution' : 'full pipeline execution (validators + LLM reasoning)'}
+                </p>
+              </div>
+
+              {/* Counts */}
+              <div className="flex items-center gap-3">
+                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
+                  <div className="text-xl font-bold font-mono text-rose-500">{result.counts.supports_suspect}</div>
+                  <div className="text-[10px] uppercase font-semibold text-slate-400">Suspect</div>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
+                  <div className="text-xl font-bold font-mono text-emerald-500">{result.counts.supports_genuine}</div>
+                  <div className="text-[10px] uppercase font-semibold text-slate-400">Genuine</div>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
+                  <div className="text-xl font-bold font-mono text-slate-400">{result.counts.neutral}</div>
+                  <div className="text-[10px] uppercase font-semibold text-slate-400">Neutral</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Verdict Body */}
+            <div className="p-6 sm:p-8 space-y-6">
+              {result.verdict === 'UNVERIFIABLE' && (
+                <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 font-mono">Decisive Missing Artefact</h4>
+                  <p className="text-sm font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">{result.missing_artefact}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600"><b>Interim Action Work-Order:</b> {result.interim_action}</p>
+                  {result.lean && (
+                    <div className="text-xs font-mono text-amber-400 dark:text-amber-400 light:text-amber-700 pt-2 border-t border-amber-500/20">
+                      ▸ Directional Lean: {result.lean.direction.toUpperCase()} ({result.lean.confidence} confidence) — {result.lean.basis}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono mb-3">Protocol Actions</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {Object.entries(result.actions).map(([role, text]) => (
+                    <div key={role} className="p-4 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-1">
+                      <div className="text-xs font-bold uppercase text-indigo-500 font-mono">{role} Action</div>
+                      <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ---------- EVIDENCE AUDIT LEDGER ---------- */}
+          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Evidence Audit Ledger</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">{filteredFindings.length} findings logged — verified audit trail</p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="relative flex-1 md:w-64">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Filter findings (CIN, Delhi, fail)..."
+                    className="w-full bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-100 dark:text-slate-100 light:text-slate-900 outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 bg-slate-950 dark:bg-slate-950 light:bg-slate-100 p-1 rounded-xl border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                      viewMode === 'table' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200'
+                    }`}
+                  >
+                    Table
+                  </button>
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                      viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200'
+                    }`}
+                  >
+                    Cards
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              {['all', 'identity', 'certification', 'custody', 'provenance'].map(dim => (
+                <button
+                  key={dim}
+                  onClick={() => setActiveDim(dim)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    activeDim === dim
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-900 dark:bg-slate-900 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-700 hover:bg-slate-800'
+                  }`}
+                >
+                  {dim}
+                </button>
+              ))}
+
+              <span className="mx-1 text-slate-600">|</span>
+
+              {['all', 'supports_suspect', 'supports_genuine'].map(dir => (
+                <button
+                  key={dir}
+                  onClick={() => setActiveDir(dir)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    activeDir === dir
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-900 dark:bg-slate-900 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-700 hover:bg-slate-800'
+                  }`}
+                >
+                  {dir.replace('supports_', '')}
+                </button>
+              ))}
+            </div>
+
+            {/* Table View */}
+            {viewMode === 'table' ? (
+              <div className="overflow-x-auto rounded-xl border border-slate-800 dark:border-slate-800 light:border-slate-200">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950 dark:bg-slate-950 light:bg-slate-100 text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase font-mono text-[10px] border-b border-slate-800 dark:border-slate-800 light:border-slate-200">
+                    <tr>
+                      <th className="p-3">Check & Category</th>
+                      <th className="p-3">Assertion & Details</th>
+                      <th className="p-3">Status / Direction</th>
+                      <th className="p-3">Reasoner Ruling</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 dark:divide-slate-800/60 light:divide-slate-200">
+                    {filteredFindings.map((f, idx) => {
+                      const isGenuine = f.direction === 'supports_genuine';
+                      const isSuspect = f.direction === 'supports_suspect';
+                      const icon = isGenuine ? '✓' : isSuspect ? '✗' : '•';
+                      const badgeCls = isGenuine
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                        : isSuspect
+                        ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                        : 'bg-slate-800 text-slate-400 border-slate-700';
+
+                      return (
+                        <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="p-3 align-top">
+                            <div className="font-mono font-semibold text-slate-200 dark:text-slate-200 light:text-slate-900 text-xs">{f.check}</div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                                f.source_tier === 'authoritative'
+                                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                                  : 'bg-slate-800 dark:bg-slate-800 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-600'
+                              }`}>
+                                {f.source_tier}
+                              </span>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-500 light:text-slate-400 font-mono">{f.dimension}</span>
+                            </div>
+                          </td>
+
+                          <td className="p-3 align-top">
+                            <div className="font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 text-xs">{f.assertion}</div>
+                            <div className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-xs mt-0.5 leading-relaxed">{f.detail}</div>
+                          </td>
+
+                          <td className="p-3 align-top whitespace-nowrap">
+                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold border inline-flex items-center gap-1 ${badgeCls}`}>
+                              {icon} {f.direction.replace('supports_', '').toUpperCase()} ({f.result})
+                            </span>
+                          </td>
+
+                          <td className="p-3 align-top text-xs text-slate-400">—</td>
+                        </tr>
+                      );
+                    })}
+                    {filteredFindings.length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="p-6 text-center text-slate-500">No findings match your search filter.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              /* Cards View */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredFindings.map((f, idx) => (
+                  <div key={idx} className="p-4 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between font-mono text-xs">
+                      <span className="font-semibold text-indigo-400">{f.check}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] ${
+                        f.direction === 'supports_genuine' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+                      }`}>
+                        {f.direction.replace('supports_', '')}
+                      </span>
+                    </div>
+                    <div className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">{f.assertion}</div>
+                    <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">{f.detail}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ---------- AGENT DELIBERATION ---------- */}
+          {result.reasoning && !result.rules_only && (
+            <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Agent Deliberation & Reasoning</h3>
+                <span className="px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  Engine: {result.reasoning.engine}
+                </span>
+              </div>
+
+              {result.reasoning.narrative && (
+                <div className="p-5 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border-l-4 border-indigo-500 text-sm text-slate-200 dark:text-slate-200 light:text-slate-800 leading-relaxed">
+                  {result.reasoning.narrative}
+                </div>
+              )}
+
+              {/* Contradictions */}
+              <div className="space-y-4">
+                {(result.reasoning.contradictions || []).map((c, i) => (
+                  <div key={i} className="p-5 rounded-xl bg-slate-955 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-4">
+                    <div className="flex items-center justify-between font-mono text-xs">
+                      <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">Topic: {c.topic}</span>
+                      <span className="px-2.5 py-1 rounded-full bg-slate-800 dark:bg-slate-800 light:bg-slate-200 text-indigo-400 dark:text-indigo-400 light:text-indigo-700">{c.resolved_direction}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-emerald-500/5 border-l-2 border-emerald-500 space-y-1">
+                        <div className="text-[10px] font-bold uppercase text-emerald-500 font-mono">Benign Hypothesis</div>
+                        <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700">{c.benign}</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-rose-500/5 border-l-2 border-rose-500 space-y-1">
+                        <div className="text-[10px] font-bold uppercase text-rose-500 font-mono">Malicious Hypothesis</div>
+                        <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700">{c.malicious}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-slate-900 dark:bg-slate-900 light:bg-white text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 border border-slate-800 dark:border-slate-800 light:border-slate-200">
+                      <b>Resolution:</b> {c.resolution}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ---------- KNOWN LIMITS ---------- */}
+          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Known System Boundaries</h3>
+            <ol className="space-y-2 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 list-decimal list-inside">
+              {(result.cannot_determine || []).map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+      {/* ---------- FOOTER ---------- */}
+      <footer className="text-center text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 pt-8 border-t border-slate-800 dark:border-slate-800 light:border-slate-200">
+        PROVENANCE · Offline MCA Registry Snapshot 2026-07-22 · Feature Branch: feature/ui-redesign
+      </footer>
+    </div>
+  );
 }
 
-/* ---------- audit-trail filters ---------- */
-let activeDim = "all", activeDir = "all";
-function buildFilters(findings){
-  const dims = [...new Set(findings.map(f => f.dimension))];
-  activeDim = "all"; activeDir = "all";
-  const mk = (label, group, value) =>
-    `<button class="fchip${value === "all" ? " on" : ""}" data-g="${group}" data-v="${value}">${label}</button>`;
-  $("filters").innerHTML =
-    mk("All dimensions","dim","all") + dims.map(d => mk(d,"dim",d)).join("") +
-    `<span style="width:14px"></span>` +
-    mk("All directions","dir","all") + mk("suspect only","dir","supports_suspect") +
-    mk("genuine only","dir","supports_genuine");
-  document.querySelectorAll(".fchip").forEach(b => b.onclick = () => {
-    if(b.dataset.g === "dim") activeDim = b.dataset.v; else activeDir = b.dataset.v;
-    document.querySelectorAll(`.fchip[data-g="${b.dataset.g}"]`)
-      .forEach(x => x.classList.toggle("on", x === b));
-    applyFilters();
-  });
-}
-function applyFilters(){
-  for(const tr of allRows){
-    const okDim = activeDim === "all" || tr.dataset.dimension === activeDim;
-    const okDir = activeDir === "all" || tr.dataset.direction === activeDir;
-    tr.style.display = okDim && okDir ? "" : "none";
-  }
-}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
