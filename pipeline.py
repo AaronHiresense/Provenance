@@ -74,7 +74,8 @@ def analyze(dossier: dict, rules_only: bool = False,
 
     # stage 5 — verdict
     cin_assert = next((a for a in assertions if a.attribute == "cin"), None)
-    row = registry.lookup_cin(cin_assert.value) if cin_assert else None
+    row = registry.lookup_cin(
+        validators.extract_identifier(cin_assert.value)) if cin_assert else None
     result = decide(
         led, reasoning, rules_only=rules_only,
         registry_row_found=row is not None,

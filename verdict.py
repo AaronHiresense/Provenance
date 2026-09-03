@@ -144,12 +144,19 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         verdict = "SUSPECT" if strong_suspect else "GENUINE"
     elif suspect:
         # reasoner saw the conflicts and did not call it SUSPECT
-        if reasoning.get("recommended_verdict") == "UNVERIFIABLE":
+        amalgamated = (registry_status or "").strip().lower() in (
+            "amalgamated", "converted to llp")
+        if reasoning.get("recommended_verdict") == "UNVERIFIABLE" and \
+                strong_suspect and not amalgamated and \
+                not auth_contradiction:
+            # governance: the reasoner may soften STRONG evidence to
+            # UNVERIFIABLE only when an authoritative record documents the
+            # benign mechanism (a registry-recorded succession) or the
+            # authoritative tier itself is in conflict. Unexplained strong
+            # contradictions stand.
+            verdict = "SUSPECT"
+        elif reasoning.get("recommended_verdict") == "UNVERIFIABLE":
             verdict, subtype = "UNVERIFIABLE", "contradictory"
-            # branch on the registry's structured status field, not on
-            # substrings in free text
-            amalgamated = (registry_status or "").strip().lower() in (
-                "amalgamated", "converted to llp")
             if amalgamated:
                 missing_artefact = ("The NCLT scheme-of-amalgamation order "
                                    "naming the successor entity — it either "

@@ -226,6 +226,43 @@ def test_cannot_determine_is_case_aware():
     assert r_bis["cannot_determine"] != r_hsi["cannot_determine"]
 
 
+def test_identifier_extraction_survives_decoration():
+    import validators as v
+    assert v.extract_identifier("ACY-8928 (LLPIN)") == "ACY-8928"
+    assert v.extract_identifier("CIN: U29309TN1997PTC039462") == \
+        "U29309TN1997PTC039462"
+    assert v.extract_identifier("garbage") == "garbage"
+
+
+def test_reasoner_cannot_soften_strong_evidence_without_mechanism():
+    """The reasoner may say UNVERIFIABLE past strong evidence only when the
+    registry documents the benign mechanism (succession) or the
+    authoritative tier itself conflicts."""
+    import verdict as V
+    from ledger import Finding, Ledger
+    led = Ledger()
+    led.add(Finding("gstin state", "gstin_state_matches_claim", "fail",
+                    "supports_suspect", "strong", "derived", "identity"))
+    led.add(Finding("registry", "registry_exists", "pass",
+                    "supports_genuine", "moderate", "authoritative",
+                    "identity"))
+    led.add(Finding("status", "company_status_active", "pass",
+                    "supports_genuine", "moderate", "authoritative",
+                    "identity"))
+    led.add(Finding("cert", "cert_date_after_incorporation", "pass",
+                    "supports_genuine", "weak", "derived", "certification"))
+    # Active company, no documented succession -> the strong finding stands
+    r = V.decide(led, {"recommended_verdict": "UNVERIFIABLE"},
+                 registry_row_found=True, has_identifier=True,
+                 registry_status="Active")
+    assert r["verdict"] == "SUSPECT"
+    # Amalgamated company -> the reasoner's caution is honored
+    r2 = V.decide(led, {"recommended_verdict": "UNVERIFIABLE"},
+                  registry_row_found=True, has_identifier=True,
+                  registry_status="Amalgamated")
+    assert r2["verdict"] == "UNVERIFIABLE" and r2["subtype"] == "contradictory"
+
+
 def test_raw_text_wrapping():
     text = ("CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES "
             "PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\n"

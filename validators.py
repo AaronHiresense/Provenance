@@ -80,6 +80,18 @@ def is_llpin(identifier: str) -> bool:
     return bool(_LLPIN_RE.match(identifier.strip().upper()))
 
 
+_IDENT_SEARCH_RE = re.compile(
+    r"[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}|[A-Z]{3}-\d{4}")
+
+
+def extract_identifier(value: str) -> str:
+    """Pull the CIN/LLPIN out of a possibly decorated extracted value
+    ('ACY-8928 (LLPIN)', 'CIN: U29309...') so lookups survive extraction
+    noise. Returns the raw value when nothing identifier-shaped is found."""
+    m = _IDENT_SEARCH_RE.search(str(value).upper())
+    return m.group(0) if m else str(value).strip()
+
+
 def gstin_check_char(first14: str) -> str:
     total = 0
     for i, ch in enumerate(first14):
@@ -785,11 +797,12 @@ def run_all(assertions: list) -> Ledger:
     row = None
     decoded = None
     if a_cin:
-        row = registry.lookup_cin(a_cin.value)
-        fnd, decoded = cin_decode(a_cin.value)
+        ident = extract_identifier(a_cin.value)
+        row = registry.lookup_cin(ident)
+        fnd, decoded = cin_decode(ident)
         fnd.source_doc = a_cin.source_doc
         led.add(fnd)
-        led.add(registry_exists(a_cin.value, row,
+        led.add(registry_exists(ident, row,
                                 a_inc.value if a_inc else None))
         claims = {}
         if a_name:
@@ -798,10 +811,10 @@ def run_all(assertions: list) -> Ledger:
             claims["state"] = a_state.value
         if a_inc:
             claims["incorporation_date"] = a_inc.value
-        led.extend(cin_vs_registry(a_cin.value, claims, row))
-        led.add(company_status_active(a_cin.value, row))
+        led.extend(cin_vs_registry(ident, claims, row))
+        led.add(company_status_active(ident, row))
         nic = (row or {}).get("nic_code") or (decoded or {}).get("nic_code")
-        led.add(nic_is_manufacturing(a_cin.value, nic))
+        led.add(nic_is_manufacturing(ident, nic))
 
     if a_gstin:
         f = gstin_checksum(a_gstin.value)
