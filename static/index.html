@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PROVENANCE — Counterfeit Document & Record Investigator</title>
+<title>PROVENANCE — Document Intelligence & Registry Verification</title>
 
 <!-- Tailwind CSS 3 -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -14,89 +14,167 @@
       extend: {
         colors: {
           slate: {
+            750: '#1e293b',
             850: '#0f172a',
             950: '#090d16',
           },
-          indigo: {
-            500: '#6366f1',
-            600: '#4f46e5',
-            700: '#4338ca',
-          },
-          emerald: {
-            500: '#10b981',
-            600: '#059669',
-          },
-          rose: {
-            500: '#f43f5e',
-            600: '#e11d48',
-          },
-          amber: {
-            500: '#f59e0b',
-            600: '#d97706',
+          brand: {
+            50: '#eff6ff',
+            100: '#dbeafe',
+            500: '#3b82f6',
+            600: '#2563eb',
+            700: '#1d4ed8',
+            900: '#1e3a8a',
           }
         },
         fontFamily: {
-          sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          mono: ['JetBrains Mono', 'monospace'],
+          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'monospace'],
         }
       }
     }
   }
 </script>
 
-<!-- Google Fonts -->
+<!-- Google Fonts: Inter & JetBrains Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<!-- React 18 & ReactDOM 18 -->
+<!-- React 18 & ReactDOM 18 & Babel Standalone -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <style>
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
   }
   
   * {
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   }
 
   /* Custom scrollbars */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 99px; }
-  
-  .glass-card-dark {
-    background: rgba(17, 23, 38, 0.75);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+  html.light body {
+    background-color: #f8fafc;
+    color: #0f172a;
   }
-  
-  .glass-card-light {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+
+  html.dark body {
+    background-color: #090d16;
+    color: #f8fafc;
+  }
+
+  .panel-base {
+    border-radius: 12px;
+  }
+
+  html.light .panel-base {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  }
+
+  html.dark .panel-base {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
   }
 </style>
 </head>
-<body class="bg-slate-950 text-slate-100 dark:bg-slate-950 dark:text-slate-100 light:bg-slate-50 light:text-slate-900 min-h-screen pb-20 selection:bg-indigo-500/30 selection:text-indigo-200">
+<body class="min-h-screen pb-16 selection:bg-blue-500/20 selection:text-blue-700">
 
 <div id="root"></div>
 
 <script type="text/babel">
 const { useState, useEffect, useMemo } = React;
 
+// --- ELEGANT INLINE SVG ICONS ---
+const ShieldIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const AlertTriangleIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
+const CheckCircleIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const XCircleIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const SearchIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const FileTextIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const CpuIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+  </svg>
+);
+
+const LayersIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+  </svg>
+);
+
+const PlayIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+
+const RefreshIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const MoonIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  </svg>
+);
+
+const SunIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
 function App() {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [cases, setCases] = useState([]);
   const [selectedCase, setSelectedCase] = useState('');
+  const [currentDossierDetails, setCurrentDossierDetails] = useState(null);
   const [activeTab, setActiveTab] = useState('library'); // 'library' | 'live' | 'json'
   const [rulesOnly, setRulesOnly] = useState(false);
   const [rawText, setRawText] = useState('');
@@ -107,12 +185,13 @@ function App() {
   const [pipelineStage, setPipelineStage] = useState(0); // 0..5
   const [result, setResult] = useState(null);
   
+  // Ledger controls
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDim, setActiveDim] = useState('all');
   const [activeDir, setActiveDir] = useState('all');
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
+  const [activeTier, setActiveTier] = useState('all');
+  const [activeMainTab, setActiveMainTab] = useState('ledger'); // 'ledger' | 'deliberation' | 'documents'
 
-  // Apply Theme
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -125,7 +204,6 @@ function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Load Cases
   useEffect(() => {
     fetch('/api/cases')
       .then(res => res.json())
@@ -136,16 +214,23 @@ function App() {
       .catch(err => console.error('Failed to load cases:', err));
   }, []);
 
-  // Run Investigation Analysis
+  useEffect(() => {
+    if (!selectedCase) return;
+    fetch(`/api/cases/${selectedCase}`)
+      .then(res => res.json())
+      .then(dossier => setCurrentDossierDetails(dossier))
+      .catch(err => console.error('Failed to fetch case details:', err));
+  }, [selectedCase]);
+
   const runAnalysis = async (payload) => {
     setIsAnalyzing(true);
-    setStatus('Investigating dossier...');
+    setStatus('Extracting dossier assertions...');
     setResult(null);
     setPipelineStage(1);
 
-    const timer1 = setTimeout(() => setPipelineStage(2), 1000);
-    const timer2 = setTimeout(() => setPipelineStage(3), 2000);
-    const timer3 = setTimeout(() => setPipelineStage(4), 3000);
+    const timer1 = setTimeout(() => { setPipelineStage(2); setStatus('Validating against MCA registry...'); }, 700);
+    const timer2 = setTimeout(() => { setPipelineStage(3); setStatus('Assembling audit ledger...'); }, 1400);
+    const timer3 = setTimeout(() => { setPipelineStage(4); setStatus('Evaluating intent hypotheses...'); }, 2100);
 
     try {
       const res = await fetch('/api/analyze', {
@@ -158,14 +243,13 @@ function App() {
         throw new Error(errData.detail || res.statusText);
       }
       const data = await res.json();
-      
       setPipelineStage(5);
       setResult(data);
-      setStatus(`Case ${data.case_id} completed`);
+      setStatus(`Completed case ${data.case_id}`);
     } catch (err) {
       setStatus(`Error: ${err.message}`);
       setPipelineStage(0);
-    } fontally: {
+    } finally {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
@@ -192,563 +276,559 @@ function App() {
       const dossier = JSON.parse(jsonText);
       runAnalysis({ dossier, rules_only: rulesOnly });
     } catch (e) {
-      alert(`Invalid JSON format: ${e.message}`);
+      alert(`Invalid JSON: ${e.message}`);
     }
   };
 
-  // Filtered findings for ledger
   const filteredFindings = useMemo(() => {
     if (!result || !result.ledger || !result.ledger.findings) return [];
     return result.ledger.findings.filter(f => {
       const matchesDim = activeDim === 'all' || f.dimension === activeDim;
       const matchesDir = activeDir === 'all' || f.direction === activeDir;
+      const matchesTier = activeTier === 'all' || f.source_tier === activeTier;
       const q = searchQuery.toLowerCase().trim();
       const matchesQuery = !q || (
-        f.check.toLowerCase().includes(q) ||
-        f.assertion.toLowerCase().includes(q) ||
-        f.detail.toLowerCase().includes(q) ||
-        f.result.toLowerCase().includes(q) ||
-        f.dimension.toLowerCase().includes(q)
+        (f.check && f.check.toLowerCase().includes(q)) ||
+        (f.assertion && f.assertion.toLowerCase().includes(q)) ||
+        (f.detail && f.detail.toLowerCase().includes(q)) ||
+        (f.dimension && f.dimension.toLowerCase().includes(q))
       );
-      return matchesDim && matchesDir && matchesQuery;
+      return matchesDim && matchesDir && matchesTier && matchesQuery;
     });
-  }, [result, activeDim, activeDir, searchQuery]);
+  }, [result, activeDim, activeDir, activeTier, searchQuery]);
+
+  const selectedCaseObj = useMemo(() => cases.find(c => c.file === selectedCase), [cases, selectedCase]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-8">
+    <div className="min-h-screen flex flex-col">
       
-      {/* ---------- HEADER ---------- */}
-      <header className="flex items-center justify-between pb-6 border-b border-slate-800 dark:border-slate-800 light:border-slate-200">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg shadow-indigo-600/25">
+      {/* ---------- SENIOR NAVBAR ---------- */}
+      <header className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between">
+        
+        {/* Left: Brand & Breadcrumb */}
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
             P
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-slate-100 dark:text-slate-100 light:text-slate-900">PROVENANCE</h1>
-              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 dark:text-indigo-400 light:text-indigo-700 border border-indigo-500/20">
-                Document Investigator
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Counterfeit Auto-Parts & Registry Verification System</p>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-slate-900 dark:text-white tracking-tight">PROVENANCE</span>
+            <span className="text-slate-300 dark:text-slate-700">/</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">Document Intelligence</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-600 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            MCA Registry · 3.67M Records
+        {/* Right: Status Pill & Theme Toggle */}
+        <div className="flex items-center gap-4 text-xs">
+          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>MCA DuckDB: 3.67M Records</span>
           </div>
 
-          <div className="px-3 py-1.5 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs font-mono text-amber-400 dark:text-amber-400 light:text-amber-600 flex items-center gap-2 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            ENGINE: {result ? result.llm_provider.toUpperCase() : 'READY'}
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+            <CpuIcon className="w-3.5 h-3.5 text-slate-400" />
+            <span>Engine: {result ? result.llm_provider.toUpperCase() : 'Ready'}</span>
           </div>
 
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="p-2 rounded-xl bg-slate-900 dark:bg-slate-900 light:bg-white hover:bg-slate-800 dark:hover:bg-slate-800 light:hover:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-600 transition-colors shadow-sm"
-            title="Toggle Light/Dark Theme"
+            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+            title="Toggle theme"
           >
-            {theme === 'dark' ? '🌙' : '☀️'}
+            {theme === 'dark' ? <SunIcon className="w-4 h-4 text-amber-400" /> : <MoonIcon className="w-4 h-4" />}
           </button>
         </div>
       </header>
 
-      {/* ---------- WORKBENCH CONTAINER ---------- */}
-      <section className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
+      {/* ---------- MAIN TWO-COLUMN WORKSPACE ---------- */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Tab Controls */}
-        <div className="flex items-center gap-2 border-b border-slate-800 dark:border-slate-800 light:border-slate-200 pb-4">
-          <button
-            onClick={() => setActiveTab('library')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'library'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
-            }`}
-          >
-            Prepared Case Studies
-          </button>
+        {/* LEFT COLUMN: CONTROL PANEL (4 Cols) */}
+        <aside className="lg:col-span-4 space-y-6">
           
-          <button
-            onClick={() => setActiveTab('live')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'live'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
-            }`}
-          >
-            Paste Document Text
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('json')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'json'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200 dark:hover:text-slate-200 light:hover:text-slate-900 hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-slate-100'
-            }`}
-          >
-            Raw Dossier JSON
-          </button>
-        </div>
-
-        {/* Tab 1: Library */}
-        {activeTab === 'library' && (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <div className="flex-1 space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Select Investigation Dossier</label>
-              <select
-                value={selectedCase}
-                onChange={e => setSelectedCase(e.target.value)}
-                className="w-full bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all cursor-pointer"
-              >
-                {cases.map(c => (
-                  <option key={c.file} value={c.file}>
-                    {c.title} ({c.documents} documents)
-                  </option>
-                ))}
-              </select>
+          <div className="panel-base p-5 space-y-5">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Investigation Dossier</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Select a case study or paste raw document text to verify.</p>
             </div>
 
-            <div className="flex items-center gap-5 pt-2 sm:pt-6">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rulesOnly}
-                  onChange={e => setRulesOnly(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-10 h-6 bg-slate-800 dark:bg-slate-800 light:bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 relative"></div>
-                <span className="text-xs font-medium text-slate-300 dark:text-slate-300 light:text-slate-700">Rules-Only Mode</span>
-              </label>
-
+            {/* Input Mode Segmented Switch */}
+            <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg text-xs font-medium">
               <button
-                onClick={handleRunSelectCase}
-                disabled={isAnalyzing || !selectedCase}
-                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                onClick={() => setActiveTab('library')}
+                className={`py-1.5 rounded-md transition-all ${activeTab === 'library' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
               >
-                {isAnalyzing ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Investigating...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>⚡ Run Investigation</span>
-                  </>
-                )}
+                Case Studies
+              </button>
+              <button
+                onClick={() => setActiveTab('live')}
+                className={`py-1.5 rounded-md transition-all ${activeTab === 'live' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
+              >
+                Raw Text
+              </button>
+              <button
+                onClick={() => setActiveTab('json')}
+                className={`py-1.5 rounded-md transition-all ${activeTab === 'json' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'}`}
+              >
+                JSON
               </button>
             </div>
-          </div>
-        )}
 
-        {/* Tab 2: Raw Text */}
-        {activeTab === 'live' && (
-          <div className="space-y-4">
-            <textarea
-              value={rawText}
-              onChange={e => setRawText(e.target.value)}
-              placeholder="Paste unformatted document text here... Separate multiple documents with lines containing ---"
-              className="w-full h-36 bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl p-4 font-mono text-xs outline-none focus:border-indigo-500"
-            />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">Autonomous extraction agent will parse and normalize factual assertions.</span>
-              <button
-                onClick={handleRunRawText}
-                disabled={isAnalyzing || !rawText.trim()}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
-              >
-                Analyze Raw Text
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: JSON */}
-        {activeTab === 'json' && (
-          <div className="space-y-4">
-            <textarea
-              value={jsonText}
-              onChange={e => setJsonText(e.target.value)}
-              placeholder='{"case_id": "custom", "documents": [{"doc_id": "DOC-1", "doc_type": "tax_invoice", "text": "..."}]}'
-              className="w-full h-36 bg-slate-950 dark:bg-slate-950 light:bg-slate-50 text-slate-100 dark:text-slate-100 light:text-slate-900 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl p-4 font-mono text-xs outline-none focus:border-indigo-500"
-            />
-            <div className="flex justify-end">
-              <button
-                onClick={handleRunJson}
-                disabled={isAnalyzing || !jsonText.trim()}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
-              >
-                Analyze JSON Dossier
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 pt-2 border-t border-slate-800/60 dark:border-slate-800/60 light:border-slate-200">
-          Status: {status}
-        </div>
-      </section>
-
-      {/* ---------- PIPELINE STEPPER ---------- */}
-      <section className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Pipeline Progress</h3>
-          <span className="text-xs font-mono text-indigo-400 dark:text-indigo-400 light:text-indigo-600">
-            {pipelineStage === 0 ? 'idle' : `stage ${pipelineStage}/5`}
-          </span>
-        </div>
-
-        <div className="relative flex items-center justify-between px-4 pt-2">
-          {/* Rail Track */}
-          <div className="absolute left-10 right-10 top-6 h-0.5 bg-slate-800 dark:bg-slate-800 light:bg-slate-200 z-0">
-            <div
-              className="h-full bg-indigo-500 transition-all duration-500"
-              style={{ width: `${Math.max(0, (pipelineStage - 1) * 25)}%` }}
-            ></div>
-          </div>
-
-          {/* Step Nodes */}
-          {[
-            { num: 1, label: 'Extract' },
-            { num: 2, label: 'Validate' },
-            { num: 3, label: 'Ledger' },
-            { num: 4, label: 'Reason' },
-            { num: 5, label: 'Verdict' },
-          ].map(step => {
-            const isDone = pipelineStage > step.num || (pipelineStage === 5 && result);
-            const isActive = pipelineStage === step.num && !result;
-
-            return (
-              <div key={step.num} className="flex flex-col items-center gap-2 z-10">
-                <div
-                  className={`w-8 h-8 rounded-full border-2 font-mono text-xs font-bold flex items-center justify-center transition-all ${
-                    isDone
-                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                      : isActive
-                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30 animate-pulse'
-                      : 'bg-slate-950 dark:bg-slate-950 light:bg-white border-slate-800 dark:border-slate-800 light:border-slate-300 text-slate-400'
-                  }`}
-                >
-                  {isDone ? '✓' : step.num}
-                </div>
-                <span className={`text-xs font-medium ${
-                  isDone || isActive ? 'text-slate-200 dark:text-slate-200 light:text-slate-900 font-semibold' : 'text-slate-400 dark:text-slate-400 light:text-slate-500'
-                }`}>
-                  {step.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ---------- BANNERS ---------- */}
-      {result && result.aliased && (
-        <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 dark:text-indigo-300 light:text-indigo-800">
-          ℹ️ <b>Aliased Entities Notice:</b> Display names in this case study are aliased for privacy. Verification runs against authentic MCA company registry records.
-        </div>
-      )}
-
-      {result && result.injection_flags?.length > 0 && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400 dark:text-rose-400 light:text-rose-700 space-y-2">
-          <b>⚠️ Prompt Injection Attempt Blocked & Logged as Tamper Evidence</b>
-          <div className="space-y-1 font-mono text-[11px]">
-            {result.injection_flags.map((f, i) => (
-              <div key={i}><b>{f.source_doc}</b>: "{f.content}"</div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ---------- VERDICT HERO ---------- */}
-      {result && (
-        <section className="space-y-6">
-          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl overflow-hidden shadow-xl transition-all">
-            {/* Verdict Header */}
-            <div className={`p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-800 dark:border-slate-800 light:border-slate-200 ${
-              result.verdict === 'GENUINE' ? 'bg-emerald-500/10' : result.verdict === 'SUSPECT' ? 'bg-rose-500/10' : 'bg-amber-500/10'
-            }`}>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className={`text-4xl font-black font-mono tracking-wider ${
-                    result.verdict === 'GENUINE' ? 'text-emerald-500' : result.verdict === 'SUSPECT' ? 'text-rose-500' : 'text-amber-500'
-                  }`}>
-                    {result.verdict}
-                  </h2>
-                </div>
-                <p className="text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 mt-2">
-                  {result.subtype ? `subtype: ${result.subtype} · ` : ''}
-                  {result.rules_only ? 'deterministic rules-only execution' : 'full pipeline execution (validators + LLM reasoning)'}
-                </p>
-              </div>
-
-              {/* Counts */}
-              <div className="flex items-center gap-3">
-                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
-                  <div className="text-xl font-bold font-mono text-rose-500">{result.counts.supports_suspect}</div>
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Suspect</div>
-                </div>
-                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
-                  <div className="text-xl font-bold font-mono text-emerald-500">{result.counts.supports_genuine}</div>
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Genuine</div>
-                </div>
-                <div className="px-4 py-2 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-center min-w-[80px]">
-                  <div className="text-xl font-bold font-mono text-slate-400">{result.counts.neutral}</div>
-                  <div className="text-[10px] uppercase font-semibold text-slate-400">Neutral</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Verdict Body */}
-            <div className="p-6 sm:p-8 space-y-6">
-              {result.verdict === 'UNVERIFIABLE' && (
-                <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 font-mono">Decisive Missing Artefact</h4>
-                  <p className="text-sm font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">{result.missing_artefact}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600"><b>Interim Action Work-Order:</b> {result.interim_action}</p>
-                  {result.lean && (
-                    <div className="text-xs font-mono text-amber-400 dark:text-amber-400 light:text-amber-700 pt-2 border-t border-amber-500/20">
-                      ▸ Directional Lean: {result.lean.direction.toUpperCase()} ({result.lean.confidence} confidence) — {result.lean.basis}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono mb-3">Protocol Actions</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(result.actions).map(([role, text]) => (
-                    <div key={role} className="p-4 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-1">
-                      <div className="text-xs font-bold uppercase text-indigo-500 font-mono">{role} Action</div>
-                      <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 leading-relaxed">{text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ---------- EVIDENCE AUDIT LEDGER ---------- */}
-          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Evidence Audit Ledger</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-500">{filteredFindings.length} findings logged — verified audit trail</p>
-              </div>
-
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Filter findings (CIN, Delhi, fail)..."
-                    className="w-full bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-100 dark:text-slate-100 light:text-slate-900 outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1 bg-slate-950 dark:bg-slate-950 light:bg-slate-100 p-1 rounded-xl border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                      viewMode === 'table' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200'
-                    }`}
+            {/* Mode 1: Case Studies */}
+            {activeTab === 'library' && (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Select Case Study</label>
+                  <select
+                    value={selectedCase}
+                    onChange={e => setSelectedCase(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500"
                   >
-                    Table
-                  </button>
-                  <button
-                    onClick={() => setViewMode('cards')}
-                    className={`px-3 py-1 rounded-lg font-medium transition-all ${
-                      viewMode === 'cards' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-200'
-                    }`}
-                  >
-                    Cards
-                  </button>
+                    {cases.map(c => (
+                      <option key={c.file} value={c.file}>
+                        {c.title} ({c.documents} docs)
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-            </div>
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              {['all', 'identity', 'certification', 'custody', 'provenance'].map(dim => (
-                <button
-                  key={dim}
-                  onClick={() => setActiveDim(dim)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    activeDim === dim
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-900 dark:bg-slate-900 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-700 hover:bg-slate-800'
-                  }`}
-                >
-                  {dim}
-                </button>
-              ))}
-
-              <span className="mx-1 text-slate-600">|</span>
-
-              {['all', 'supports_suspect', 'supports_genuine'].map(dir => (
-                <button
-                  key={dir}
-                  onClick={() => setActiveDir(dir)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    activeDir === dir
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-900 dark:bg-slate-900 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-700 hover:bg-slate-800'
-                  }`}
-                >
-                  {dir.replace('supports_', '')}
-                </button>
-              ))}
-            </div>
-
-            {/* Table View */}
-            {viewMode === 'table' ? (
-              <div className="overflow-x-auto rounded-xl border border-slate-800 dark:border-slate-800 light:border-slate-200">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950 dark:bg-slate-950 light:bg-slate-100 text-slate-400 dark:text-slate-400 light:text-slate-600 uppercase font-mono text-[10px] border-b border-slate-800 dark:border-slate-800 light:border-slate-200">
-                    <tr>
-                      <th className="p-3">Check & Category</th>
-                      <th className="p-3">Assertion & Details</th>
-                      <th className="p-3">Status / Direction</th>
-                      <th className="p-3">Reasoner Ruling</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 dark:divide-slate-800/60 light:divide-slate-200">
-                    {filteredFindings.map((f, idx) => {
-                      const isGenuine = f.direction === 'supports_genuine';
-                      const isSuspect = f.direction === 'supports_suspect';
-                      const icon = isGenuine ? '✓' : isSuspect ? '✗' : '•';
-                      const badgeCls = isGenuine
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                        : isSuspect
-                        ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
-                        : 'bg-slate-800 text-slate-400 border-slate-700';
-
-                      return (
-                        <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="p-3 align-top">
-                            <div className="font-mono font-semibold text-slate-200 dark:text-slate-200 light:text-slate-900 text-xs">{f.check}</div>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                                f.source_tier === 'authoritative'
-                                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                                  : 'bg-slate-800 dark:bg-slate-800 light:bg-slate-200 text-slate-400 dark:text-slate-400 light:text-slate-600'
-                              }`}>
-                                {f.source_tier}
-                              </span>
-                              <span className="text-[10px] text-slate-500 dark:text-slate-500 light:text-slate-400 font-mono">{f.dimension}</span>
-                            </div>
-                          </td>
-
-                          <td className="p-3 align-top">
-                            <div className="font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900 text-xs">{f.assertion}</div>
-                            <div className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-xs mt-0.5 leading-relaxed">{f.detail}</div>
-                          </td>
-
-                          <td className="p-3 align-top whitespace-nowrap">
-                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold border inline-flex items-center gap-1 ${badgeCls}`}>
-                              {icon} {f.direction.replace('supports_', '').toUpperCase()} ({f.result})
-                            </span>
-                          </td>
-
-                          <td className="p-3 align-top text-xs text-slate-400">—</td>
-                        </tr>
-                      );
-                    })}
-                    {filteredFindings.length === 0 && (
-                      <tr>
-                        <td colSpan="4" className="p-6 text-center text-slate-500">No findings match your search filter.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              /* Cards View */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredFindings.map((f, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-2">
-                    <div className="flex items-center justify-between font-mono text-xs">
-                      <span className="font-semibold text-indigo-400">{f.check}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] ${
-                        f.direction === 'supports_genuine' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-                      }`}>
-                        {f.direction.replace('supports_', '')}
+                {/* Case Metadata */}
+                {selectedCaseObj && (
+                  <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 text-xs space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-mono text-slate-500">{selectedCaseObj.case_id}</span>
+                      <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">
+                        {selectedCaseObj.documents} Documents
                       </span>
                     </div>
-                    <div className="text-xs font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">{f.assertion}</div>
-                    <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">{f.detail}</p>
+                    <div className="font-medium text-slate-800 dark:text-slate-200 leading-snug">
+                      {selectedCaseObj.title}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {/* Attached Docs Preview */}
+                {currentDossierDetails && currentDossierDetails.documents && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider block">Attached Documents</span>
+                    <div className="space-y-1">
+                      {currentDossierDetails.documents.map((doc, i) => (
+                        <div key={i} className="px-2.5 py-1.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 text-xs flex items-center justify-between">
+                          <span className="font-mono text-slate-600 dark:text-slate-300 text-[11px]">{doc.doc_id}</span>
+                          <span className="text-slate-500 capitalize text-[11px]">{doc.doc_type.replace(/_/g, ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Mode 2: Raw Text */}
+            {activeTab === 'live' && (
+              <div className="space-y-3">
+                <textarea
+                  value={rawText}
+                  onChange={e => setRawText(e.target.value)}
+                  placeholder="Paste document text here. Separate multiple documents with --- lines."
+                  className="w-full h-36 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs font-mono outline-none focus:border-blue-500"
+                />
+                <button
+                  onClick={() => setRawText("TAX INVOICE\nSupplier: Cascade Brake Systems Pvt Ltd\nCIN: U29304TZ2018PTC030111\nGSTIN: 33AAACC1234F1Z5\nDate: 2026-02-10\nItem: Brake Shoe Lot BS-7702\n---\nFORM 23 CERTIFICATE\nIssued to: Cascade Brake Systems Pvt Ltd\nAddress: Industrial Estate, Hosur, Tamil Nadu")}
+                  className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Insert Sample Text
+                </button>
+              </div>
+            )}
+
+            {/* Mode 3: JSON */}
+            {activeTab === 'json' && (
+              <textarea
+                value={jsonText}
+                onChange={e => setJsonText(e.target.value)}
+                placeholder='{"case_id": "custom", "documents": [...]}'
+                className="w-full h-36 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs font-mono outline-none focus:border-blue-500"
+              />
+            )}
+
+            {/* Rules Only Switch */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Rules-only mode (Deterministic)</span>
+              <button
+                type="button"
+                onClick={() => setRulesOnly(!rulesOnly)}
+                className={`w-9 h-5 rounded-full transition-colors relative ${rulesOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
+              >
+                <span className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.75 transition-transform ${rulesOnly ? 'translate-x-4' : 'translate-x-0.75'}`} />
+              </button>
+            </div>
+
+            {/* Run CTA Button */}
+            <button
+              onClick={() => {
+                if (activeTab === 'library') handleRunSelectCase();
+                else if (activeTab === 'live') handleRunRawText();
+                else handleRunJson();
+              }}
+              disabled={isAnalyzing}
+              className="w-full py-2.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-xs transition-all hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+            >
+              {isAnalyzing ? (
+                <>
+                  <RefreshIcon className="w-3.5 h-3.5 animate-spin" />
+                  <span>Analyzing Dossier...</span>
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="w-3 h-3" />
+                  <span>Run Verification Pipeline</span>
+                </>
+              )}
+            </button>
           </div>
 
-          {/* ---------- AGENT DELIBERATION ---------- */}
-          {result.reasoning && !result.rules_only && (
-            <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-100 dark:text-slate-100 light:text-slate-900">Agent Deliberation & Reasoning</h3>
-                <span className="px-3 py-1 rounded-full text-xs font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  Engine: {result.reasoning.engine}
-                </span>
-              </div>
+          {/* System Constraints */}
+          <div className="panel-base p-4 space-y-2 text-xs">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-xs">Architecture Scope</h3>
+            <ul className="space-y-1 text-slate-500 dark:text-slate-400 text-[11px] list-disc list-inside">
+              <li>Offline MCA company registry matching</li>
+              <li>Pure validator checks (checksums, ROC codes, dates)</li>
+              <li>Dual-hypothesis benign vs. malicious reasoning</li>
+            </ul>
+          </div>
+        </aside>
 
-              {result.reasoning.narrative && (
-                <div className="p-5 rounded-xl bg-slate-950 dark:bg-slate-950 light:bg-slate-50 border-l-4 border-indigo-500 text-sm text-slate-200 dark:text-slate-200 light:text-slate-800 leading-relaxed">
-                  {result.reasoning.narrative}
-                </div>
-              )}
+        {/* RIGHT COLUMN: MAIN CANVAS (8 Cols) */}
+        <section className="lg:col-span-8 space-y-6">
+          
+          {/* STEPPER PROGRESS BAR */}
+          <div className="panel-base p-4 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-900 dark:text-white">Pipeline Execution Progress</span>
+              <span className="font-mono text-[11px] text-slate-500">{status}</span>
+            </div>
 
-              {/* Contradictions */}
-              <div className="space-y-4">
-                {(result.reasoning.contradictions || []).map((c, i) => (
-                  <div key={i} className="p-5 rounded-xl bg-slate-955 dark:bg-slate-950 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 space-y-4">
-                    <div className="flex items-center justify-between font-mono text-xs">
-                      <span className="font-semibold text-slate-200 dark:text-slate-200 light:text-slate-800">Topic: {c.topic}</span>
-                      <span className="px-2.5 py-1 rounded-full bg-slate-800 dark:bg-slate-800 light:bg-slate-200 text-indigo-400 dark:text-indigo-400 light:text-indigo-700">{c.resolved_direction}</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-emerald-500/5 border-l-2 border-emerald-500 space-y-1">
-                        <div className="text-[10px] font-bold uppercase text-emerald-500 font-mono">Benign Hypothesis</div>
-                        <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700">{c.benign}</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-rose-500/5 border-l-2 border-rose-500 space-y-1">
-                        <div className="text-[10px] font-bold uppercase text-rose-500 font-mono">Malicious Hypothesis</div>
-                        <p className="text-xs text-slate-300 dark:text-slate-300 light:text-slate-700">{c.malicious}</p>
-                      </div>
-                    </div>
-                    <div className="p-3 rounded-lg bg-slate-900 dark:bg-slate-900 light:bg-white text-xs text-slate-300 dark:text-slate-300 light:text-slate-700 border border-slate-800 dark:border-slate-800 light:border-slate-200">
-                      <b>Resolution:</b> {c.resolution}
+            <div className="grid grid-cols-5 gap-2 pt-1">
+              {[
+                { num: 1, name: 'Extract' },
+                { num: 2, name: 'Validate' },
+                { num: 3, name: 'Ledger' },
+                { num: 4, name: 'Reason' },
+                { num: 5, name: 'Verdict' },
+              ].map(s => {
+                const isDone = pipelineStage > s.num || (pipelineStage === 5 && result);
+                const isActive = pipelineStage === s.num && !result;
+
+                return (
+                  <div key={s.num} className="space-y-1.5">
+                    <div className={`h-1.5 rounded-full transition-all ${
+                      isDone ? 'bg-emerald-500' : isActive ? 'bg-blue-600 animate-pulse' : 'bg-slate-200 dark:bg-slate-800'
+                    }`} />
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={`font-medium ${isDone || isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400'}`}>
+                        {s.name}
+                      </span>
+                      {isDone && <CheckCircleIcon className="w-3 h-3 text-emerald-500" />}
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* INJECTION WARNING */}
+          {result && result.injection_flags?.length > 0 && (
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-800 dark:text-rose-300 space-y-2">
+              <div className="flex items-center gap-2 font-semibold text-rose-700 dark:text-rose-400">
+                <AlertTriangleIcon className="w-4 h-4 text-rose-600" />
+                <span>Prompt Injection Blocked & Logged into Ledger</span>
               </div>
+              <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                Instruction-like lines were stripped from raw text before LLM reasoning and logged as tamper evidence.
+              </p>
             </div>
           )}
 
-          {/* ---------- KNOWN LIMITS ---------- */}
-          <div className="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 light:text-slate-500 font-mono">Known System Boundaries</h3>
-            <ol className="space-y-2 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 list-decimal list-inside">
-              {(result.cannot_determine || []).map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ol>
-          </div>
+          {/* NO RESULT PLACEHOLDER */}
+          {!result && !isAnalyzing && (
+            <div className="panel-base p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+                <ShieldIcon className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">No Investigation Active</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Select a prepared dossier study on the left or paste raw document text, then click "Run Verification Pipeline" to begin analysis.
+              </p>
+            </div>
+          )}
+
+          {/* VERDICT HERO & AUDIT LEDGER */}
+          {result && (
+            <div className="space-y-6">
+              
+              {/* Verdict Summary Card */}
+              <div className="panel-base p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">Pipeline Verdict</span>
+                    <div className="flex items-center gap-3">
+                      <h2 className={`text-3xl font-bold font-mono tracking-tight ${
+                        result.verdict === 'GENUINE' ? 'text-emerald-600 dark:text-emerald-400' : result.verdict === 'SUSPECT' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                      }`}>
+                        {result.verdict}
+                      </h2>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                        result.verdict === 'GENUINE'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                          : result.verdict === 'SUSPECT'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
+                          : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800'
+                      }`}>
+                        {result.subtype || 'standard'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Findings breakdown counts */}
+                  <div className="flex items-center gap-4 text-xs font-mono">
+                    <div className="text-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="font-bold text-rose-600 dark:text-rose-400 text-base">{result.counts.supports_suspect}</div>
+                      <div className="text-[10px] text-slate-400">Suspect</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="font-bold text-emerald-600 dark:text-emerald-400 text-base">{result.counts.supports_genuine}</div>
+                      <div className="text-[10px] text-slate-400">Genuine</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="font-bold text-slate-500 text-base">{result.counts.neutral}</div>
+                      <div className="text-[10px] text-slate-400">Neutral</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* UNVERIFIABLE missing artefact notice */}
+                {result.verdict === 'UNVERIFIABLE' && (
+                  <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2 text-xs">
+                    <div className="font-semibold text-amber-800 dark:text-amber-300">Decisive Missing Artefact</div>
+                    <p className="text-amber-900 dark:text-amber-200 font-medium">{result.missing_artefact}</p>
+                    <div className="text-slate-600 dark:text-slate-400 text-[11px] pt-1">
+                      <b>Interim Action:</b> {result.interim_action}
+                    </div>
+                  </div>
+                )}
+
+                {/* Protocol Actions Grid */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-slate-900 dark:text-white">Protocol Action Directives</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    {Object.entries(result.actions || {}).map(([role, text]) => (
+                      <div key={role} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1">
+                        <span className="font-medium text-slate-900 dark:text-white capitalize text-[11px] block">{role}</span>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* TABBED MAIN INSPECTOR */}
+              <div className="panel-base p-6 space-y-5">
+                
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 flex-wrap gap-3">
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-medium">
+                    <button
+                      onClick={() => setActiveMainTab('ledger')}
+                      className={`px-3 py-1.5 rounded-md transition-all ${activeMainTab === 'ledger' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Audit Ledger ({filteredFindings.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveMainTab('deliberation')}
+                      className={`px-3 py-1.5 rounded-md transition-all ${activeMainTab === 'deliberation' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      Agent Deliberation
+                    </button>
+                    {currentDossierDetails && (
+                      <button
+                        onClick={() => setActiveMainTab('documents')}
+                        className={`px-3 py-1.5 rounded-md transition-all ${activeMainTab === 'documents' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
+                      >
+                        Source Docs
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search bar inside ledger */}
+                  {activeMainTab === 'ledger' && (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Filter findings..."
+                        className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md pl-8 pr-3 py-1 text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-blue-500 w-48"
+                      />
+                      <SearchIcon className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+                    </div>
+                  )}
+                </div>
+
+                {/* TAB 1: AUDIT LEDGER TABLE */}
+                {activeMainTab === 'ledger' && (
+                  <div className="space-y-4">
+                    {/* Dimension / Filter Pills */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                      <span className="text-[11px] text-slate-400 font-medium mr-1">Filter:</span>
+                      {['all', 'identity', 'certification', 'custody', 'provenance'].map(dim => (
+                        <button
+                          key={dim}
+                          onClick={() => setActiveDim(dim)}
+                          className={`px-2.5 py-0.5 rounded text-[11px] font-medium transition-all ${
+                            activeDim === dim
+                              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          {dim}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Clean Table */}
+                    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 font-medium text-[11px] border-b border-slate-200 dark:border-slate-800">
+                          <tr>
+                            <th className="p-3">Check</th>
+                            <th className="p-3">Assertion & Detail</th>
+                            <th className="p-3">Tier</th>
+                            <th className="p-3">Direction</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                          {filteredFindings.map((f, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
+                              <td className="p-3 align-top font-mono font-medium text-slate-700 dark:text-slate-300 text-[11px] whitespace-nowrap">
+                                {f.check}
+                              </td>
+                              <td className="p-3 align-top space-y-0.5">
+                                <div className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{f.assertion}</div>
+                                <div className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{f.detail}</div>
+                              </td>
+                              <td className="p-3 align-top whitespace-nowrap">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
+                                  f.source_tier === 'authoritative'
+                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                  {f.source_tier}
+                                </span>
+                              </td>
+                              <td className="p-3 align-top whitespace-nowrap">
+                                <span className={`px-2.5 py-1 rounded-md text-[11px] font-medium inline-flex items-center gap-1.5 ${
+                                  f.direction === 'supports_genuine'
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                    : f.direction === 'supports_suspect'
+                                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                }`}>
+                                  {f.direction === 'supports_genuine' ? <CheckCircleIcon className="w-3 h-3" /> : f.direction === 'supports_suspect' ? <XCircleIcon className="w-3 h-3" /> : null}
+                                  {f.direction.replace('supports_', '')}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          {filteredFindings.length === 0 && (
+                            <tr>
+                              <td colSpan="4" className="p-6 text-center text-slate-400 text-xs">
+                                No findings match your filter query.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: AGENT DELIBERATION */}
+                {activeMainTab === 'deliberation' && (
+                  <div className="space-y-4 text-xs">
+                    {result.reasoning && !result.rules_only ? (
+                      <>
+                        {result.reasoning.narrative && (
+                          <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 leading-relaxed text-slate-700 dark:text-slate-300">
+                            <span className="font-semibold text-slate-900 dark:text-white block mb-1">Executive Summary</span>
+                            {result.reasoning.narrative}
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          <span className="font-semibold text-slate-900 dark:text-white block">Contradiction Analysis</span>
+                          {(result.reasoning.contradictions || []).map((c, i) => (
+                            <div key={i} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
+                              <div className="flex items-center justify-between font-medium">
+                                <span className="text-slate-900 dark:text-white">{c.topic}</span>
+                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 text-[11px] font-mono">
+                                  {c.resolved_direction}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                <div className="p-3 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                  <span className="text-[10px] font-semibold uppercase text-emerald-600 block mb-1">Benign Hypothesis</span>
+                                  {c.benign}
+                                </div>
+                                <div className="p-3 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                  <span className="text-[10px] font-semibold uppercase text-rose-600 block mb-1">Malicious Hypothesis</span>
+                                  {c.malicious}
+                                </div>
+                              </div>
+                              <p className="text-slate-600 dark:text-slate-400 text-[11px]">
+                                <b>Resolution:</b> {c.resolution}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-6 text-center text-slate-400">
+                        {result.rules_only ? 'Rules-only execution bypassed LLM hypothesis deliberation.' : 'No deliberation record generated.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 3: SOURCE DOCUMENTS */}
+                {activeMainTab === 'documents' && currentDossierDetails && (
+                  <div className="space-y-4 text-xs">
+                    {currentDossierDetails.documents?.map((doc, idx) => (
+                      <div key={idx} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between font-mono text-[11px] text-slate-500">
+                          <span className="font-semibold text-slate-900 dark:text-white">[{doc.doc_id}] {doc.doc_type?.toUpperCase()}</span>
+                          <span>{doc.text?.length || 0} chars</span>
+                        </div>
+                        <pre className="text-[11px] font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-800 max-h-48 overflow-y-auto">
+                          {doc.text}
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+          )}
+
         </section>
-      )}
+
+      </main>
 
       {/* ---------- FOOTER ---------- */}
-      <footer className="text-center text-xs font-mono text-slate-400 dark:text-slate-400 light:text-slate-500 pt-8 border-t border-slate-800 dark:border-slate-800 light:border-slate-200">
-        PROVENANCE · Offline MCA Registry Snapshot 2026-07-22 · Feature Branch: feature/ui-redesign
+      <footer className="mt-auto border-t border-slate-200 dark:border-slate-800/80 py-4 text-center text-xs text-slate-400 font-mono">
+        PROVENANCE · Offline MCA Company Master Data Snapshot (2026-07-22)
       </footer>
+
     </div>
   );
 }
