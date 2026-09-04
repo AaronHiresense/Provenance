@@ -74,6 +74,19 @@ Edit `frontend/src/**`, never `static/` by hand. `app.py` mounts
 Plain-language labels for every check, tier and dimension live in
 `frontend/src/labels.ts` — add an entry there when you add a validator.
 
+**Agent run trace.** `POST /api/analyze/stream` returns newline-delimited
+JSON: one `{"type":"stage", "stage", "status": running|done|skipped,
+"detail", "ms"}` event per stage transition from `pipeline.analyze_events()`,
+then a final `{"type":"result", "result": ...}` identical to `/api/analyze`.
+The UI (`hooks/useAgentRun.ts`, `components/AgentTrace.tsx`) plays those
+real events with a minimum dwell per step so they stay readable; the
+per-step millisecond figures shown are the backend's own. Never fake stages
+with timers in the UI — add an event in `analyze_events` instead.
+Animations use the `motion` package (`motion/react-m` under `LazyMotion`
+strict mode, so import `m`, not `motion`); effect primitives modelled on the
+Magic UI / 21st.dev registries live in `components/effects.tsx` and honour
+`prefers-reduced-motion`.
+
 ## LLM configuration
 
 `.env` (git-ignored; copy `.env.example`). The `.env` loader in `llm.py`
@@ -139,8 +152,8 @@ that in any new test file (that env var beats the `.env` file's key).
 ## Repo map
 
 ```
-app.py           FastAPI: /, /assets, /api/cases, /api/analyze (case | dossier | raw_text)
-pipeline.py      stage glue + display aliasing + dossier_from_raw_text
+app.py           FastAPI: /, /assets, /api/cases, /api/analyze, /api/analyze/stream (NDJSON stage events)
+pipeline.py      stage glue as analyze_events() generator (+ analyze() wrapper), display aliasing, dossier_from_raw_text
 extract.py       stage 1 (LLM extraction, injection hygiene, label-parser fallback)
 validators.py    stage 2 (22 pure checks) + run_all orchestrator
 ledger.py        stage 3 (Assertion, Finding, Ledger, tier/strength ranks)

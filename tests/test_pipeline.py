@@ -372,3 +372,21 @@ def test_raw_text_wrapping():
     checks = {f["check"] for f in r["ledger"]["findings"]}
     assert "registry_exists" in checks and "gstin_checksum" in checks
 
+
+
+def test_analyze_events_streams_stages_then_result():
+    """The streaming path must walk every stage in order and end with the
+    exact result analyze() returns, with aliases applied to events too."""
+    dossier = json.loads((CASES / "suspect_velomax.json").read_text(encoding="utf-8"))
+    events = list(pipeline.analyze_events(dossier))
+    stages = [(e["stage"], e["status"]) for e in events if e["type"] == "stage"]
+    assert [s for s, _ in stages] == ["extract", "extract", "validate", "validate",
+                                      "ledger", "ledger", "reason", "reason",
+                                      "verdict", "verdict"]
+    assert all(st in ("running", "done") for _, st in stages)
+    assert events[-1]["type"] == "result"
+    assert events[-1]["result"]["verdict"] == pipeline.analyze(dossier)["verdict"]
+    assert "BIKEBLOOM" not in json.dumps(events).upper()
+    ro = [e for e in pipeline.analyze_events(dossier, rules_only=True)
+          if e["type"] == "stage" and e["stage"] == "reason"]
+    assert ro == [ro[0]] and ro[0]["status"] == "skipped"

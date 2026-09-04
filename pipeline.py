@@ -1,8 +1,18 @@
-"""Glue: dossier -> extract -> validate -> ledger -> reason -> verdict."""
+"""Glue: dossier -> extract -> validate -> ledger -> reason -> verdict.
+
+Two entry points over the same code path:
+
+  analyze(dossier)          -> the final result dict (tests, eval, /api/analyze)
+  analyze_events(dossier)   -> a generator of stage events ending in the same
+                               result, for the streaming endpoint so the UI
+                               can show each agent's real progress rather
+                               than a timer.
+"""
 from __future__ import annotations
 
 import re
-from typing import Optional
+import time
+from typing import Iterator, Optional
 
 import registry
 import validators
@@ -41,16 +51,51 @@ def dossier_from_raw_text(text: str, case_id: str = "live-case") -> dict:
             "pasted document(s))", "documents": documents}
 
 
-def analyze(dossier: dict, rules_only: bool = False,
-            llm: Optional[LLMClient] = None) -> dict:
+STAGES = ("extract", "validate", "ledger", "reason", "verdict")
+
+
+def analyze_events(dossier: dict, rules_only: bool = False,
+                   llm: Optional[LLMClient] = None) -> Iterator[dict]:
+    """Run the pipeline, yielding one event per stage transition.
+
+    Event shape: {"type": "stage", "stage": <name>, "status": "running" |
+    "done" | "skipped", "detail": str, "ms": int, ...counts}. The last event
+    is {"type": "result", "result": <the analyze() dict>}. Every event is
+    passed through the case's display aliases, so nothing on the wire names
+    a real company the verdict may cast doubt on.
+    """
     llm = llm or LLMClient()
     case_id = dossier.get("case_id", "unknown")
+    aliases = dossier.get("display_aliases") or {}
+
+    def ev(**kw) -> dict:
+        kw.setdefault("type", "stage")
+        return _apply_aliases(kw, aliases) if aliases else kw
+
+    t0 = time.perf_counter()
+
+    def ms() -> int:
+        return int((time.perf_counter() - t0) * 1000)
 
     # stage 1 — extraction (with injection hygiene)
+    n_docs = len(dossier.get("documents", []))
+    yield ev(stage="extract", status="running", ms=ms(),
+             detail=f"Reading {n_docs} document{'s' if n_docs != 1 else ''}"
+                    f" with the {'language model' if llm.provider != 'mock' else 'offline extractor'}")
     assertions, injection_flags, extraction_meta = \
         extract_assertions(dossier, llm)
+    yield ev(stage="extract", status="done", ms=ms(),
+             detail=f"{len(assertions)} typed claims read"
+                    + (f" · {len(injection_flags)} instruction-like line"
+                       f"{'s' if len(injection_flags) != 1 else ''} stripped"
+                       if injection_flags else ""),
+             claims=len(assertions), injections=len(injection_flags),
+             engine=extraction_meta["engine"])
 
     # stage 2 + 3 — deterministic validators fill the ledger
+    yield ev(stage="validate", status="running", ms=ms(),
+             detail="Checking every claim against the MCA registry, GSTN "
+                    "rules and the logistics tables")
     led = validators.run_all(assertions)
 
     # instruction-like content inside documents is itself evidence of
@@ -66,13 +111,45 @@ def analyze(dossier: dict, rules_only: bool = False,
                    "Genuine supply-chain documents do not address the "
                    "reviewing system.",
         ))
+    n_bad = len(led.by_direction("supports_suspect"))
+    n_good = len(led.by_direction("supports_genuine"))
+    yield ev(stage="validate", status="done", ms=ms(),
+             detail=f"{len(led.findings)} checks ran · {n_bad} contradict "
+                    f"the records · {n_good} support them",
+             checks=len(led.findings), contradict=n_bad, support=n_good)
+
+    yield ev(stage="ledger", status="running", ms=ms(),
+             detail="Writing each finding with its source, strength and "
+                    "dimension")
+    yield ev(stage="ledger", status="done", ms=ms(),
+             detail=f"{len(led.findings)} findings on the ledger · highest "
+                    f"tier with signal: {led.highest_tier_with_signal() or 'none'}",
+             top_tier=led.highest_tier_with_signal())
 
     # stage 4 — LLM reasoning (skipped in rules-only mode)
     reasoning = {}
-    if not rules_only:
+    if rules_only:
+        yield ev(stage="reason", status="skipped", ms=ms(),
+                 detail="Reasoning step skipped at your request; "
+                        "deterministic rules decide alone")
+    else:
+        yield ev(stage="reason", status="running", ms=ms(),
+                 detail=f"Weighing an innocent and a forgery reading for each "
+                        f"of {n_bad} contradiction{'s' if n_bad != 1 else ''}")
         reasoning = reason_over_ledger(led, llm, case_id=case_id)
+        n_c = len(reasoning.get("contradictions", []))
+        yield ev(stage="reason", status="done", ms=ms(),
+                 detail=f"{n_c} contradiction{'s' if n_c != 1 else ''} "
+                        f"argued · recommends {reasoning.get('recommended_verdict')}"
+                        + (" (deterministic fallback)"
+                           if reasoning.get("engine") != "llm" else ""),
+                 engine=reasoning.get("engine"),
+                 recommended=reasoning.get("recommended_verdict"))
 
     # stage 5 — verdict
+    yield ev(stage="verdict", status="running", ms=ms(),
+             detail="Applying the governance rules: authoritative beats "
+                    "heuristic, tiers are never averaged")
     cin_assert = next((a for a in assertions if a.attribute == "cin"), None)
     row = registry.lookup_cin(
         validators.extract_identifier(cin_assert.value)) if cin_assert else None
@@ -81,7 +158,7 @@ def analyze(dossier: dict, rules_only: bool = False,
         registry_row_found=row is not None,
         has_identifier=cin_assert is not None,
         registry_status=(row or {}).get("status"),
-        n_documents=len(dossier.get("documents", [])),
+        n_documents=n_docs,
     )
     result["case_id"] = case_id
     result["extraction"] = extraction_meta
@@ -90,19 +167,34 @@ def analyze(dossier: dict, rules_only: bool = False,
     result["registry_row"] = row
     result["llm_provider"] = llm.provider
     result["llm_model"] = None if llm.provider == "mock" else llm.model
+    result["elapsed_ms"] = ms()
 
     # Display aliasing: cases anchored to real registry records must never
     # show a real company as a counterfeiter. The pipeline runs on real
     # values (so every registry cross-check is honest); only the response
     # the audience sees is renamed. CINs stay real so the record remains
     # independently verifiable.
-    aliases = dossier.get("display_aliases") or {}
     if aliases:
         result = _apply_aliases(result, aliases)
         result["aliased"] = True
     else:
         result["aliased"] = False
-    return result
+
+    yield ev(stage="verdict", status="done", ms=ms(),
+             detail=f"{result['verdict']}"
+                    + (f" · {result['subtype']}" if result.get("subtype") else ""),
+             verdict=result["verdict"], subtype=result.get("subtype"))
+    yield {"type": "result", "result": result}
+
+
+def analyze(dossier: dict, rules_only: bool = False,
+            llm: Optional[LLMClient] = None) -> dict:
+    """Run the whole pipeline and return the final result dict."""
+    last = None
+    for last in analyze_events(dossier, rules_only=rules_only, llm=llm):
+        pass
+    assert last is not None and last["type"] == "result"
+    return last["result"]
 
 
 def _apply_aliases(obj, aliases: dict):

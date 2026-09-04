@@ -1,8 +1,13 @@
 import { useState } from "react";
+import * as m from "motion/react-m";
+import { AnimatePresence, stagger, type Variants } from "motion/react";
 import type { AnalysisResult, Contradiction, Finding } from "../types";
 import { SOURCE_LABELS, STRENGTH_LABELS, findingLabel, firstSentence, humanize, pairReasoning, rulingLabel, splitEvidence } from "../labels";
 import { ChevronIcon } from "./Icons";
 import { Section } from "./Section";
+
+const listV: Variants = { hidden: {}, show: { transition: { delayChildren: stagger(0.1, { startDelay: 0.15 }) } } };
+const cardV: Variants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: "spring", visualDuration: 0.45, bounce: 0.2 } } };
 
 interface CardProps {
   finding: Finding;
@@ -19,7 +24,7 @@ export function FindingCard({ finding: f, reasoning: c, defaultOpen = false, sev
   const headline = contradicts ? firstSentence(f.detail) : f.assertion;
   const body = contradicts ? `Claim tested: ${f.assertion}. ${f.detail.slice(firstSentence(f.detail).length).trim()}`.trim() : f.detail;
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <m.article variants={cardV} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start gap-3.5">
         <span className={`chip mt-0.5 shrink-0 ${severity.cls}`}>{severity.text}</span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -38,7 +43,9 @@ export function FindingCard({ finding: f, reasoning: c, defaultOpen = false, sev
           </button>
         )}
       </div>
+      <AnimatePresence initial={false}>
       {c && open && (
+        <m.div key="reasoning" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: "easeOut" }} className="overflow-hidden">
         <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
           <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
             <div>
@@ -57,8 +64,10 @@ export function FindingCard({ finding: f, reasoning: c, defaultOpen = false, sev
             </div>
           )}
         </div>
+        </m.div>
       )}
-    </article>
+      </AnimatePresence>
+    </m.article>
   );
 }
 
@@ -83,14 +92,14 @@ export function WhyFindings({ result: r }: { result: AnalysisResult }) {
 
   return (
     <Section title={title} aside={aside}>
-      <div className="flex flex-col gap-2.5">
+      <m.div className="flex flex-col gap-2.5" variants={listV} initial="hidden" animate="show">
         {lead.map((f, i) => {
           const c = pairs.get(f);
           const sev = isUnv && c?.resolved_direction === "unresolved" ? { text: "Unresolved", cls: "chip-unv" } : severityFor(f);
           return <FindingCard key={`${f.check}-${i}`} finding={f} reasoning={c} defaultOpen={i === 0} severity={sev} />;
         })}
         {lead.length === 0 && <p className="text-xs text-slate-500">No directional evidence was produced for this dossier.</p>}
-      </div>
+      </m.div>
       {rest.length > 0 && (
         <div className="space-y-2.5">
           <div className="flex flex-wrap items-center gap-2.5 px-1 text-xs text-slate-600 dark:text-slate-400">
@@ -102,13 +111,15 @@ export function WhyFindings({ result: r }: { result: AnalysisResult }) {
               {showWeaker ? "Hide" : "Show"}
             </button>
           </div>
-          {showWeaker && (
-            <div className="flex flex-col gap-2.5">
-              {rest.map((f, i) => (
-                <FindingCard key={`${f.check}-w${i}`} finding={f} reasoning={pairs.get(f)} severity={severityFor(f)} />
-              ))}
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {showWeaker && (
+              <m.div key="weaker" className="flex flex-col gap-2.5 overflow-hidden" variants={listV} initial="hidden" animate="show" exit={{ opacity: 0, height: 0 }}>
+                {rest.map((f, i) => (
+                  <FindingCard key={`${f.check}-w${i}`} finding={f} reasoning={pairs.get(f)} severity={severityFor(f)} />
+                ))}
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
       {r.reasoning && !r.rules_only && r.reasoning.narrative && (

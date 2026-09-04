@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 import { api } from "./api";
 import type { AnalysisResult, CaseSummary, Dossier } from "./types";
 import { useTheme } from "./hooks/useTheme";
+import { useAgentRun } from "./hooks/useAgentRun";
 import { TopBar } from "./components/TopBar";
 import { InputPanel, type InputMode } from "./components/InputPanel";
 import { CaseGrid } from "./components/CaseGrid";
+import { AgentTrace } from "./components/AgentTrace";
 import { VerdictCard } from "./components/VerdictCard";
 import { Actions } from "./components/Actions";
 import { WhyFindings } from "./components/Findings";
@@ -12,7 +16,6 @@ import { Notices } from "./components/Notices";
 import { AllChecks } from "./components/AllChecks";
 import { CouldNotCheck } from "./components/CouldNotCheck";
 import { SourceDocs } from "./components/SourceDocs";
-import { SpinnerIcon } from "./components/Icons";
 
 export default function App() {
   const [theme, toggleTheme] = useTheme();
@@ -23,14 +26,15 @@ export default function App() {
   const [rawText, setRawText] = useState("");
   const [jsonText, setJsonText] = useState("");
   const [rulesOnly, setRulesOnly] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [resultDossier, setResultDossier] = useState<Dossier | null>(null);
   // Bumped per analysis so every result section mounts fresh (no open/closed
   // state leaking from the previous run).
   const [runId, setRunId] = useState(0);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const agent = useAgentRun();
+  const busy = agent.running;
+  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     api
@@ -90,9 +94,10 @@ export default function App() {
         body = { dossier: parsed, rules_only: rulesOnly };
         docsForResult = parsed;
       }
-      setBusy(true);
+      setResult(null);
+      requestAnimationFrame(() => mainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
       try {
-        const r = await api.analyze(body);
+        const r = await agent.start(body);
         if (override?.file && override.file !== selectedCase) {
           docsForResult = await api.dossier(override.file).catch(() => null);
           setSelectedCase(override.file);
@@ -100,19 +105,18 @@ export default function App() {
         setResult(r);
         setResultDossier(docsForResult);
         setRunId((n) => n + 1);
-        requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
       } catch (e) {
         setError((e as Error).message);
-      } finally {
-        setBusy(false);
       }
     },
-    [mode, selectedCase, dossier, rawText, jsonText, rulesOnly],
+    [mode, selectedCase, dossier, rawText, jsonText, rulesOnly, agent],
   );
+
+  const showTrace = busy || result !== null;
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar theme={theme} onToggleTheme={toggleTheme} result={result} />
+      <TopBar theme={theme} onToggleTheme={toggleTheme} result={result} busy={busy} />
 
       <main className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-start gap-6 p-4 sm:p-6 lg:grid-cols-12 lg:gap-8 lg:p-8">
         <aside className="space-y-4 lg:sticky lg:top-20 lg:col-span-4">
@@ -135,31 +139,34 @@ export default function App() {
           />
         </aside>
 
-        <section className="space-y-7 lg:col-span-8" ref={resultRef} aria-live="polite">
-          {busy && (
-            <div className="panel flex items-center gap-3 px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
-              <SpinnerIcon className="h-4 w-4" />
-              Checking every claim against the registry{rulesOnly ? "" : ", then reasoning over the contradictions"}…
-            </div>
-          )}
+        <section className="scroll-mt-20 space-y-7 lg:col-span-8" ref={mainRef} aria-live="polite">
+          {showTrace && <AgentTrace steps={agent.steps} running={agent.running} elapsedMs={agent.elapsedMs} />}
 
-          {!result && !busy && <CaseGrid cases={cases} selected={selectedCase} onPick={(f) => setSelectedCase(f)} onRun={(f) => run({ file: f })} busy={busy} />}
+          {/* No exit animations here: the next view must mount even when the
+              tab is hidden and animation frames are paused. */}
+          <AnimatePresence initial={false}>
+            {!result && !busy && (
+              <m.div key="grid" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                <CaseGrid cases={cases} selected={selectedCase} onPick={(f) => setSelectedCase(f)} onRun={(f) => run({ file: f })} busy={busy} />
+              </m.div>
+            )}
 
-          {result && (
-            <div key={runId} className="space-y-7">
-              <VerdictCard result={result} />
-              <Actions actions={result.actions} />
-              <WhyFindings result={result} />
-              <Notices result={result} />
-              <AllChecks result={result} />
-              <CouldNotCheck result={result} />
-              <SourceDocs dossier={resultDossier} result={result} />
-            </div>
-          )}
+            {result && (
+              <m.div key={`run-${runId}`} className="space-y-7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+                <VerdictCard result={result} />
+                <Actions actions={result.actions} />
+                <WhyFindings result={result} />
+                <Notices result={result} />
+                <AllChecks result={result} />
+                <CouldNotCheck result={result} />
+                <SourceDocs dossier={resultDossier} result={result} />
+              </m.div>
+            )}
+          </AnimatePresence>
         </section>
       </main>
 
-      <footer className="mt-auto border-t border-slate-200 py-4 text-center font-mono text-[11px] text-slate-400 dark:border-slate-800/80">
+      <footer className="mt-auto border-t border-slate-200 py-4 text-center font-mono text-[11px] text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
         PROVENANCE · offline MCA registry, snapshot 22 Jul 2026 · every verdict ships with its evidence
       </footer>
     </div>

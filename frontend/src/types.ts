@@ -78,7 +78,36 @@ export interface AnalysisResult {
   llm_provider: "mock" | "anthropic" | "openai_compat";
   llm_model: string | null;
   aliased: boolean;
+  elapsed_ms?: number;
 }
+
+export type Stage = "extract" | "validate" | "ledger" | "reason" | "verdict";
+export type StageStatus = "running" | "done" | "skipped";
+
+/** One line of the NDJSON stream from /api/analyze/stream. */
+export interface StageEvent {
+  type: "stage";
+  stage: Stage;
+  status: StageStatus;
+  detail: string;
+  ms: number;
+  claims?: number;
+  injections?: number;
+  checks?: number;
+  contradict?: number;
+  support?: number;
+  engine?: string;
+  recommended?: Verdict;
+  verdict?: Verdict;
+  subtype?: Subtype;
+}
+
+export interface ResultEvent {
+  type: "result";
+  result: AnalysisResult;
+}
+
+export type StreamEvent = StageEvent | ResultEvent;
 
 export interface CaseSummary {
   file: string;

@@ -118,7 +118,7 @@ export function InputPanel(p: Props) {
       <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800/80">
         <label htmlFor="rulesOnly" className="text-xs font-medium text-slate-600 dark:text-slate-400">
           Skip the reasoning step
-          <span className="block text-[11px] font-normal text-slate-400">Deterministic checks only</span>
+          <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">Deterministic checks only</span>
         </label>
         <button
           id="rulesOnly"

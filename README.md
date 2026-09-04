@@ -105,6 +105,11 @@ what this run could not check. Pick a bundled case from the grid, paste
 document text, or paste a dossier JSON; flip **Skip the reasoning step** to
 run stage 2 alone. Light and dark themes follow the OS setting.
 
+Every run shows the agents working: the extraction agent, the validators,
+the ledger, the reasoning agent and the verdict step light up in turn as the
+backend streams real stage events (`/api/analyze/stream`), each with its own
+measured time, before the verdict lands.
+
 To change the UI, edit `frontend/src` and rebuild (`cd frontend && npm install
 && npm run build`); the compiled bundle in `static/` is committed so the demo
 never needs Node or a network.

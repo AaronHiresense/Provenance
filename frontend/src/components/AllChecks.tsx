@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 import type { AnalysisResult, Dimension, Finding } from "../types";
 import { GROUPS, RESULT_LABELS, SOURCE_LABELS, STRENGTH_LABELS, byConsequence, findingLabel, pairReasoning, resultKind, rulingLabel } from "../labels";
 import { ChevronIcon } from "./Icons";
@@ -29,8 +31,10 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
           </div>
         </button>
       </div>
+      <AnimatePresence initial={false}>
       {open && (
-        <div className="col-span-4 space-y-2 bg-slate-50/70 px-3 pt-1 pb-3.5 text-xs dark:bg-slate-950/40">
+        <m.div key="detail" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: "easeOut" }} className="col-span-4 overflow-hidden">
+        <div className="space-y-2 bg-slate-50/70 px-3 pt-1 pb-3.5 text-xs dark:bg-slate-950/40">
           <p className="text-slate-700 dark:text-slate-300">{f.detail}</p>
           <p className="font-mono text-[11px] text-slate-500">
             {f.result}
@@ -53,7 +57,9 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
             </div>
           )}
         </div>
+        </m.div>
       )}
+      </AnimatePresence>
     </>
   );
 }
@@ -111,7 +117,9 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
                 </span>
                 <span className={`chip ${bad ? "chip-sus" : good ? "chip-gen" : "chip-neu"}`}>{bad ? `${bad} contradict${bad === 1 ? "s" : ""}` : good ? `${good} support${good === 1 ? "s" : ""}` : "no signal"}</span>
               </button>
+              <AnimatePresence initial={false}>
               {open && (
+                <m.div key="table" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="overflow-hidden">
                 <div className="overflow-x-auto">
                   <div role="table" className="grid min-w-[640px] grid-cols-[1fr_130px_150px_40px]">
                     <div role="row" className="contents">
@@ -126,7 +134,9 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
                     ))}
                   </div>
                 </div>
+                </m.div>
               )}
+              </AnimatePresence>
             </div>
           );
         })}

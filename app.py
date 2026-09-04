@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -85,8 +85,7 @@ def get_case(name: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
-@app.post("/api/analyze")
-def analyze(req: AnalyzeRequest) -> dict:
+def _dossier_from_request(req: AnalyzeRequest) -> dict:
     if req.raw_text is not None:
         if len(req.raw_text) > 200_000:
             raise HTTPException(422, "raw_text too large (200KB max)")
@@ -100,4 +99,25 @@ def analyze(req: AnalyzeRequest) -> dict:
         raise HTTPException(422, "provide 'case', 'dossier', or 'raw_text'")
     if not isinstance(dossier.get("documents"), list):
         raise HTTPException(422, "dossier must contain a 'documents' list")
-    return pipeline.analyze(dossier, rules_only=req.rules_only)
+    return dossier
+
+
+@app.post("/api/analyze")
+def analyze(req: AnalyzeRequest) -> dict:
+    return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only)
+
+
+@app.post("/api/analyze/stream")
+def analyze_stream(req: AnalyzeRequest) -> StreamingResponse:
+    """Same pipeline, but one newline-delimited JSON event per stage
+    transition so the UI can show each agent's real progress. The last line
+    carries the full result exactly as /api/analyze would return it."""
+    dossier = _dossier_from_request(req)
+
+    def lines():
+        for event in pipeline.analyze_events(dossier, rules_only=req.rules_only):
+            yield json.dumps(event, default=str) + "\n"
+
+    return StreamingResponse(lines(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})

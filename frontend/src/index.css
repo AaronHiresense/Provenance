@@ -86,3 +86,91 @@ body {
   border: 2px solid transparent;
   background-clip: content-box;
 }
+
+/* ---------- motion primitives (see components/effects.tsx) ---------- */
+
+/* Shimmer: a highlight sweeping across text while a step is running. */
+.shimmer-text {
+  background-image: linear-gradient(110deg, #64748b 35%, #1d4ed8 50%, #64748b 65%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+html.dark .shimmer-text {
+  background-image: linear-gradient(110deg, #94a3b8 35%, #93c5fd 50%, #94a3b8 65%);
+}
+@keyframes shimmer {
+  from {
+    background-position: 250% 0;
+  }
+  to {
+    background-position: -250% 0;
+  }
+}
+
+/* Border beam: a light travelling around a card's edge along its rectangle. */
+.border-beam {
+  /* Two masks composited with "exclude" leave only a 2px ring (border +
+     padding) visible, so the travelling light reads as a thin edge. The
+     unprefixed properties are enough for every current engine; a later
+     -webkit-mask shorthand would reset mask-composite, so none is used. */
+  border: 1px solid transparent;
+  padding: 1px;
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-clip: content-box, border-box;
+  mask-composite: exclude;
+}
+.border-beam-light {
+  position: absolute;
+  width: var(--beam-size);
+  aspect-ratio: 1;
+  background: linear-gradient(to left, var(--beam-color), transparent);
+  offset-path: rect(0 auto auto 0 round var(--beam-radius));
+  offset-anchor: 100% 50%;
+  animation: border-beam var(--beam-duration) linear infinite;
+}
+@keyframes border-beam {
+  to {
+    offset-distance: 100%;
+  }
+}
+
+/* Spotlight: a radial glow that follows the pointer over the verdict card. */
+.spotlight {
+  --spot-x: 30%;
+  --spot-y: 40%;
+  --spot-opacity: 0.55;
+  background: radial-gradient(420px circle at var(--spot-x) var(--spot-y), var(--spot-color), transparent 60%);
+  opacity: var(--spot-opacity);
+  transition: opacity 0.4s ease;
+}
+
+/* Aurora: slow drifting colour behind the verdict card. */
+.aurora {
+  background: radial-gradient(60% 80% at 20% 30%, var(--aurora-a), transparent 60%), radial-gradient(50% 70% at 80% 70%, var(--aurora-b), transparent 60%);
+  background-size: 160% 160%;
+  animation: aurora 14s ease-in-out infinite alternate;
+  filter: blur(24px);
+}
+@keyframes aurora {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    animation: none;
+    color: inherit;
+    background: none;
+  }
+  .border-beam-light,
+  .aurora {
+    animation: none;
+  }
+}
