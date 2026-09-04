@@ -1,0 +1,68 @@
+{
+ "runs": 306,
+ "stats": {
+  "cin_typo": {
+   "held": 19,
+   "degraded_ok": 26,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 0
+  },
+  "date_swap": {
+   "held": 18,
+   "degraded_ok": 21,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 6
+  },
+  "field_reorder": {
+   "held": 42,
+   "degraded_ok": 3,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 0
+  },
+  "doc_drop": {
+   "held": 33,
+   "degraded_ok": 6,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 6
+  },
+  "field_delete": {
+   "held": 33,
+   "degraded_ok": 3,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 9
+  },
+  "state_swap": {
+   "held": 21,
+   "degraded_ok": 24,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 0
+  },
+  "spec_swap": {
+   "held": 6,
+   "degraded_ok": 6,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 33
+  },
+  "inject_novel": {
+   "held": 42,
+   "degraded_ok": 3,
+   "FALSE_GENUINE": 0,
+   "crash": 0,
+   "skipped": 0
+  }
+ },
+ "false_genuine": 0,
+ "crashes": 0,
+ "injection_catch": [
+  21,
+  45
+ ],
+ "red_cells": []
+}

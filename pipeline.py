@@ -81,6 +81,7 @@ def analyze(dossier: dict, rules_only: bool = False,
         registry_row_found=row is not None,
         has_identifier=cin_assert is not None,
         registry_status=(row or {}).get("status"),
+        n_documents=len(dossier.get("documents", [])),
     )
     result["case_id"] = case_id
     result["extraction"] = extraction_meta

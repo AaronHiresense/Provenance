@@ -68,7 +68,8 @@ def _cannot_determine(led: Ledger) -> list:
 def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
            registry_row_found: bool = True,
            has_identifier: bool = True,
-           registry_status: str = None) -> dict:
+           registry_status: str = None,
+           n_documents: int = None) -> dict:
     """Combine the ledger (always) and the reasoning stage (unless
     rules_only) into exactly one verdict."""
     directional = [f for f in led.findings if f.direction != "neutral"]
@@ -97,6 +98,15 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         interim_action = ("Quarantine the lot and request the supplier's "
                           "certificate of incorporation before any further "
                           "movement.")
+    elif n_documents is not None and n_documents < 2 and not strong_suspect:
+        # one document is not a paper trail: no single paper, however
+        # internally consistent, can support GENUINE — and this holds
+        # regardless of how generously extraction read that one paper
+        verdict, subtype = "UNVERIFIABLE", "insufficient"
+        missing_artefact = _most_valuable_missing(led)
+        interim_action = ("Request the rest of the paper trail (invoice, "
+                          "dispatch note) from the supplier; hold the lot "
+                          "meanwhile.")
     elif not registry_row_found and not [
             f for f in suspect if f.check != "registry_exists"
             and f.source_tier != "heuristic"]:
@@ -123,11 +133,16 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
                           "resolved.")
     elif auth_suspect:
         verdict = "SUSPECT"
-    elif len(directional) < 3 or \
-            all(f.dimension == "identity" for f in directional):
+    elif not strong_suspect and (lambda meaningful: len(meaningful) < 3 or all(
+            f.dimension == "identity" for f in meaningful))(
+            [f for f in directional if f.source_tier != "heuristic"]):
         # a real supplier identity does not certify the goods in this
-        # shipment: without at least one certification/provenance/custody
-        # finding, the dossier cannot support GENUINE
+        # shipment: without at least one non-heuristic certification/
+        # provenance/custody finding, the dossier cannot support GENUINE.
+        # Coverage is measured on non-heuristic findings only — otherwise
+        # an injected hostile line (a heuristic injection_screen finding)
+        # could "widen" the evidence and unlock a GENUINE (found by the
+        # mutation harness).
         verdict, subtype = "UNVERIFIABLE", "insufficient"
         missing_artefact = _most_valuable_missing(led)
         interim_action = ("Request the missing document from the supplier; "

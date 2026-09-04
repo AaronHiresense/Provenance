@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Certificate prop — print me</title>
+<style>
+  @page { size: A4; margin: 18mm; }
+  body { font-family: "Times New Roman", Georgia, serif; color: #111;
+         background: #fff; max-width: 640px; margin: 24px auto; }
+  .frame { border: 3px double #333; padding: 36px 44px; }
+  h1 { text-align: center; font-size: 22px; letter-spacing: 3px; margin: 0 0 4px; }
+  .co { text-align: center; font-size: 15px; margin-bottom: 22px; }
+  .co b { font-size: 17px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 18px 0; }
+  td { padding: 6px 4px; border-bottom: 1px solid #bbb; vertical-align: top; }
+  td:first-child { width: 38%; color: #444; }
+  .decl { font-size: 13.5px; margin-top: 16px; line-height: 1.6; }
+  .sig { display: flex; justify-content: space-between; margin-top: 44px; font-size: 13px; }
+  .sig div { text-align: center; }
+  .sig .line { border-top: 1px solid #333; width: 180px; margin-bottom: 4px; }
+  .note { color: #888; font-size: 11px; text-align: center; margin-top: 26px;
+          font-family: Arial, sans-serif; }
+  @media print { .note { display: none; } body { margin: 0; } }
+</style>
+</head>
+<body>
+<div class="frame">
+  <h1>CERTIFICATE OF CONFORMITY</h1>
+  <div class="co"><b>MERIDIAN AUTO INDIA PRIVATE LIMITED</b><br>
+  Okhla Industrial Estate, New Delhi</div>
+  <table>
+    <tr><td>CIN</td><td>U74900DL1994PTC057980</td></tr>
+    <tr><td>State</td><td>Delhi</td></tr>
+    <tr><td>Part Number</td><td>SA-0663 — Lower suspension arms (pack of 20)</td></tr>
+    <tr><td>Certificate No</td><td>MAI-COC-4402</td></tr>
+    <tr><td>Certificate Date</td><td>15 January 2026</td></tr>
+    <tr><td>Applicable Standard</td><td>AIS-041</td></tr>
+  </table>
+  <p class="decl">We hereby certify that the above-referenced suspension arms
+  conform to AIS-041 and were manufactured at our Okhla plant under our
+  quality management system. This certificate accompanies lot MAI-251210-00305.</p>
+  <div class="sig">
+    <div><div class="line"></div>Quality Manager</div>
+    <div><div class="line"></div>Authorised Signatory</div>
+  </div>
+</div>
+<p class="note">DEMO PROP — company name is an alias; the CIN is a real registry
+record whose status is Strike Off. Print 3 copies; hand to jurors during the
+cold open, then run the "Meridian Auto India" case from the case library.
+This footer does not print.</p>
+</body>
+</html>
