@@ -6,7 +6,8 @@ every claim against India's MCA company registry (3.67M companies, DuckDB)
 and a battery of deterministic validators, then reasons to exactly one
 verdict: **GENUINE · SUSPECT · UNVERIFIABLE**.
 
-Fully offline. Python 3.14 · FastAPI · DuckDB · vanilla HTML/JS.
+Fully offline. Python 3.12+ · FastAPI · DuckDB · React (Vite + TypeScript +
+Tailwind, compiled into `static/` and committed, so running needs Python only).
 
 ## Quick start
 
@@ -96,10 +97,17 @@ server. Three provider modes:
 
 ## UI
 
-Select a bundled case or paste a brand-new dossier JSON (live jury testing),
-optionally flip **rules-only** to skip stage 4. The ledger fills in row by
-row, followed by the verdict card, reasoning trace, injection warnings, and
-the Known Limits panel.
+The verdict comes first: one plain sentence, the actions for each desk
+(distributor, OEM, service), then the findings that decided it, strongest
+first, with the reasoner's innocent and forgery readings one click away.
+Every check is listed below that, grouped by what it examined, followed by
+what this run could not check. Pick a bundled case from the grid, paste
+document text, or paste a dossier JSON; flip **Skip the reasoning step** to
+run stage 2 alone. Light and dark themes follow the OS setting.
+
+To change the UI, edit `frontend/src` and rebuild (`cd frontend && npm install
+&& npm run build`); the compiled bundle in `static/` is committed so the demo
+never needs Node or a network.
 
 ## Calibration
 

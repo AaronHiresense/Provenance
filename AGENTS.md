@@ -5,7 +5,8 @@ Guidance for coding agents (and humans) working in this repository.
 ## What this is
 
 A counterfeit auto-parts **documents & records** investigator (Quessathon
-Challenge 07). FastAPI backend + vanilla single-page UI. A 5-stage pipeline
+Challenge 07). FastAPI backend + React single-page UI (Vite + TypeScript +
+Tailwind, compiled into `static/`). A 5-stage pipeline
 turns a dossier of supply-chain documents into exactly one verdict:
 GENUINE · SUSPECT · UNVERIFIABLE(missing|inaccessible|contradictory|insufficient).
 Runs fully offline against a local DuckDB copy of the MCA company registry.
@@ -53,7 +54,25 @@ python eval.py --live                     # same, with the configured LLM
 ```
 
 **No `--reload`:** restart uvicorn after editing any `.py` file.
-`static/index.html` is served fresh per request — no restart needed.
+
+## Frontend (React)
+
+The UI source lives in `frontend/` and is compiled into `static/` — the
+compiled output IS committed, so a fresh clone runs with Python alone and no
+network (AGENTS invariant 8: React, Tailwind and the Inter / JetBrains Mono
+fonts are all bundled, nothing loads from a CDN).
+
+```bash
+cd frontend
+npm install                 # once (Node 20+)
+npm run dev                 # Vite dev server on :5173, proxies /api to :8321
+npm run build               # typecheck + build -> ../static  (commit the result)
+```
+
+Edit `frontend/src/**`, never `static/` by hand. `app.py` mounts
+`static/assets` for the hashed bundles and serves `static/index.html` at `/`.
+Plain-language labels for every check, tier and dimension live in
+`frontend/src/labels.ts` — add an entry there when you add a validator.
 
 ## LLM configuration
 
@@ -120,7 +139,7 @@ that in any new test file (that env var beats the `.env` file's key).
 ## Repo map
 
 ```
-app.py           FastAPI: /, /api/cases, /api/analyze (case | dossier | raw_text)
+app.py           FastAPI: /, /assets, /api/cases, /api/analyze (case | dossier | raw_text)
 pipeline.py      stage glue + display aliasing + dossier_from_raw_text
 extract.py       stage 1 (LLM extraction, injection hygiene, label-parser fallback)
 validators.py    stage 2 (22 pure checks) + run_all orchestrator
@@ -129,7 +148,8 @@ reason.py        stage 4 (LLM benign-vs-malicious, deterministic fallback)
 verdict.py       stage 5 (verdict + subtype + work order + actions + limits)
 llm.py           provider wrapper (anthropic-compatible | openai_compat | mock) + .env loader
 registry.py      DuckDB access + GST state alias map
-static/index.html   the whole UI (vanilla, offline, dark)
+frontend/        React UI source (Vite + TS + Tailwind); `npm run build` -> static/
+static/          compiled UI (committed; never edit by hand)
 cases/           15 demo dossiers with expected verdicts
 mocks/           cached LLM JSON for mock mode (extract_<case>, reason_<case>)
 tests/           pytest suites (validators + end-to-end pipeline)

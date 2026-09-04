@@ -1,5 +1,6 @@
-"""PROVENANCE — FastAPI backend. Fully offline: serves the vanilla single-page
-UI from static/ and exposes the analysis pipeline.
+"""PROVENANCE — FastAPI backend. Fully offline: serves the compiled React
+single-page UI from static/ (built by `npm run build` in frontend/) and
+exposes the analysis pipeline.
 
 Run:  python -m uvicorn app:app --port 8321
 """
@@ -11,6 +12,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import pipeline
@@ -19,6 +21,12 @@ BASE = Path(__file__).resolve().parent
 CASES_DIR = BASE / "cases"
 
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
+
+# Hashed JS/CSS/font bundles emitted by the frontend build. Guarded so the API
+# still starts on a clone that has not built the UI yet.
+_ASSETS = BASE / "static" / "assets"
+if _ASSETS.is_dir():
+    app.mount("/assets", StaticFiles(directory=_ASSETS), name="assets")
 
 
 @app.on_event("startup")
@@ -59,9 +67,13 @@ def list_cases() -> list:
             d = json.loads(p.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError:
             continue
+        expected = d.get("expected") or {}
         out.append({"file": p.stem, "case_id": d.get("case_id", p.stem),
                     "title": d.get("title", p.stem),
-                    "documents": len(d.get("documents", []))})
+                    "documents": len(d.get("documents", [])),
+                    # the case's own expected verdict, shown on the case grid
+                    "expected": expected.get("verdict"),
+                    "aliased": bool(d.get("display_aliases"))})
     return out
 
 
