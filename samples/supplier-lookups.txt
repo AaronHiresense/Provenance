@@ -1,0 +1,7 @@
+Identifiers to try in the Supplier lookup mode (type one, press Enter):
+
+U29309TN1997PTC039462   HSI Automotives Private Limited, Tamil Nadu, active manufacturer since 1997
+U29309TN1998PLC040717   Bonfiglioli Transmissions Limited, Tamil Nadu, active
+ACY-8688                Norde Automa LLP (an LLPIN: no NIC or state encoding, so some checks abstain)
+U29100MH2015PTC999999   Not in the registry snapshot: reported as a gap, never as proof
+33AABCH4501R1ZK         A GST number on its own: checksum, state code and embedded PAN only

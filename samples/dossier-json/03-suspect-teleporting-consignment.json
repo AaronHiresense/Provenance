@@ -1,0 +1,24 @@
+{
+  "case_id": "suspect_teleport",
+  "title": "Brake caliper lot BC-3310 \u2014 the teleporting consignment",
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2025-08-02",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BC-3310\nCertificate No: HSI-COC-37001\nCertificate Date: 2025-08-02\nStandard: IS 15100\nBIS Licence: CM/L-7411032\nWe certify these brake caliper assemblies were produced at our Sriperumbudur plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2025-08-09",
+      "text": "TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\nState: Tamil Nadu\nInvoice No: HSI/2025/04981\nInvoice Date: 2025-08-09\nPart Number: BC-3310\nHSN Code: 8544\nLot Code: SPB-250728-00167\nQty: 40 units front brake caliper assemblies"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "eway_bill",
+      "date": "2025-08-09",
+      "text": "E-WAY BILL SUMMARY\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nPart Number: BC-3310\nLot Code: SPB-250728-00167\nRoute From: Chennai\nDestination: Delhi\nDistance: 2200 km\nEway Validity: 1\nManufacturing Date: 2025-07-28\nShip Date: 2025-08-09\nCarrier: RapidWheel Roadways"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 /* Fonts are bundled from node_modules so the built app needs no network. */
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/manrope";
 @import "tailwindcss";
 
 /* Theme is a class on <html> ("dark" / "light"), set before React mounts. */
@@ -9,6 +10,7 @@
 @theme {
   --font-sans: "Inter Variable", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "Cascadia Code", Consolas, monospace;
+  --font-display: "Manrope Variable", "Inter Variable", "Segoe UI", system-ui, sans-serif;
 }
 
 html {
@@ -200,4 +202,47 @@ html.dark .shimmer-text {
   .aurora {
     animation: none;
   }
+}
+
+/* ---------- briefing surface: a records desk ---------- */
+
+/* Ruled paper fading out below the composer, and one soft lamp of light over
+   the headline. Deliberately not a colour wash: this is a desk with documents
+   on it, not a launchpad. */
+.desk-rule {
+  background-image: linear-gradient(to bottom, color-mix(in oklab, #0f172a 7%, transparent) 1px, transparent 1px);
+  background-size: 100% 28px;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 78%);
+}
+html.dark .desk-rule {
+  background-image: linear-gradient(to bottom, color-mix(in oklab, #e2e8f0 9%, transparent) 1px, transparent 1px);
+}
+.desk-lamp {
+  background: radial-gradient(52% 38% at 22% 0%, color-mix(in oklab, #1d4ed8 13%, transparent) 0%, color-mix(in oklab, #1d4ed8 5%, transparent) 40%, transparent 72%);
+}
+html.dark .desk-lamp {
+  background: radial-gradient(52% 38% at 22% 0%, color-mix(in oklab, #60a5fa 14%, transparent) 0%, transparent 70%);
+}
+
+/* The composer: a solid card with a document-header strip, not glass. */
+.sheet {
+  @apply rounded-xl border border-slate-300/80 bg-white dark:border-slate-700 dark:bg-slate-900;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 32px -20px rgba(15, 23, 42, 0.25);
+}
+html.dark .sheet {
+  box-shadow: 0 12px 32px -20px rgba(0, 0, 0, 0.7);
+}
+.sheet-head {
+  @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 dark:border-slate-800 dark:bg-slate-950/60;
+}
+/* Underline tabs: the document-header vocabulary, not a pill segment. */
+.utab {
+  @apply relative -mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-1 py-3 text-xs font-medium text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white;
+}
+.utab[aria-selected="true"],
+.utab[aria-pressed="true"] {
+  @apply border-slate-900 text-slate-900 dark:border-white dark:text-white;
+}
+.font-display {
+  font-family: var(--font-display);
 }

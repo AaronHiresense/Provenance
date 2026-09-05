@@ -62,7 +62,10 @@ export default function App() {
       } else if (input.kind === "raw") {
         const n = input.text.split(/^\s*-{3,}\s*$/m).filter((s) => s.trim()).length;
         body = { raw_text: input.text, case_id: `live-${Date.now().toString(36)}`, rules_only: rulesOnly };
-        title = `Pasted paperwork · ${n} document${n === 1 ? "" : "s"}`;
+        const lookup = /^SUPPLIER LOOKUP\b/.exec(input.text);
+        title = lookup
+          ? `Supplier lookup · ${(input.text.split("\n")[1] ?? "").replace(/^\w+:\s*/, "")}`.trim()
+          : `Pasted paperwork · ${n} document${n === 1 ? "" : "s"}`;
       } else {
         body = { dossier: input.dossier, rules_only: rulesOnly };
         title = input.dossier.title ?? input.dossier.case_id ?? "Pasted dossier";

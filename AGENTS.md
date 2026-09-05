@@ -87,6 +87,14 @@ and "awaiting" items in localStorage; the desk preference lives there too.
 `preflight.PLAN` must mirror `validators.run_all()` — `tests/test_preflight.py`
 fails when a validator is added without a plan entry.
 
+**Three ways to start** (components/Briefing.tsx, after the HireTap agentic
+brief screen): Paperwork (paste or drop documents), Supplier lookup (a CIN,
+LLPIN or GST number becomes a one-line `SUPPLIER LOOKUP` document so the
+identity checks run alone), and Dossier JSON. All three read live through
+/api/preflight before the run. One prepared lot is recommended at a time
+(refreshable); the full list, recent lots and lots waiting on documents sit
+in the activity strip below the composer.
+
 **Agent run trace.** `POST /api/analyze/stream` returns newline-delimited
 JSON: one `{"type":"stage", "stage", "status": running|done|skipped,
 "detail", "ms"}` event per stage transition from `pipeline.analyze_events()`,

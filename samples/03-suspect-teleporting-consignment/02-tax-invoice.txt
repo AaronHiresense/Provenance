@@ -1,0 +1,11 @@
+TAX INVOICE
+Supplier: HSI AUTOMOTIVES PRIVATE LIMITED
+CIN: U29309TN1997PTC039462
+GSTIN: 33AABCH4501R1ZK
+State: Tamil Nadu
+Invoice No: HSI/2025/04981
+Invoice Date: 2025-08-09
+Part Number: BC-3310
+HSN Code: 8544
+Lot Code: SPB-250728-00167
+Qty: 40 units front brake caliper assemblies

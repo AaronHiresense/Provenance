@@ -1,0 +1,18 @@
+{
+  "case_id": "genuine_norde_llp",
+  "title": "Cable harness lot CH-0912 \u2014 Norde Automa LLP (abstention showcase)",
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2026-07-15",
+      "text": "CERTIFICATE OF CONFORMITY\nManufacturer: NORDE AUTOMA LLP\nCIN: ACY-8688\nState: Gujarat\nRole: manufacturer\nPart Number: CH-0912\nCertificate No: NAL-COC-0017\nCertificate Date: 2026-07-15\nWe certify these cable harness sets were assembled at our Ahmedabad unit to customer drawing rev C."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "dispatch_note",
+      "date": "2026-07-18",
+      "text": "DISPATCH NOTE\nCompany: NORDE AUTOMA LLP\nPart Number: CH-0912\nLot Code: NAL-260705-00042\nManufacturing Date: 2026-07-05\nShip Date: 2026-07-18\nCarrier: Gujarat Line Haul, Ahmedabad"
+    }
+  ]
+}

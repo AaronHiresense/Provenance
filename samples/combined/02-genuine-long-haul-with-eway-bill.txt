@@ -1,0 +1,36 @@
+CERTIFICATE OF CONFORMITY
+Manufacturer: HSI AUTOMOTIVES PRIVATE LIMITED
+CIN: U29309TN1997PTC039462
+State: Tamil Nadu
+Role: manufacturer
+Part Number: BC-2209
+Certificate No: HSI-COC-37002
+Certificate Date: 2025-08-01
+Standard: IS 15100
+BIS Licence: CM/L-7411032
+We certify these brake caliper assemblies were produced at our Sriperumbudur plant.
+---
+TAX INVOICE
+Supplier: HSI AUTOMOTIVES PRIVATE LIMITED
+CIN: U29309TN1997PTC039462
+GSTIN: 33AABCH4501R1ZK
+State: Tamil Nadu
+Invoice No: HSI/2025/04985
+Invoice Date: 2025-08-07
+Part Number: BC-2209
+HSN Code: 8708
+Lot Code: SPB-250725-00162
+Qty: 40 units front brake caliper assemblies
+---
+E-WAY BILL SUMMARY
+Company: HSI AUTOMOTIVES PRIVATE LIMITED
+Part Number: BC-2209
+Lot Code: SPB-250725-00162
+Route From: Chennai
+Destination: Delhi
+Distance: 2180 km
+Eway Validity: 12
+Manufacturing Date: 2025-07-25
+Ship Date: 2025-08-07
+Dispatch From: Tamil Nadu
+Carrier: BlueDart Surface, Chennai hub

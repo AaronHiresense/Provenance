@@ -1,0 +1,12 @@
+E-WAY BILL SUMMARY
+Company: HSI AUTOMOTIVES PRIVATE LIMITED
+Part Number: BC-2209
+Lot Code: SPB-250725-00162
+Route From: Chennai
+Destination: Delhi
+Distance: 2180 km
+Eway Validity: 12
+Manufacturing Date: 2025-07-25
+Ship Date: 2025-08-07
+Dispatch From: Tamil Nadu
+Carrier: BlueDart Surface, Chennai hub

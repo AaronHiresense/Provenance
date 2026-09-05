@@ -82,3 +82,30 @@ export const SunIcon = (p: P) => (
     <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
   </Icon>
 );
+
+export const BracesIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M8 3H7a2 2 0 00-2 2v4a2 2 0 01-2 2 2 2 0 012 2v4a2 2 0 002 2h1M16 3h1a2 2 0 012 2v4a2 2 0 002 2 2 2 0 00-2 2v4a2 2 0 01-2 2h-1" />
+  </Icon>
+);
+export const RefreshIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M21 12a9 9 0 11-2.64-6.36M21 3v6h-6" />
+  </Icon>
+);
+export const ArrowRightIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </Icon>
+);
+export const ClockIcon = (p: P) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Icon>
+);
+export const BuildingIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M4 21h16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4" />
+  </Icon>
+);

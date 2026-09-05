@@ -1,0 +1,11 @@
+E-WAY BILL SUMMARY
+Company: HSI AUTOMOTIVES PRIVATE LIMITED
+Part Number: BC-3310
+Lot Code: SPB-250728-00167
+Route From: Chennai
+Destination: Delhi
+Distance: 2200 km
+Eway Validity: 1
+Manufacturing Date: 2025-07-28
+Ship Date: 2025-08-09
+Carrier: RapidWheel Roadways

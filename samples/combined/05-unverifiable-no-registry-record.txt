@@ -1,0 +1,29 @@
+CERTIFICATE OF CONFORMITY
+Manufacturer: GHOSTLINE AUTO PARTS PRIVATE LIMITED
+CIN: U29100MH2015PTC999999
+State: Maharashtra
+Incorporated: 2015-06-15
+Role: manufacturer
+Part Number: BP-7754
+Certificate No: GAP-COC-2210
+Certificate Date: 2026-02-10
+We certify these brake pad sets conform to IS 2742 and were manufactured at our Pune plant.
+---
+TAX INVOICE
+Supplier: GHOSTLINE AUTO PARTS PRIVATE LIMITED
+CIN: U29100MH2015PTC999999
+GSTIN: 27AABCG7701H1ZR
+State: Maharashtra
+Invoice No: GAP/2026/0088
+Invoice Date: 2026-02-15
+Part Number: BP-7754
+Lot Code: GAP-260120-00077
+Qty: 80 units brake pad sets
+---
+DISPATCH NOTE
+Company: GHOSTLINE AUTO PARTS PRIVATE LIMITED
+Part Number: BP-7754
+Lot Code: GAP-260120-00077
+Manufacturing Date: 2026-01-20
+Ship Date: 2026-02-15
+Carrier: Deccan Freight, Pune
