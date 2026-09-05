@@ -109,6 +109,25 @@ export interface ResultEvent {
 
 export type StreamEvent = StageEvent | ResultEvent;
 
+/** What the agent understands before it runs (POST /api/preflight). */
+export interface PreflightPlanItem {
+  check: string;
+  will_run: boolean;
+  reason: string | null;
+}
+export interface Preflight {
+  documents: { doc_id: string; kind: string; chars: number; date: string | null }[];
+  claims: Assertion[];
+  identifiers: { company_name: string | null; cin: string | null; gstin: string | null; lot_code: string | null; part_number: string | null };
+  registry: { cin: string; name: string; status: string | null; state_name: string | null; registration_date: string | null; nic_code: string | null } | null;
+  injections: number;
+  plan: PreflightPlanItem[];
+  runnable: number;
+  total: number;
+  unlocks: { document: string; checks: string[] }[];
+  aliased: boolean;
+}
+
 export interface CaseSummary {
   file: string;
   case_id: string;

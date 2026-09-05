@@ -74,6 +74,19 @@ Edit `frontend/src/**`, never `static/` by hand. `app.py` mounts
 Plain-language labels for every check, tier and dimension live in
 `frontend/src/labels.ts` — add an entry there when you add a validator.
 
+**Interaction model.** The UI has no navigation: brief, read, work, decide.
+The briefing screen (`components/Briefing.tsx`) is one composer that accepts
+pasted text, dropped files or a dossier JSON and classifies it itself. While
+the user pastes, `POST /api/preflight` (`preflight.py`, no LLM) returns what
+the agent can see, the registry row for the CIN, the checks it will run and
+which document would unlock more; `components/Preflight.tsx` renders it.
+After the verdict, `components/Checkpoints.tsx` offers the moves for the
+user's desk (hold, release, refer, wait) and drafts supplier notes from the
+evidence; the agent never sends anything. `history.ts` keeps lots, decisions
+and "awaiting" items in localStorage; the desk preference lives there too.
+`preflight.PLAN` must mirror `validators.run_all()` — `tests/test_preflight.py`
+fails when a validator is added without a plan entry.
+
 **Agent run trace.** `POST /api/analyze/stream` returns newline-delimited
 JSON: one `{"type":"stage", "stage", "status": running|done|skipped,
 "detail", "ms"}` event per stage transition from `pipeline.analyze_events()`,
@@ -152,7 +165,8 @@ that in any new test file (that env var beats the `.env` file's key).
 ## Repo map
 
 ```
-app.py           FastAPI: /, /assets, /api/cases, /api/analyze, /api/analyze/stream (NDJSON stage events)
+app.py           FastAPI: /, /assets, /api/cases, /api/analyze, /api/analyze/stream (NDJSON stage events), /api/preflight
+preflight.py     what the agent understands before it runs: docs, offline fields, registry row, check plan, unlocks
 pipeline.py      stage glue as analyze_events() generator (+ analyze() wrapper), display aliasing, dossier_from_raw_text
 extract.py       stage 1 (LLM extraction, injection hygiene, label-parser fallback)
 validators.py    stage 2 (22 pure checks) + run_all orchestrator

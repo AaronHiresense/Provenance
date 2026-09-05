@@ -97,6 +97,15 @@ server. Three provider modes:
 
 ## UI
 
+You brief an investigator, not fill a form. One composer takes the
+paperwork (pasted text, dropped files or a dossier JSON). As you paste, the
+agent says what it can see: the documents, the company it found in the MCA
+registry, the checks it will run and which document would unlock more. It
+then runs in front of you and, after the verdict, proposes the next moves
+for your desk (distributor, OEM or service), drafts the supplier request
+for the one missing document, and keeps the lot on the briefing screen
+until that document arrives. Nothing is sent and nothing leaves the machine.
+
 The verdict comes first: one plain sentence, the actions for each desk
 (distributor, OEM, service), then the findings that decided it, strongest
 first, with the reasoner's innocent and forgery readings one click away.

@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import pipeline
+import preflight as preflight_mod
 
 BASE = Path(__file__).resolve().parent
 CASES_DIR = BASE / "cases"
@@ -105,6 +106,15 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
     return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only)
+
+
+@app.post("/api/preflight")
+def preflight(req: AnalyzeRequest) -> dict:
+    """What the agent understands before it runs: documents recognised,
+    fields read offline, the registry record for the CIN, and which checks
+    the dossier can support. No LLM call, so it is safe to call on every
+    edit of the paste box."""
+    return preflight_mod.preflight(_dossier_from_request(req))
 
 
 @app.post("/api/analyze/stream")

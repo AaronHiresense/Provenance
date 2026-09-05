@@ -1,4 +1,4 @@
-import type { AnalysisResult, AnalyzeRequest, CaseSummary, Dossier, StreamEvent } from "./types";
+import type { AnalysisResult, AnalyzeRequest, CaseSummary, Dossier, Preflight, StreamEvent } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -23,6 +23,14 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }).then((r) => json<AnalysisResult>(r)),
+
+  preflight: (body: AnalyzeRequest, signal?: AbortSignal) =>
+    fetch("/api/preflight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    }).then((r) => json<Preflight>(r)),
 
   /** Streams stage events as the pipeline runs; resolves with the final
    *  result. Falls back to the plain endpoint if streaming is unavailable. */
