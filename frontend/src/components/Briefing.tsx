@@ -27,8 +27,14 @@ const SNAPSHOT = new Date("2026-07-22");
 const stack: Variants = { hidden: {}, show: { transition: { delayChildren: stagger(0.07, { startDelay: 0.05 }) } } };
 const rise: Variants = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } } };
 
-/** Turn whatever was pasted or dropped into a request: a dossier JSON if it
- *  parses as one, otherwise plain document text. */
+const PIPELINE_STAGES = [
+  { id: "1", name: "Extraction Agent", blurb: "Entity & claim extraction" },
+  { id: "2", name: "22 Validators", blurb: "MCA registry & GST rules" },
+  { id: "3", name: "Evidence Ledger", blurb: "Tier & strength ranking" },
+  { id: "4", name: "Reasoning Agent", blurb: "Adversarial debate" },
+  { id: "5", name: "Verdict Engine", blurb: "Dispositive decision" },
+];
+
 function classify(text: string): BriefInput | null {
   const t = text.trim();
   if (!t) return null;
@@ -37,7 +43,7 @@ function classify(text: string): BriefInput | null {
       const j = JSON.parse(t) as Dossier;
       if (Array.isArray(j.documents)) return { kind: "dossier", dossier: j };
     } catch {
-      /* not JSON, treat as text */
+      /* not JSON */
     }
   }
   return { kind: "raw", text: t };
@@ -54,10 +60,11 @@ export function Briefing(p: Props) {
   const [pfLoading, setPfLoading] = useState(false);
   const [pfError, setPfError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [category, setCategory] = useState<"ALL" | Verdict>("ALL");
+
   const boxRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Live read of the paperwork, debounced; cancels the previous request.
   useEffect(() => {
     abortRef.current?.abort();
     const input = classify(text);
@@ -112,6 +119,7 @@ export function Briefing(p: Props) {
     }
     if (parts.length) setText((prev) => [prev.trim(), ...parts].filter(Boolean).join("\n---\n"));
   };
+
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragging(false);
@@ -123,17 +131,53 @@ export function Briefing(p: Props) {
   const awaiting = p.historyList.filter((r) => r.status === "awaiting");
   const recent = p.historyList.slice(0, 6);
 
+  const filteredCases = p.cases.filter((c) => {
+    if (category === "ALL") return true;
+    return c.expected === category;
+  });
+
   return (
     <m.div className="mx-auto w-full max-w-5xl space-y-8" variants={stack} initial="hidden" animate="show">
-      <m.div variants={rise} className="space-y-2 pt-2">
-        <span className="eyebrow">Investigator for auto-parts paperwork</span>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 text-balance sm:text-4xl dark:text-white">Brief the investigator.</h1>
-        <p className="max-w-2xl text-[15px] text-slate-600 text-pretty dark:text-slate-300">
-          Drop in the certificate, invoice and dispatch note for one lot. I read them, check every claim against the MCA company registry and the GST and logistics rules, argue the innocent and forgery readings of each contradiction, and give you one verdict with the evidence and your next move.
+      {/* Hero Header */}
+      <m.div variants={rise} className="space-y-3 pt-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow">Agentic Investigator for Auto-Parts Paperwork</span>
+          <span className="chip chip-reg font-mono text-[10.5px]">3.67M MCA Registry Records</span>
+          <span className="chip chip-neu font-mono text-[10.5px]">Fully Offline</span>
+        </div>
+
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+          Brief the investigator.
+        </h1>
+        <p className="max-w-2xl text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+          Drop in the certificate, invoice and dispatch note for one lot. I read them, check every claim against the MCA company registry and GST/logistics rules, argue innocent vs. forgery readings of each contradiction, and give you one verdict with evidence.
         </p>
+
+        {/* Pipeline Stage Bar */}
+        <div className="pt-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {PIPELINE_STAGES.map((s) => (
+              <div key={s.id} className="rounded-lg border border-slate-200 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+                <span className="font-mono text-[10px] font-semibold text-slate-400 dark:text-slate-500">STAGE 0{s.id}</span>
+                <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">{s.name}</div>
+                <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">{s.blurb}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </m.div>
 
-      <m.section variants={rise} className={`panel relative overflow-hidden transition-colors ${dragging ? "border-blue-500 ring-2 ring-blue-500/30" : ""}`} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
+      {/* Main Dossier Drop Area */}
+      <m.section
+        variants={rise}
+        className={`panel relative overflow-hidden transition-colors ${dragging ? "border-blue-500 ring-2 ring-blue-500/30" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
         {pfLoading && <BorderBeam radius={12} duration={3} />}
         <div className="p-2">
           <label htmlFor="brief" className="sr-only">
@@ -155,7 +199,7 @@ export function Briefing(p: Props) {
               Add files
               <input type="file" accept=".txt,.md,.json,text/plain,application/json" multiple className="sr-only" onChange={(e) => e.target.files && void readFiles(e.target.files)} />
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
               <input type="checkbox" checked={p.rulesOnly} onChange={(e) => p.onRulesOnly(e.target.checked)} className="h-3.5 w-3.5 accent-blue-600" />
               Rules only, skip the reasoning agent
             </label>
@@ -165,7 +209,7 @@ export function Briefing(p: Props) {
                 {p.error}
               </span>
             )}
-            <span className="hidden text-[11px] text-slate-400 sm:inline">Ctrl+Enter</span>
+            <span className="hidden text-[11px] font-mono text-slate-400 sm:inline">Ctrl+Enter</span>
             <button type="button" className="btn btn-primary" disabled={!ready || p.busy} onClick={investigate}>
               {p.busy ? <SpinnerIcon className="h-3.5 w-3.5" /> : <PlayIcon className="h-3 w-3" />}
               Investigate
@@ -175,6 +219,7 @@ export function Briefing(p: Props) {
         <PreflightPanel data={pf} loading={pfLoading && !pf} error={pfError} />
       </m.section>
 
+      {/* Waiting items section */}
       {awaiting.length > 0 && (
         <m.section variants={rise} className="space-y-2">
           <div className="flex items-baseline gap-3">
@@ -183,7 +228,12 @@ export function Briefing(p: Props) {
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {awaiting.map((r) => (
-              <button key={r.id} type="button" onClick={() => p.onReopen(r)} className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:hover:bg-amber-950/50">
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => p.onReopen(r)}
+                className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left hover:bg-amber-100/70 dark:border-amber-900/60 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
+              >
                 <span className="chip chip-unv mt-0.5 shrink-0">Awaiting</span>
                 <span className="min-w-0">
                   <span className="block truncate text-[13px] font-semibold text-slate-900 dark:text-slate-100">{r.title}</span>
@@ -195,15 +245,43 @@ export function Briefing(p: Props) {
         </m.section>
       )}
 
-      <m.section variants={rise} className="space-y-2">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Or watch me work a prepared lot</h2>
-          <span className="text-xs text-slate-500 dark:text-slate-400">Real registry records, one click. The expected outcome is shown so nothing is a surprise.</span>
+      {/* Prepared Benchmark Dossiers */}
+      <m.section variants={rise} className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Or watch me work a prepared lot</h2>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Real registry records, one click. Select a case to run the agent.</span>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+            {(["ALL", "GENUINE", "SUSPECT", "UNVERIFIABLE"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setCategory(tab)}
+                className={`relative rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  category === tab ? "text-slate-900 dark:text-white font-semibold" : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                }`}
+              >
+                {category === tab && (
+                  <m.span
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-md bg-white shadow-sm dark:bg-slate-700"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{tab}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-2">
-          {p.cases.map((c) => {
+
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+          {filteredCases.map((c) => {
             const { lot, who } = splitTitle(c.title);
             const v = c.expected as Verdict | undefined;
+
             return (
               <m.button
                 key={c.file}
@@ -212,11 +290,11 @@ export function Briefing(p: Props) {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.985 }}
                 onClick={() => p.onInvestigate({ kind: "case", file: c.file })}
-                className="flex w-56 shrink-0 flex-col gap-1.5 rounded-lg border border-slate-200 bg-white p-3 text-left hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60"
+                className="flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white p-3.5 text-left hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800/60 transition-colors"
               >
                 <span className="text-[13px] leading-snug font-semibold text-slate-900 dark:text-slate-100">{lot}</span>
                 <span className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{who}</span>
-                <span className="mt-auto flex items-center gap-2 pt-1">
+                <span className="mt-auto flex items-center gap-2 pt-2">
                   {v && <span className={`chip ${VERDICT_STYLE[v].chip}`}>{v.charAt(0) + v.slice(1).toLowerCase()}</span>}
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">{c.documents} doc{c.documents === 1 ? "" : "s"}</span>
                 </span>
@@ -226,41 +304,97 @@ export function Briefing(p: Props) {
         </div>
       </m.section>
 
+      {/* System Capabilities & Recent History Split */}
       <m.div variants={rise} className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <section className="space-y-2 lg:col-span-3">
-          <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Recent lots</h2>
+        <section className="space-y-3 lg:col-span-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Recent Audit History</h2>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Kept locally on this machine</span>
+          </div>
+
           {recent.length === 0 ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">Nothing yet. Every lot you investigate is kept here on this machine, with its verdict and what you decided.</p>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+              No recent investigations. Select a prepared dossier above or paste paperwork to begin.
+            </div>
           ) : (
-            <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
-              {recent.map((r) => (
-                <li key={r.id}>
-                  <button type="button" onClick={() => p.onReopen(r)} className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <span className={`chip shrink-0 ${VERDICT_STYLE[r.verdict].chip}`}>{r.verdict.charAt(0) + r.verdict.slice(1).toLowerCase()}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium text-slate-900 dark:text-slate-100">{r.title}</span>
-                      <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                        {r.supplier ?? "supplier unknown"} · {r.contradictions} contradiction{r.contradictions === 1 ? "" : "s"}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {recent.map((r) => (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => p.onReopen(r)}
+                      className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
+                      <span className={`chip shrink-0 ${VERDICT_STYLE[r.verdict].chip}`}>
+                        {r.verdict.charAt(0) + r.verdict.slice(1).toLowerCase()}
                       </span>
-                    </span>
-                    <span className="chip chip-neu shrink-0 capitalize">{r.status}</span>
-                    <span className="shrink-0 text-[11px] text-slate-500 dark:text-slate-400">{timeAgo(r.at)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px] font-semibold text-slate-900 dark:text-slate-100">{r.title}</span>
+                        <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                          {r.supplier ?? "supplier unknown"} · {r.contradictions} contradiction{r.contradictions === 1 ? "" : "s"}
+                        </span>
+                      </span>
+                      <span className="chip chip-neu shrink-0 capitalize">{r.status}</span>
+                      <span className="shrink-0 text-[11px] text-slate-500 dark:text-slate-400">{timeAgo(r.at)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </section>
-        <section className="space-y-2 lg:col-span-2">
-          <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">What I check</h2>
-          <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-            <li className="flex gap-2"><FileIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" /><span><b className="font-semibold text-slate-900 dark:text-slate-100">Identity.</b> The CIN against 3.67 million MCA registry records: name, state, status, incorporation date, registered activity. GST numbers by checksum, state code and embedded PAN.</span></li>
-            <li className="flex gap-2"><FileIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" /><span><b className="font-semibold text-slate-900 dark:text-slate-100">Certification.</b> Certificate dates against incorporation, BIS licence holder, type-approval validity, the standard on the OEM sheet.</span></li>
-            <li className="flex gap-2"><FileIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" /><span><b className="font-semibold text-slate-900 dark:text-slate-100">Custody and logistics.</b> Manufacture, dispatch and receipt in order; dispatch state; e-way validity against distance; route distance; HSN against part; port against mode of entry.</span></li>
-            <li className="flex gap-2"><FileIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" /><span><b className="font-semibold text-slate-900 dark:text-slate-100">Tampering.</b> Lot-code grammar, fields that drift between documents, and any line that tries to instruct the reviewer.</span></li>
-          </ul>
+
+        <section className="space-y-3 lg:col-span-2">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Verification Engine Capabilities</h2>
+            <span className="text-xs text-slate-500 dark:text-slate-400">22 Deterministic Rules</span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5">
+            <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                <FileIcon className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>1. Identity Resolution</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                CIN decode vs. 3.67M MCA registry records, incorporation date, active status, GSTIN checksums & embedded PAN logic.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                <FileIcon className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>2. Certification Audit</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-400 dark:text-slate-400">
+                Certificate dates vs. incorporation, BIS licence holder lookup, type approval validity windows & OEM specifications.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                <FileIcon className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>3. Custody & Logistics</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Manufacturing & dispatch order, e-way bill validity vs. distance, route sanity, HSN classification & entry port mode.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                <FileIcon className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>4. Tampering & Prompt Defense</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Lot code grammar, cross-document field drift detection, and instruction injection hygiene filter.
+              </p>
+            </div>
+          </div>
+
           <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Registry snapshot 22 Jul 2026, {snapshotAge} days old. Companies registered since then are reported as unknown, never guessed. Everything runs on this machine.
+            MCA Registry snapshot date: 22 Jul 2026 ({snapshotAge} days old). 100% local execution.
           </p>
         </section>
       </m.div>

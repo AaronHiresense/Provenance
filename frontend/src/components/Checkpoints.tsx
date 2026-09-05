@@ -27,8 +27,6 @@ function supplierName(r: AnalysisResult): string {
   return r.registry_row ? titleCase(r.registry_row.name.toLowerCase()) : "the supplier";
 }
 
-/** Deterministic drafts. The agent writes the note; the user decides whether
- *  to send it. Nothing leaves the machine. */
 function draftRequest(r: AnalysisResult): string {
   const s = supplierName(r);
   const cin = r.registry_row?.cin ?? "(CIN not found)";
@@ -101,22 +99,22 @@ function draftArchive(r: AnalysisResult): string {
 function movesFor(r: AnalysisResult, desk: Desk): Move[] {
   if (r.verdict === "SUSPECT") {
     const base: Move[] = [
-      { key: "quarantine", label: "Mark the lot quarantined", detail: "Records the hold here and freezes the lot in your recent list.", status: "quarantined", primary: desk === "distributor" },
-      { key: "hold", label: "Draft the hold notice to the supplier", detail: "Lists the findings that contradict the records. You review and send.", draft: () => draftHold(r) },
-      { key: "refer", label: "Draft the brand-protection referral", detail: "A summary for the OEM with the decisive evidence and a sample request.", draft: () => draftReferral(r), status: "referred", primary: desk === "oem" },
+      { key: "quarantine", label: "Mark lot quarantined", detail: "Records hold status locally and freezes lot in audit history.", status: "quarantined", primary: desk === "distributor" },
+      { key: "hold", label: "Draft supplier hold notice", detail: "Lists contradictory findings. Review and copy to send.", draft: () => draftHold(r) },
+      { key: "refer", label: "Draft brand-protection referral", detail: "Summary for OEM brand protection with sample inspection request.", draft: () => draftReferral(r), status: "referred", primary: desk === "oem" },
     ];
-    if (desk === "service") base.unshift({ key: "nofit", label: "Do not fit; flag affected job cards", detail: "Marks the lot so it is not fitted, and reminds you to inform customers with parts already fitted.", status: "quarantined", primary: true });
+    if (desk === "service") base.unshift({ key: "nofit", label: "Flag affected job cards (Do Not Fit)", detail: "Marks lot so parts are not fitted on customer vehicles.", status: "quarantined", primary: true });
     return base;
   }
   if (r.verdict === "UNVERIFIABLE") {
     return [
-      { key: "request", label: "Draft the request for the missing document", detail: "Names exactly the one document that decides this case.", draft: () => draftRequest(r), primary: true },
-      { key: "await", label: "Hold the lot and wait for it", detail: "Keeps this lot on the briefing screen until you paste the new paperwork; I will run it again.", status: "awaiting" },
+      { key: "request", label: "Draft missing document request", detail: "Names the exact missing document required for verification.", draft: () => draftRequest(r), primary: true },
+      { key: "await", label: "Hold lot & await document", detail: "Keeps lot pending on briefing screen until new paperwork is pasted.", status: "awaiting" },
     ];
   }
   return [
-    { key: "release", label: "Release the lot", detail: desk === "service" ? "Fit normally and record the lot code against the job card." : "Release to inventory with the dossier linked to the lot code.", status: "released", primary: true },
-    { key: "archive", label: "Copy the provenance archive entry", detail: "A one-paragraph record of what was checked and when.", draft: () => draftArchive(r) },
+    { key: "release", label: "Release lot to inventory", detail: desk === "service" ? "Fit parts normally & record lot code on job card." : "Release to active inventory with dossier linked.", status: "released", primary: true },
+    { key: "archive", label: "Generate provenance audit record", detail: "Creates a certified one-paragraph audit log of checks performed.", draft: () => draftArchive(r) },
   ];
 }
 
@@ -132,50 +130,68 @@ export function Checkpoints({ result, desk, record, onStatus }: Props) {
       setCopied(key);
       setTimeout(() => setCopied(null), 1600);
     } catch {
-      /* clipboard blocked; the text is selectable */
+      /* clipboard blocked */
     }
   };
 
   return (
-    <Section title="Your next moves" aside={`For the ${deskLabel.toLowerCase()} desk · nothing is sent without you`}>
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+    <Section title="Agent Recommended Next Moves" aside={`Active Desk: ${deskLabel} · Nothing sent without review`}>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {moves.map((mv) => {
           const done = mv.status && record?.status === mv.status;
           const isOpen = openDraft === mv.key;
           return (
-            <div key={mv.key} className={`flex flex-col gap-2 rounded-lg border bg-white p-3.5 dark:bg-slate-900 ${mv.primary ? "border-blue-500 ring-1 ring-blue-500" : "border-slate-200 dark:border-slate-800"}`}>
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">{mv.label}</p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{mv.detail}</p>
+            <div
+              key={mv.key}
+              className={`flex flex-col justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm dark:bg-slate-900 ${
+                mv.primary ? "border-blue-500 ring-1 ring-blue-500/50" : "border-slate-200 dark:border-slate-800"
+              }`}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{mv.label}</span>
+                  {done && (
+                    <span className="chip chip-gen shrink-0">
+                      <CheckIcon className="h-3 w-3" /> Confirmed
+                    </span>
+                  )}
                 </div>
-                {done && (
-                  <span className="chip chip-gen shrink-0">
-                    <CheckIcon className="h-3 w-3" /> Done
-                  </span>
-                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{mv.detail}</p>
               </div>
-              <div className="flex flex-wrap gap-2">
+
+              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
                 {mv.status && !done && (
-                  <button type="button" className={`btn ${mv.primary && !mv.draft ? "btn-primary" : ""}`} onClick={() => onStatus(mv.status!, mv.status === "awaiting" ? (result.missing_artefact ?? undefined) : undefined)}>
-                    {mv.status === "awaiting" ? "Hold and wait" : mv.status === "released" ? "Release" : mv.status === "referred" ? "Mark referred" : "Confirm"}
+                  <button
+                    type="button"
+                    className={`btn ${mv.primary && !mv.draft ? "btn-primary" : ""}`}
+                    onClick={() => onStatus(mv.status!, mv.status === "awaiting" ? (result.missing_artefact ?? undefined) : undefined)}
+                  >
+                    {mv.status === "awaiting" ? "Hold & Wait" : mv.status === "released" ? "Confirm Release" : mv.status === "referred" ? "Mark Referred" : "Confirm Action"}
                   </button>
                 )}
                 {mv.draft && (
-                  <button type="button" className={`btn ${mv.primary ? "btn-primary" : ""}`} onClick={() => setOpenDraft(isOpen ? null : mv.key)} aria-expanded={isOpen}>
-                    {isOpen ? "Hide draft" : "Draft it for me"}
+                  <button
+                    type="button"
+                    className={`btn ${mv.primary ? "btn-primary" : ""}`}
+                    onClick={() => setOpenDraft(isOpen ? null : mv.key)}
+                    aria-expanded={isOpen}
+                  >
+                    {isOpen ? "Hide Draft" : "Draft Communication"}
                   </button>
                 )}
               </div>
+
               <AnimatePresence initial={false}>
                 {mv.draft && isOpen && (
                   <m.div key="draft" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="mt-1 rounded-md border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60">
-                      <pre className="max-h-64 overflow-auto p-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-slate-200">{mv.draft()}</pre>
+                    <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/60">
+                      <pre className="max-h-64 overflow-auto p-3 font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-slate-200">
+                        {mv.draft()}
+                      </pre>
                       <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-[11px] text-slate-500 dark:border-slate-800">
-                        <span>Drafted from the evidence. Edit before sending.</span>
-                        <button type="button" className="font-medium text-blue-700 hover:underline dark:text-blue-400" onClick={() => void copy(mv.key, mv.draft!())}>
-                          {copied === mv.key ? "Copied" : "Copy"}
+                        <span>Pre-drafted by agent from verified evidence.</span>
+                        <button type="button" className="font-semibold text-blue-600 hover:underline dark:text-blue-400" onClick={() => void copy(mv.key, mv.draft!())}>
+                          {copied === mv.key ? "✓ Copied" : "Copy to Clipboard"}
                         </button>
                       </div>
                     </div>

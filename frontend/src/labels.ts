@@ -192,22 +192,24 @@ export const VERDICT_STYLE: Record<Verdict, { word: string; bar: string; tint: s
   },
 };
 
-/** One plain sentence a desk can act on. */
+/** One generic, evidence-based summary sentence describing why the verdict was reached. */
 export function verdictSentence(r: AnalysisResult): string {
-  const { primary, suspect } = splitEvidence(r.ledger.findings);
+  const { primary, suspect, support } = splitEvidence(r.ledger.findings);
   const decisive = primary.filter((f) => f.strength === "dispositive").length;
   const strong = primary.length - decisive;
+  const totalVerified = r.counts.supports_genuine || support.length;
+
   if (r.verdict === "GENUINE") {
-    return "Release this lot. The registry and every deterministic check support this paper trail.";
+    return `Verified genuine: ${totalVerified} deterministic checks confirm all claims against the MCA company registry, GST rules, and logistics records with zero contradictions.`;
   }
   if (r.verdict === "SUSPECT") {
     const parts: string[] = [];
     if (strong) parts.push(`${strong} strong`);
     if (decisive) parts.push(`${decisive} decisive`);
-    const qual = parts.length ? `, ${parts.join(" and ")}` : "";
-    return `Quarantine this lot. ${suspect.length} check${suspect.length === 1 ? "" : "s"} contradict${suspect.length === 1 ? "s" : ""} the official records${qual}.`;
+    const qual = parts.length ? ` (${parts.join(" and ")})` : "";
+    return `Suspect documentation: ${suspect.length} check${suspect.length === 1 ? "" : "s"} contradict${suspect.length === 1 ? "s" : ""} official MCA registry records and supply-chain rules${qual}.`;
   }
-  return "Hold this lot. One named document decides this case; see the work order below.";
+  return "Unverifiable documentation: Mandatory supply-chain records are missing or unconfirmed in the current dossier.";
 }
 
 export function formatDate(iso: string | null | undefined): string {
