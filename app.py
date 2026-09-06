@@ -73,7 +73,13 @@ class AnalyzeRequest(BaseModel):
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(BASE / "static" / "index.html")
+    # The asset filenames are content-hashed, so they can be cached forever —
+    # but this shell names them, and a cached copy of it pins a visitor to a
+    # bundle that no longer exists after a redeploy. Revalidate every time:
+    # it costs one conditional request and removes the whole class of "the
+    # reviewer is looking at last week's UI" failures.
+    return FileResponse(BASE / "static" / "index.html",
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/cases")
