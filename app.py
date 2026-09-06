@@ -41,8 +41,16 @@ def _banner() -> None:
     print(f"  LLM engine : {c.provider}"
           + (f" ({c.model})" if c.provider != "mock" else
              " (offline — cached JSON + deterministic fallbacks)"))
-    print(f"  Registry   : {registry.db_path()}")
-    print(f"  Snapshot   : {registry.snapshot_date()}")
+    # The banner is diagnostics, not a precondition: on a hosted first boot the
+    # volume can still be empty (scripts/fetch_db.py deliberately exits 0 so the
+    # app comes up). Report the missing registry instead of killing startup —
+    # otherwise the service crash-loops and the volume can never be populated.
+    try:
+        print(f"  Registry   : {registry.db_path()}")
+        print(f"  Snapshot   : {registry.snapshot_date()}")
+    except FileNotFoundError as exc:
+        print(f"  Registry   : NOT FOUND — {exc}")
+        print("  Snapshot   : unavailable until the registry is in place")
     print(f"  Cases      : {len(list(CASES_DIR.glob('*.json')))} in cases/")
     print("=" * 62)
 

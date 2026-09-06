@@ -23,7 +23,7 @@ python -m uvicorn app:app --port 8321
 # open http://localhost:8321
 ```
 
-Tests (offline, no key needed): `python -m pytest tests/ -q` · 88 passing.
+Tests (offline, no key needed): `python -m pytest tests/ -q` · 93 passing.
 
 ## Data setup — where the registry comes from
 
@@ -142,6 +142,62 @@ alone over-accuse — which is precisely the demo of what stage 4 adds. The
 **live-LLM run scores the same 15/15** (`eval.py --live`, DeepSeek,
 temperature 0), so the quoted numbers cover the exact code path that runs
 on stage. The real eval is the case the jury feeds it.
+
+## Deploying to Railway
+
+The image is deliberately thin: the 1.2 GB registry is **not** baked in and
+**not** in git. It lives on a Railway volume, so the container mounts it
+instead of downloading it on every boot.
+
+```bash
+railway init --name provenance
+railway add --service provenance
+railway link --project <project-id> --environment production --service provenance
+railway volume add --mount-path /data          # -> RAILWAY_VOLUME_MOUNT_PATH=/data
+railway domain                                 # public URL
+```
+
+Variables on the service (the key via stdin, so it never lands in shell
+history or the process list):
+
+```bash
+printf '%s' "$KEY" | railway variable set ANTHROPIC_API_KEY --stdin --service provenance
+railway variable set \
+  ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic \
+  PROVENANCE_LLM_MODEL=deepseek-chat \
+  PROVENANCE_DB=/data/mca.duckdb --service provenance
+```
+
+Then deploy and push the registry onto the volume:
+
+```bash
+railway up --detach
+railway volume files --volume provenance-volume upload ./mca.duckdb /mca.duckdb
+railway redeploy                               # pick up the now-populated volume
+```
+
+Four things that bite, in the order they bite:
+
+1. **`railway volume files` needs an SSH key.** Volume transfers tunnel over
+   SSH into the *running* container, so an unregistered key fails the upload
+   while still exiting 0. Register once with
+   `railway ssh keys add --key ~/.ssh/id_ed25519.pub` (on Windows/PowerShell
+   pass the full path — `~` is not expanded). Only the public half is sent.
+2. **Deploy before you upload.** The volume is only reachable through a live
+   deployment, so the first boot necessarily happens with an empty volume.
+   That is why the startup banner reports a missing registry instead of
+   raising — a crash-looping service can never be populated.
+3. **`.env` must stay out of the image.** `llm.py` gives `.env` precedence
+   *over* ambient environment variables, so a copied `.env` would silently
+   override everything set in the Railway dashboard and make the key
+   unrotatable from the UI. It is in `.dockerignore` for that reason.
+4. **On Git Bash, prefix volume commands with `MSYS_NO_PATHCONV=1`**, or
+   `/data` is rewritten into a Windows path and rejected.
+
+`MCA_DB_URL` remains supported as the alternative to a volume:
+`scripts/fetch_db.py` downloads the DB on first boot when the target is
+absent. It costs a multi-minute boot on a cold volume and makes the file
+publicly fetchable, so the volume upload above is the better default.
 
 ## Roadmap (known, named future work)
 
