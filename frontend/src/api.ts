@@ -1,4 +1,4 @@
-import type { AnalysisResult, AnalyzeRequest, CaseSummary, Dossier, Preflight, StreamEvent } from "./types";
+import type { AnalysisResult, AnalyzeRequest, CaseSummary, Dossier, Preflight, SampleSet, StreamEvent } from "./types";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -17,6 +17,7 @@ async function json<T>(res: Response): Promise<T> {
 export const api = {
   cases: () => fetch("/api/cases").then((r) => json<CaseSummary[]>(r)),
   dossier: (file: string) => fetch(`/api/cases/${encodeURIComponent(file)}`).then((r) => json<Dossier>(r)),
+  samples: () => fetch("/api/samples").then((r) => json<SampleSet[]>(r)),
   analyze: (body: AnalyzeRequest) =>
     fetch("/api/analyze", {
       method: "POST",

@@ -20,6 +20,7 @@ import preflight as preflight_mod
 
 BASE = Path(__file__).resolve().parent
 CASES_DIR = BASE / "cases"
+SAMPLES_DIR = BASE / "samples"
 
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 
@@ -28,6 +29,13 @@ app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 _ASSETS = BASE / "static" / "assets"
 if _ASSETS.is_dir():
     app.mount("/assets", StaticFiles(directory=_ASSETS), name="assets")
+
+# The sample paperwork is part of the demonstration, not just a repo artefact:
+# a reviewer has to be able to feed the system documents by hand to see that the
+# prepared lots are not canned replays. Served read-only so the files are
+# reachable from the hosted UI, not only from a clone.
+if SAMPLES_DIR.is_dir():
+    app.mount("/samples", StaticFiles(directory=SAMPLES_DIR), name="samples")
 
 
 @app.on_event("startup")
@@ -83,6 +91,42 @@ def list_cases() -> list:
                     # the case's own expected verdict, shown on the case grid
                     "expected": expected.get("verdict"),
                     "aliased": bool(d.get("display_aliases"))})
+    return out
+
+
+@app.get("/api/samples")
+def list_samples() -> list:
+    """Downloadable paperwork a reviewer can feed back in by hand.
+
+    Each set in samples/combined/ is one lot already joined the way the
+    composer joins an upload, so it can be dropped straight into Paperwork
+    mode. The expected verdict is carried in the folder name (the naming
+    convention samples/README.md documents), which keeps this endpoint from
+    having to parse that README's table.
+    """
+    combined = SAMPLES_DIR / "combined"
+    if not combined.is_dir():
+        return []
+    # Words the folder names spell lowercase that should not be shown that way.
+    caps = {"hsi": "HSI", "llp": "LLP", "bis": "BIS", "gst": "GST",
+            "eway": "e-way", "cin": "CIN"}
+    verdicts = ("genuine", "suspect", "unverifiable")
+    out = []
+    for p in sorted(combined.glob("*.txt")):
+        # e.g. "03-suspect-teleporting-consignment" -> SUSPECT, "Teleporting
+        # consignment". The verdict is dropped from the label because the UI
+        # already shows it beside the name; repeating it reads as a stutter.
+        parts = [s for s in p.stem.split("-") if not s.isdigit()]
+        verdict = next((s.upper() for s in parts if s in verdicts), None)
+        words = [caps.get(s, s) for s in parts if s not in verdicts]
+        label = " ".join(words)
+        if label and label[0].islower() and words[0] not in caps.values():
+            label = label[0].upper() + label[1:]
+        out.append({"file": p.name,
+                    "url": f"/samples/combined/{p.name}",
+                    "label": label or p.stem,
+                    "expected": verdict,
+                    "bytes": p.stat().st_size})
     return out
 
 

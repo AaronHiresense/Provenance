@@ -137,6 +137,16 @@ export interface CaseSummary {
   aliased?: boolean;
 }
 
+/** A downloadable set of sample paperwork, already joined the way the
+ *  composer joins an upload, so a reviewer can feed the system by hand. */
+export interface SampleSet {
+  file: string;
+  url: string;
+  label: string;
+  expected?: Verdict | null;
+  bytes: number;
+}
+
 export interface DossierDocument {
   doc_id: string;
   doc_type: string;

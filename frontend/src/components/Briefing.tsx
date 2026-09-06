@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type
 import * as m from "motion/react-m";
 import { AnimatePresence, stagger, useReducedMotion, type Variants } from "motion/react";
 import { api } from "../api";
-import type { CaseSummary, Dossier, Preflight as PreflightData, Verdict } from "../types";
+import type { CaseSummary, Dossier, Preflight as PreflightData, SampleSet, Verdict } from "../types";
 import { VERDICT_STYLE, formatDate, titleCase } from "../labels";
 import { type RunRecord, timeAgo } from "../history";
 import { PreflightPanel } from "./Preflight";
@@ -448,8 +448,93 @@ export function Briefing(p: Props) {
           </section>
         </m.div>
 
+        <m.div variants={rise}>
+          <BringYourOwn busy={p.busy} onInvestigate={p.onInvestigate} />
+        </m.div>
+
       </m.div>
     </div>
+  );
+}
+
+/** The prepared lots prove the pipeline runs; this proves they are not canned
+ *  replays. A reviewer downloads a set of real documents, drops it into the
+ *  composer above, and watches the same verdict come back from raw text. The
+ *  verdict key sits here too, because UNVERIFIABLE reads as a failure to
+ *  anyone who has not been told that abstaining is the designed behaviour. */
+function BringYourOwn(p: { busy: boolean; onInvestigate: (i: BriefInput) => void }) {
+  const [sets, setSets] = useState<SampleSet[] | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    api.samples().then((s) => live && setSets(s)).catch(() => live && setSets([]));
+    return () => { live = false; };
+  }, []);
+
+  // Load the text and run it through the same raw-text path a paste uses, so
+  // what the reviewer sees is genuinely the unprepared route.
+  const run = useCallback(async (s: SampleSet) => {
+    setLoading(s.file);
+    try {
+      const text = await fetch(s.url).then((r) => r.text());
+      p.onInvestigate({ kind: "raw", text });
+    } finally {
+      setLoading(null);
+    }
+  }, [p]);
+
+  if (!sets || sets.length === 0) return null;
+
+  return (
+    <section aria-labelledby="byo-h" className="mt-10">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-2 dark:border-slate-800">
+        <h2 id="byo-h" className="flex items-center gap-2 text-[13px] font-semibold text-slate-900 dark:text-white">
+          <UploadIcon className="h-3.5 w-3.5 text-slate-400" />
+          Check the work yourself
+        </h2>
+        <a href="/samples/README.md" className="text-[11px] font-medium text-blue-700 hover:underline dark:text-blue-400">
+          What each set contains
+        </a>
+      </div>
+      <p className="pt-2 text-[11.5px] text-slate-500 dark:text-slate-400">
+        Real documents, not prepared cases. Run one as raw text, or download it and paste it into the composer above to see the same verdict reached from scratch.
+      </p>
+
+      <ul className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+        {sets.map((s) => (
+          <li key={s.file}>
+            <div className="group flex items-center gap-3 rounded-md border border-transparent py-2 pr-2 pl-3 transition-colors hover:border-slate-200 hover:bg-white dark:hover:border-slate-700 dark:hover:bg-slate-900">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] leading-snug font-medium text-slate-900 dark:text-slate-100">{s.label}</span>
+                <span className="block text-[11.5px] text-slate-500 dark:text-slate-400">
+                  should read {s.expected ? s.expected.toLowerCase() : "—"}
+                </span>
+              </span>
+              <a href={s.url} download className="shrink-0 text-[11.5px] font-medium text-slate-500 hover:text-slate-900 hover:underline dark:text-slate-400 dark:hover:text-white">
+                Download
+              </a>
+              <button type="button" disabled={p.busy} onClick={() => void run(s)} className="shrink-0 rounded-md px-2 py-0.5 text-[12px] font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:text-blue-400 dark:hover:bg-blue-950/40">
+                {loading === s.file ? "Loading…" : "Run as text"}
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <dl className="mt-5 grid grid-cols-1 gap-x-8 gap-y-2 border-t border-slate-200 pt-4 sm:grid-cols-3 dark:border-slate-800">
+        {([
+          ["GENUINE", "Every claim the documents make is supported by the registry and the rules."],
+          ["SUSPECT", "The records contradict the documents. The verdict names which check decided it."],
+          ["UNVERIFIABLE", "Not a failure: the evidence does not settle it, so the system abstains and names the one document that would."],
+        ] as const).map(([v, meaning]) => (
+          <div key={v}>
+            <dt className={`text-[11px] font-semibold tracking-wide uppercase ${VERDICT_STYLE[v].word}`}>{v}</dt>
+            <dd className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500 dark:text-slate-400">{meaning}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
