@@ -4,3 +4,8 @@ __pycache__/
 .git/
 mca.duckdb
 *.duckdb
+
+# never bake secrets into the image: llm.py gives .env precedence OVER
+# ambient env vars, so a copied .env would silently override the platform's
+# configured variables (Railway, Fly, etc.).
+.env
