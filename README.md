@@ -23,7 +23,7 @@ python -m uvicorn app:app --port 8321
 # open http://localhost:8321
 ```
 
-Tests (offline, no key needed): `python -m pytest tests/ -q` · 93 passing.
+Tests (offline, no key needed): `python -m pytest tests/ -q` · 110 passing.
 
 ## Data setup — where the registry comes from
 
@@ -73,10 +73,30 @@ Expected: `(3674314,)` (exact count varies with the snapshot date).
 | Stage | Module | What it does |
 |---|---|---|
 | 1 Extract | `extract.py` | LLM turns documents into typed assertions `{entity, attribute, value, source_doc, date}`. Document text is **data, never instructions** — instruction-like content is stripped and flagged. |
-| 2 Validate | `validators.py` | Pure deterministic checks: GSTIN checksum/state/embedded-PAN, CIN decode & registry cross-check, temporal sanity (cert vs incorporation, ship vs mfg), NIC manufacturing vs trading, BIS stub, TAC validity, lot-code grammar, cross-document field drift. |
+| 2 Validate | `validators.py` | 25 pure deterministic checks: GSTIN checksum/state/embedded-PAN, CIN decode & registry cross-check, temporal sanity, NIC manufacturing vs trading, BIS stub, TAC validity, lot-code grammar, cross-document drift, **dossier reuse** (`archive.py`), and a **successor lookup** that searches the registry for a company no document names. |
 | 3 Ledger | `ledger.py` | Every Finding carries direction, strength, source tier (authoritative → heuristic) and dimension (identity/certification/provenance/custody). |
-| 4 Reason | `reason.py` | LLM generates benign vs malicious explanations per contradiction; authoritative tier beats any number of heuristics, tiers are never averaged, reasoning spans dimensions. |
-| 5 Verdict | `verdict.py` | One verdict; UNVERIFIABLE names its subtype, the single decisive missing artefact and an interim action. Includes per-level actions (OEM/distributor/service) and a "what this system cannot determine" block. |
+| 4 Reason | `reason.py` | LLM generates benign vs malicious explanations per contradiction, then **attacks its own draft** and may revise it. Authoritative tier beats any number of heuristics, tiers are never averaged, reasoning spans dimensions. A challenge may move a verdict only toward caution, and only when a non-heuristic contradiction exists. |
+| 5 Verdict | `verdict.py` | One verdict; UNVERIFIABLE names its subtype, the single decisive missing artefact and an interim action. Includes per-level actions (OEM/distributor/service), a "what this system cannot determine" block, an **unchecked-claims register** (what was read but not verified), and a **counterfactual** naming the findings that are load-bearing (`counterfactual.py`). |
+
+## Desk memory — the seen-lots archive
+
+Every other check looks for a *contradiction*. A byte-perfect copy of genuine
+paperwork attached to counterfeit goods contains none, so `archive.py` keeps an
+append-only file of dossier fingerprints and flags the same trail arriving
+twice, or one lot code carrying two different trails.
+
+- Location: `PROVENANCE_ARCHIVE` → the Railway volume → `./lot-archive.jsonl`
+  (git-ignored). A read-only disk degrades to no finding, never an exception.
+- **Recording is opt-in per run.** The API sets `archive_run=True`; `eval.py`
+  and the tests do not, so a calibration run neither reads nor writes and the
+  offline eval stays byte-for-byte deterministic.
+- `GET /api/archive` reports what the desk remembers; `DELETE /api/archive`
+  forgets it — a rehearsal that re-runs the same case would otherwise flag its
+  own earlier run as reuse. The footer of the UI shows the count and offers it.
+
+**The residual limit, stated on every verdict:** the archive catches the
+*second* sighting. The first presentation of a clone still passes, and a clone
+presented at a different desk is invisible until archives are shared.
 
 ## LLM
 

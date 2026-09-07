@@ -17,6 +17,9 @@ import { WhyFindings } from "./components/Findings";
 import { Notices } from "./components/Notices";
 import { AllChecks } from "./components/AllChecks";
 import { CouldNotCheck } from "./components/CouldNotCheck";
+import { Counterfactual } from "./components/Counterfactual";
+import { Challenge } from "./components/Challenge";
+import { DeskMemory } from "./components/DeskMemory";
 import { SourceDocs } from "./components/SourceDocs";
 
 export default function App() {
@@ -138,9 +141,11 @@ export default function App() {
           {result && (
             <m.div key={`run-${runId}`} className="space-y-7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
               <VerdictCard result={result} />
+              <Challenge result={result} />
               <Checkpoints result={result} desk={desk} record={record} onStatus={setStatus} />
               <Actions actions={result.actions} />
               <WhyFindings result={result} />
+              <Counterfactual result={result} />
               <Notices result={result} />
               <AllChecks result={result} />
               <CouldNotCheck result={result} />
@@ -150,8 +155,9 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <footer className="mt-auto border-t border-slate-200 py-4 text-center font-mono text-[11px] text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
-        PROVENANCE · offline MCA registry, snapshot 22 Jul 2026 · every verdict ships with its evidence · nothing leaves this machine
+      <footer className="mt-auto flex flex-col items-center gap-1.5 border-t border-slate-200 py-4 text-center font-mono text-[11px] text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
+        <span>PROVENANCE · offline MCA registry, snapshot 22 Jul 2026 · every verdict ships with its evidence · nothing leaves this machine</span>
+        <DeskMemory refreshKey={runId} />
       </footer>
     </div>
   );

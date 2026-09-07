@@ -14,6 +14,9 @@ import re
 import time
 from typing import Iterator, Optional
 
+import archive
+import counterfactual
+import preflight
 import registry
 import validators
 from extract import extract_assertions
@@ -55,7 +58,8 @@ STAGES = ("extract", "validate", "ledger", "reason", "verdict")
 
 
 def analyze_events(dossier: dict, rules_only: bool = False,
-                   llm: Optional[LLMClient] = None) -> Iterator[dict]:
+                   llm: Optional[LLMClient] = None,
+                   archive_run: bool = False) -> Iterator[dict]:
     """Run the pipeline, yielding one event per stage transition.
 
     Event shape: {"type": "stage", "stage": <name>, "status": "running" |
@@ -111,6 +115,12 @@ def analyze_events(dossier: dict, rules_only: bool = False,
                    "Genuine supply-chain documents do not address the "
                    "reviewing system.",
         ))
+    # The seen-lots archive: memory across runs, and the only thing that can
+    # see a reused dossier. A calibration run is not a desk submission, so it
+    # neither reads nor writes (see archive.py).
+    if archive_run:
+        led.extend(archive.check_and_record(assertions, case_id=case_id))
+
     n_bad = len(led.by_direction("supports_suspect"))
     n_good = len(led.by_direction("supports_genuine"))
     yield ev(stage="validate", status="done", ms=ms(),
@@ -138,12 +148,22 @@ def analyze_events(dossier: dict, rules_only: bool = False,
                         f"of {n_bad} contradiction{'s' if n_bad != 1 else ''}")
         reasoning = reason_over_ledger(led, llm, case_id=case_id)
         n_c = len(reasoning.get("contradictions", []))
+        ch = reasoning.get("challenge") or {}
+        if ch.get("revised"):
+            challenge_note = (f" · challenged its own {ch.get('from')} answer "
+                              "and revised to UNVERIFIABLE")
+        elif ch.get("engine") == "skipped":
+            challenge_note = " · already the cautious answer, nothing to revise"
+        else:
+            challenge_note = " · attacked its own answer, which held"
         yield ev(stage="reason", status="done", ms=ms(),
                  detail=f"{n_c} contradiction{'s' if n_c != 1 else ''} "
-                        f"argued · recommends {reasoning.get('recommended_verdict')}"
+                        f"argued{challenge_note} · recommends "
+                        f"{reasoning.get('recommended_verdict')}"
                         + (" (deterministic fallback)"
                            if reasoning.get("engine") != "llm" else ""),
                  engine=reasoning.get("engine"),
+                 challenged=bool(ch), challenge_held=ch.get("held"),
                  recommended=reasoning.get("recommended_verdict"))
 
     # stage 5 — verdict
@@ -160,11 +180,43 @@ def analyze_events(dossier: dict, rules_only: bool = False,
         registry_status=(row or {}).get("status"),
         n_documents=n_docs,
     )
+    # Did the self-critique survive stage 5? The reasoner may revise its own
+    # draft toward caution, but the governance rules still get the last word —
+    # and when they overrule the model, that is the most informative thing on
+    # the page, not something to hide.
+    ch = (reasoning or {}).get("challenge")
+    if ch:
+        if ch.get("blocked"):
+            ch["outcome"] = "blocked"
+        elif not ch.get("revised"):
+            ch["outcome"] = "held"
+        elif result["verdict"] == "UNVERIFIABLE":
+            ch["outcome"] = "upheld"
+        else:
+            ch["outcome"] = "overridden"
+            ch["override_reason"] = (
+                "The governance rules kept "
+                f"{result['verdict']}: strong evidence from an authoritative "
+                "record is not softened because a model can imagine an "
+                "innocent story for it. Only a record that explains the "
+                "contradiction can do that.")
+
     result["case_id"] = case_id
     result["extraction"] = extraction_meta
     result["assertions"] = [a.to_dict() for a in assertions]
     result["injection_flags"] = injection_flags
     result["registry_row"] = row
+    # Claims the agent read but has no checker for. Saying so is part of the
+    # verdict: silence about an unrecognised claim would read as approval.
+    result["unchecked_claims"] = preflight.unchecked_claims(assertions)
+    # What would have to be different for the answer to be different.
+    result["counterfactual"] = counterfactual.what_would_change(
+        led, reasoning, rules_only=rules_only,
+        registry_row_found=row is not None,
+        has_identifier=cin_assert is not None,
+        registry_status=(row or {}).get("status"),
+        n_documents=n_docs,
+    )
     result["llm_provider"] = llm.provider
     result["llm_model"] = None if llm.provider == "mock" else llm.model
     result["elapsed_ms"] = ms()
@@ -188,10 +240,12 @@ def analyze_events(dossier: dict, rules_only: bool = False,
 
 
 def analyze(dossier: dict, rules_only: bool = False,
-            llm: Optional[LLMClient] = None) -> dict:
+            llm: Optional[LLMClient] = None,
+            archive_run: bool = False) -> dict:
     """Run the whole pipeline and return the final result dict."""
     last = None
-    for last in analyze_events(dossier, rules_only=rules_only, llm=llm):
+    for last in analyze_events(dossier, rules_only=rules_only, llm=llm,
+                               archive_run=archive_run):
         pass
     assert last is not None and last["type"] == "result"
     return last["result"]

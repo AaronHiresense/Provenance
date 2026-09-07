@@ -7,6 +7,7 @@ Run:  python -m uvicorn app:app --port 8321
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -15,6 +16,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import archive
 import pipeline
 import preflight as preflight_mod
 
@@ -163,7 +165,30 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
 
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
-    return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only)
+    return pipeline.analyze(_dossier_from_request(req),
+                            rules_only=req.rules_only, archive_run=True)
+
+
+@app.get("/api/archive")
+def archive_stats() -> dict:
+    """What this desk remembers: how many dossiers it has screened, and how
+    many distinct lot codes. The seen-lots archive is the only thing that can
+    catch a reused dossier, so its size is part of the system's state."""
+    return archive.stats()
+
+
+@app.delete("/api/archive")
+def archive_clear() -> dict:
+    """Forget every screened dossier. Exposed because desk memory changes what
+    the next verdict says: a rehearsal, a demo, or a test run should be able to
+    start from a clean archive rather than flag its own earlier runs."""
+    path = archive.archive_path()
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+        return {"cleared": True, **archive.stats()}
+    except OSError as exc:
+        return {"cleared": False, "error": str(exc), **archive.stats()}
 
 
 @app.post("/api/preflight")
@@ -183,7 +208,8 @@ def analyze_stream(req: AnalyzeRequest) -> StreamingResponse:
     dossier = _dossier_from_request(req)
 
     def lines():
-        for event in pipeline.analyze_events(dossier, rules_only=req.rules_only):
+        for event in pipeline.analyze_events(dossier, rules_only=req.rules_only,
+                                            archive_run=True):
             yield json.dumps(event, default=str) + "\n"
 
     return StreamingResponse(lines(), media_type="application/x-ndjson",

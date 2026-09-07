@@ -47,6 +47,7 @@ PLAN = [
      "the CIN plus the company name, state or incorporation date"),
     ("company_status_active", [{"cin"}], "the company's CIN or LLPIN"),
     ("nic_is_manufacturing", [{"cin"}], "the company's CIN or LLPIN"),
+    ("successor_registry_lookup", [{"cin"}], "the company's CIN or LLPIN"),
     ("gstin_checksum", [{"gstin"}], "a GST number"),
     ("gstin_state_matches_claim", [{"gstin", "state"}, {"gstin", "cin"}], "a GST number and the company's state"),
     ("gstin_embedded_pan", [{"gstin"}], "a GST number"),
@@ -66,6 +67,44 @@ PLAN = [
     ("lot_code_grammar", [{"lot_code"}], "a lot or batch code"),
     ("cross_doc_field_drift", [], "two or more documents for a meaningful comparison"),
 ]
+
+# Attributes some check actually consumes. Two are consumed without being a
+# stated precondition: `pan` corroborates the PAN embedded in a GSTIN, and
+# `role` is recorded at the self_reported tier by run_all itself.
+CONSUMED_ATTRS = set().union(
+    *[req for _c, options, _u in PLAN for req in options]) | {
+        "pan", "role", "bis_licence"}
+
+# Attributes we read but deliberately do not treat as checkable claims:
+# they identify the paperwork rather than assert anything about the goods.
+_CLERICAL_ATTRS = {"company_name", "state", "incorporation_date"}
+
+
+def unchecked_claims(assertions) -> list:
+    """Claims the agent read but has no validator for.
+
+    The honest complement to the check plan: a dossier can carry claims no
+    validator consumes, and silence about them would read as approval. Each is
+    surfaced with the document it came from, so an unseen document format
+    degrades to "recorded, not verified" instead of vanishing.
+
+    These are not unexamined — `cross_doc_field_drift` still checks every one
+    of them for consistency wherever it appears in more than one document.
+    What they lack is a check against a record outside the dossier.
+    """
+    out, seen = [], set()
+    for a in assertions:
+        attr = a.attribute
+        if attr in CONSUMED_ATTRS or attr in _CLERICAL_ATTRS:
+            continue
+        key = (attr, str(a.value))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"attribute": attr, "value": str(a.value),
+                    "entity": a.entity, "source_doc": a.source_doc})
+    return out
+
 
 # Which document typically carries the fields that are missing.
 _UNLOCK_DOCS = [
@@ -117,6 +156,15 @@ def preflight(dossier: dict) -> dict:
             plan.append({"check": check, "will_run": True, "reason": note})
             continue
         ok = any(req <= have for req in options)
+        if ok and check == "successor_registry_lookup" and (
+                registry_row is None
+                or str(registry_row.get("status") or "").strip().lower()
+                not in validators.SUCCESSION_STATUSES):
+            # only worth running when the registry records a succession
+            plan.append({"check": check, "will_run": False,
+                         "reason": "runs only when the registry records a "
+                                   "succession (amalgamated / converted)"})
+            continue
         if ok and check == "cin_vs_registry" and registry_row is None:
             # the comparison needs a registry row to compare against
             plan.append({"check": check, "will_run": False,
@@ -156,5 +204,6 @@ def preflight(dossier: dict) -> dict:
         "runnable": runnable,
         "total": len(plan),
         "unlocks": unlocks[:3],
+        "unchecked_claims": unchecked_claims(assertions),
         "aliased": bool(dossier.get("display_aliases")),
     }

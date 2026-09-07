@@ -28,6 +28,9 @@ const CHECK_LABELS: Record<string, string> = {
   route_distance_sanity: "Claimed route distance is plausible",
   cross_doc_field_drift: "Fields agree across documents",
   injection_screen: "No instructions aimed at the reviewer",
+  successor_registry_lookup: "Successor company found in the registry",
+  dossier_reuse: "This paperwork has not been seen before",
+  lot_code_collision: "This lot code carries one paper trail",
 };
 
 export function checkLabel(check: string): string {
@@ -55,6 +58,9 @@ const FAIL_LABELS: Record<string, string> = {
   spec_matches_oem_sheet: "Part specification differs from the OEM sheet",
   eway_validity_vs_distance: "E-way bill validity does not fit the distance",
   hsn_matches_part: "HSN code does not match the part",
+  successor_registry_lookup: "Named successor is absent from the registry",
+  dossier_reuse: "This exact paperwork has been presented before",
+  lot_code_collision: "This lot code already carries a different paper trail",
   entry_port_mode_consistent: "Entry port does not match the transport mode",
   route_distance_sanity: "Claimed route distance is implausible",
   cross_doc_field_drift: "Fields differ across documents",

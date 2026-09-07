@@ -26,7 +26,8 @@ def test_plan_names_every_validator_check():
     planned = {c for c, _, _ in preflight.PLAN} | {"injection_screen"}
     src = Path(validators.__file__).read_text(encoding="utf-8")
     import re
-    emitted = set(re.findall(r'check="([a-z_]+)"', src))
+    # digits matter: tac_within_5_years was silently skipped by [a-z_]+
+    emitted = set(re.findall(r'check="([a-z0-9_]+)"', src))
     assert emitted - {"role_claim_recorded"} <= planned
 
 

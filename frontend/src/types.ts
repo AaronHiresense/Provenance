@@ -35,11 +35,52 @@ export interface Contradiction {
   resolved_direction: Direction | "unresolved";
 }
 
+export interface Challenge {
+  attack: string;
+  weakest_link: string;
+  decisive_artefact: string;
+  held: boolean;
+  why: string;
+  engine: "llm" | "deterministic_fallback" | "skipped";
+  revised: boolean;
+  from?: Verdict;
+  outcome?: "held" | "upheld" | "overridden" | "blocked";
+  override_reason?: string;
+  blocked?: boolean;
+  blocked_reason?: string;
+}
+
 export interface Reasoning {
   contradictions: Contradiction[];
   narrative: string;
   recommended_verdict: Verdict;
   engine: "llm" | "deterministic_fallback";
+  challenge?: Challenge;
+}
+
+export interface UncheckedClaim {
+  attribute: string;
+  value: string;
+  entity: string;
+  source_doc: string;
+}
+
+export interface CounterfactualRow {
+  check: string;
+  assertion: string;
+  result: string;
+  direction: Direction;
+  strength: Strength;
+  source_tier: SourceTier;
+  becomes: string;
+}
+
+export interface Counterfactual {
+  baseline: string;
+  decisive: CounterfactualRow[];
+  considered: number;
+  note: string;
+  method: string;
 }
 
 export interface Lean {
@@ -79,6 +120,15 @@ export interface AnalysisResult {
   llm_model: string | null;
   aliased: boolean;
   elapsed_ms?: number;
+  unchecked_claims: UncheckedClaim[];
+  counterfactual: Counterfactual;
+}
+
+export interface ArchiveStats {
+  screened: number;
+  lots: number;
+  path: string;
+  cleared?: boolean;
 }
 
 export type Stage = "extract" | "validate" | "ledger" | "reason" | "verdict";
@@ -97,6 +147,8 @@ export interface StageEvent {
   contradict?: number;
   support?: number;
   engine?: string;
+  challenged?: boolean;
+  challenge_held?: boolean;
   recommended?: Verdict;
   verdict?: Verdict;
   subtype?: Subtype;

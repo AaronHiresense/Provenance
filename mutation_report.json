@@ -2,8 +2,8 @@
  "runs": 306,
  "stats": {
   "cin_typo": {
-   "held": 19,
-   "degraded_ok": 26,
+   "held": 20,
+   "degraded_ok": 25,
    "FALSE_GENUINE": 0,
    "crash": 0,
    "skipped": 0
@@ -61,7 +61,7 @@
  "false_genuine": 0,
  "crashes": 0,
  "injection_catch": [
-  21,
+  27,
   45
  ],
  "red_cells": []

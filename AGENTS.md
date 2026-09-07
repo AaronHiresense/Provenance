@@ -48,7 +48,7 @@ This writes `mca.duckdb` into the project root with two tables:
 
 ```bash
 python -m uvicorn app:app --port 8321     # then open http://localhost:8321
-python -m pytest tests/ -q                # 88 tests, all offline/mock
+python -m pytest tests/ -q                # 110 tests, all offline/mock
 python eval.py                            # calibration over cases/ (mock)
 python eval.py --live                     # same, with the configured LLM
 ```
@@ -153,6 +153,16 @@ that in any new test file (that env var beats the `.env` file's key).
 8. **Fully offline demo path**: never add a runtime dependency on the
    network, CDNs, web fonts, or live registries to the core flow. The BIS
    check is a stub table by design.
+9. **The self-critique may only add caution.** `reason._challenge` attacks its
+   own draft, and a successful attack escalates to UNVERIFIABLE and nothing
+   else — never toward GENUINE. It may escalate *only* when a non-heuristic
+   suspect finding exists; otherwise the attack is recorded and blocked. This
+   is the mirror of rule 4, and `eval.py --live` is what caught its absence
+   (the challenger talked itself out of a clean dossier over a typo).
+10. **The archive never runs during calibration.** `archive_run` is opt-in and
+   set only by the API. `eval.py` and the tests must stay deterministic, so
+   they neither read nor write the seen-lots archive. Validators stay pure:
+   the archive is called from `pipeline.py`, never from `validators.py`.
 
 ## Data & encoding gotchas (learned the hard way)
 
@@ -177,7 +187,9 @@ app.py           FastAPI: /, /assets, /api/cases, /api/analyze, /api/analyze/str
 preflight.py     what the agent understands before it runs: docs, offline fields, registry row, check plan, unlocks
 pipeline.py      stage glue as analyze_events() generator (+ analyze() wrapper), display aliasing, dossier_from_raw_text
 extract.py       stage 1 (LLM extraction, injection hygiene, label-parser fallback)
-validators.py    stage 2 (22 pure checks) + run_all orchestrator
+validators.py    stage 2 (25 pure checks) + run_all orchestrator
+archive.py       the seen-lots archive: dossier fingerprints, reuse + lot-collision findings
+counterfactual.py  per-finding "what would change this verdict", pure, re-runs stage 5
 ledger.py        stage 3 (Assertion, Finding, Ledger, tier/strength ranks)
 reason.py        stage 4 (LLM benign-vs-malicious, deterministic fallback)
 verdict.py       stage 5 (verdict + subtype + work order + actions + limits)

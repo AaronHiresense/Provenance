@@ -665,6 +665,123 @@ def tac_within_5_years(tac_issue_date, reference_date=None) -> Finding:
 _LOT_RE = re.compile(r"^([A-Z]{2,4})-(\d{6})-(\d{3,5})$")
 
 
+# Registry statuses that mean "this entity was replaced", not "this entity is
+# dead". They are the only ones for which hunting a successor makes sense.
+SUCCESSION_STATUSES = ("amalgamated", "converted to llp")
+
+_CORP_SUFFIX = re.compile(
+    r"\b(private|public|limited|ltd|llp|pvt|company|co|and|&)\b", re.I)
+
+
+def _name_stem(name: str) -> str:
+    """The distinctive part of a company name, minus corporate furniture."""
+    stem = _CORP_SUFFIX.sub(" ", str(name or ""))
+    stem = re.sub(r"[^A-Za-z ]", " ", stem)
+    return " ".join(stem.split()).upper()
+
+
+def successor_registry_lookup(identifier: str, row: Optional[dict],
+                              candidate_names: Optional[list] = None,
+                              gstin_state: Optional[str] = None) -> Finding:
+    """Follow the thread: when the registry says an entity was succeeded,
+    go and look for the successor.
+
+    This is the one check that consults a record no document names. A
+    succession status is the registry documenting a benign mechanism for name,
+    state and GST drift — but the mechanism only holds if a successor actually
+    exists. So we take every other company name the dossier mentions, plus the
+    stem of the registered name, and search the 3.67M-row registry for it.
+
+    Both outcomes are informative and neither is proof:
+
+      * a successor that exists, is Active, and sits in the state the GSTIN
+        points to corroborates the amalgamation reading;
+      * a successor named on the invoice with **no** registry record at all
+        leaves the succession undocumented outside the dossier's own say-so.
+
+    Direction stays neutral either way. An absent registry record is a gap and
+    not evidence of forgery (the same governance rule that governs
+    `registry_exists`), and a present one is corroboration, not the NCLT order.
+    """
+    assertion = (f"The successor to {identifier} can be found in the registry")
+    status = (row or {}).get("status", "") or ""
+    if not row or status.strip().lower() not in SUCCESSION_STATUSES:
+        return Finding(
+            assertion=assertion, check="successor_registry_lookup",
+            result="abstain (no recorded succession)",
+            direction="neutral", strength="weak",
+            source_tier="authoritative", dimension="identity",
+            detail="The registry does not record this entity as succeeded, "
+                   "so there is no successor to look for.",
+        )
+
+    registered = str(row.get("name") or "")
+    names = []
+    for n in (candidate_names or []):
+        n = str(n or "").strip()
+        if n and _name_stem(n) != _name_stem(registered) and n not in names:
+            names.append(n)
+
+    # Every name the dossier offers, then the registered stem as a fallback.
+    for name in names:
+        hits = registry.search_name(_name_stem(name) or name, limit=5)
+        active = [h for h in hits
+                  if (h.get("status") or "").strip().lower() == "active"]
+        if active:
+            hit = active[0]
+            state_note = ""
+            if gstin_state and hit.get("state_name"):
+                same = registry.states_equivalent(gstin_state,
+                                                 hit["state_name"])
+                state_note = (
+                    f" Its registered state ({hit['state_name']}) "
+                    + ("matches the state the GSTIN points to, which is what a "
+                       "post-merger GST consolidation would look like."
+                       if same else
+                       "does not match the state the GSTIN points to.")
+                )
+            return Finding(
+                assertion=assertion, check="successor_registry_lookup",
+                result=f"pass (candidate successor found: {hit['cin']})",
+                direction="neutral", strength="moderate",
+                source_tier="authoritative", dimension="identity",
+                detail=f"'{name}' appears on the paperwork but not as the "
+                       f"certifying entity. The registry has an Active company "
+                       f"of that name: {hit['name']} ({hit['cin']}, "
+                       f"{hit.get('state_name')}).{state_note} This "
+                       "corroborates the succession the registry records; it "
+                       "does not prove this consignment is covered by it — the "
+                       "NCLT scheme order names the lawful successor.",
+                source_doc="",
+            )
+
+    if names:
+        return Finding(
+            assertion=assertion, check="successor_registry_lookup",
+            result="fail (named successor absent from the registry)",
+            direction="neutral", strength="moderate",
+            source_tier="authoritative", dimension="identity",
+            detail=f"The registry records {identifier} as '{status}', and the "
+                   f"dossier bills under {', '.join(repr(n) for n in names)} — "
+                   "but no company of that name is in the registry snapshot. "
+                   "The succession is therefore documented only by the dossier "
+                   "itself, which is the party being checked. Treated as a gap, "
+                   "not as proof: the NCLT scheme order remains the artefact "
+                   "that settles it.",
+            source_doc="",
+        )
+
+    return Finding(
+        assertion=assertion, check="successor_registry_lookup",
+        result="abstain (no successor named)",
+        direction="neutral", strength="weak",
+        source_tier="authoritative", dimension="identity",
+        detail=f"The registry records {identifier} as '{status}', but the "
+               "dossier names no other entity, so there is no successor to "
+               "look up. The NCLT scheme order would name one.",
+    )
+
+
 def lot_code_grammar(lot_code: str, reference_date=None) -> Finding:
     """Expected grammar: PLANT(2-4 letters)-YYMMDD-SEQ(3-5 digits)."""
     assertion = f"Lot code '{lot_code}' follows the PLANT-YYMMDD-SEQ grammar"
@@ -1085,6 +1202,20 @@ def run_all(assertions: list) -> Ledger:
         led.add(company_status_active(ident, row))
         nic = (row or {}).get("nic_code") or (decoded or {}).get("nic_code")
         led.add(nic_is_manufacturing(ident, nic))
+        # Follow the thread: a recorded succession sends the agent looking
+        # for a company the documents may never name.
+        if row and str(row.get("status") or "").strip().lower() \
+                in SUCCESSION_STATUSES:
+            other_names = []
+            for a in assertions:
+                if a.attribute == "company_name" and a.value not in other_names:
+                    other_names.append(a.value)
+            gst_state = None
+            if a_gstin:
+                code = str(a_gstin.value).strip()[:2]
+                gst_state = registry.state_name_for_code(code)
+            led.add(successor_registry_lookup(ident, row, other_names,
+                                              gst_state))
 
     if a_gstin:
         f = gstin_checksum(a_gstin.value)

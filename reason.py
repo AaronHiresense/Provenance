@@ -51,6 +51,148 @@ Full schema:
  "recommended_verdict": "GENUINE"|"SUSPECT"|"UNVERIFIABLE"}"""
 
 
+_CHALLENGE_SYSTEM = """You are the CHALLENGER. Another reasoning pass has just
+produced a draft verdict from the evidence ledger below. Your job is not to
+agree with it. Your job is to construct the strongest honest case that the
+draft is WRONG, using only the ledger — do not invent facts.
+
+Ask, specifically:
+* if the draft is SUSPECT: what innocent mechanism would produce this exact
+  pattern of findings? Is there one the draft did not consider?
+* if the draft is GENUINE: what would a competent forger have had to fake to
+  produce exactly these findings, and is anything on this ledger inconsistent
+  with that?
+* in both cases: which single document or record, not present here, would
+  settle the disagreement?
+
+Then judge your own attack honestly. Most drafts survive; say so when they do.
+A draft only fails if your attack identifies a real, unresolved alternative
+that the present evidence cannot rule out.
+
+Return ONLY JSON:
+{"attack": str,            // the strongest case that the draft is wrong
+ "weakest_link": str,      // the check name the draft leans on most
+ "decisive_artefact": str, // the one document/record that would settle it
+ "held": true|false,       // true = the draft survives your attack
+ "why": str}               // one sentence on why it held or failed"""
+
+
+def _challenge(led: Ledger, draft: dict, llm: LLMClient,
+               case_id: str = "unknown") -> dict:
+    """Attack the draft verdict, then let it revise itself — one way only.
+
+    The challenger may move the recommendation toward caution
+    (GENUINE/SUSPECT -> UNVERIFIABLE) and never away from it. That asymmetry is
+    the point: a model arguing itself into more doubt costs a two-day hold, and
+    a model arguing itself out of doubt costs a recall. It is enforced here in
+    code, not requested in the prompt.
+
+    A draft that is already UNVERIFIABLE is already the cautious answer, so
+    there is nothing for a successful attack to move it to; we say that
+    deterministically instead of spending a second model call on it.
+    """
+    drafted = draft.get("recommended_verdict")
+    if drafted == "UNVERIFIABLE":
+        return {
+            "attack": "The draft already abstains and names what it is "
+                      "waiting for, so the cautious direction is taken.",
+            "weakest_link": "", "decisive_artefact": "",
+            "held": True, "engine": "skipped",
+            "why": "A challenge can only move a verdict toward caution, and "
+                   "UNVERIFIABLE is already the cautious answer.",
+            "revised": False,
+        }
+
+    payload = llm.complete_json(
+        _CHALLENGE_SYSTEM,
+        f"Draft verdict: {drafted}\n\nDraft reasoning: "
+        f"{draft.get('narrative', '')}\n\nEvidence ledger:\n"
+        + json.dumps(led.to_dict(), indent=2),
+        cache_key=f"challenge_{case_id}",
+    )
+    if not payload or not isinstance(payload.get("held"), bool):
+        return _deterministic_challenge(led, draft)
+
+    payload.setdefault("attack", "")
+    payload.setdefault("weakest_link", "")
+    payload.setdefault("decisive_artefact", "")
+    payload.setdefault("why", "")
+    payload["engine"] = "llm"
+
+    # Two governance bounds on a successful attack, both enforced here rather
+    # than requested in the prompt:
+    #
+    # 1. It escalates to UNVERIFIABLE and can do nothing else. A challenge can
+    #    never turn suspicion into approval.
+    # 2. It may only escalate when there is a real contradiction to escalate
+    #    about — at least one suspect finding above the heuristic tier. This
+    #    is the mirror of the rule that heuristics alone can never force
+    #    SUSPECT: doubt manufactured from nothing is not judgement, it is an
+    #    abstention rate. Without it a model can talk itself out of any clean
+    #    dossier, which is exactly what a supplier with good paperwork and bad
+    #    luck would suffer.
+    real_contradiction = any(
+        f.direction == "supports_suspect" and f.source_tier != "heuristic"
+        for f in led.findings)
+    payload["revised"] = (not payload["held"]) and real_contradiction
+    if not payload["held"] and not real_contradiction:
+        payload["blocked"] = True
+        payload["blocked_reason"] = (
+            "The attack is recorded but cannot move the verdict: nothing on "
+            "this ledger contradicts the documents above the heuristic tier. "
+            "A challenge may add caution to real evidence, not manufacture "
+            "doubt where there is none.")
+    return payload
+
+
+def _deterministic_challenge(led: Ledger, draft: dict) -> dict:
+    """The offline challenger: same shape, no model, always reproducible."""
+    drafted = draft.get("recommended_verdict")
+    if drafted == "UNVERIFIABLE":
+        # same rule as the model path: caution is already the destination
+        return {
+            "attack": "The draft already abstains and names what it is "
+                      "waiting for, so the cautious direction is taken.",
+            "weakest_link": "", "decisive_artefact": "",
+            "held": True, "engine": "skipped",
+            "why": "A challenge can only move a verdict toward caution, and "
+                   "UNVERIFIABLE is already the cautious answer.",
+            "revised": False,
+        }
+    suspect = [f for f in led.findings if f.direction == "supports_suspect"]
+    strongest = max(suspect,
+                    key=lambda f: (TIER_RANK[f.source_tier],
+                                   STRENGTH_RANK[f.strength]),
+                    default=None)
+    if drafted == "SUSPECT" and strongest is not None:
+        attack = (f"The case rests on '{strongest.check}' at the "
+                  f"{strongest.source_tier} tier. If that single record is "
+                  "stale or mis-keyed, the pattern collapses into ordinary "
+                  "administrative untidiness.")
+        why = (f"It holds: {strongest.source_tier}-tier evidence at "
+               f"{strongest.strength} strength is not displaced by the "
+               "possibility of an error, only by a record that contradicts it.")
+        artefact = ("A certified copy of the MCA master data for the quoted "
+                    "CIN, dated after this dossier.")
+    elif drafted == "GENUINE":
+        attack = ("Every check that passed could be reproduced by a forger "
+                  "who copied a real supplier's identity wholesale; the "
+                  "ledger cannot see goods, only paper.")
+        why = ("It holds on the evidence present: nothing here contradicts "
+               "the trail. The residual risk is dossier reuse, which is "
+               "stated as a limit rather than resolved.")
+        artefact = ("The OEM's production record for this lot, or an earlier "
+                    "sighting of the same dossier at this desk.")
+    else:
+        attack = "No directional evidence to attack."
+        why = "Nothing to revise."
+        artefact = ""
+    return {"attack": attack, "weakest_link":
+            strongest.check if strongest is not None else "",
+            "decisive_artefact": artefact, "held": True,
+            "why": why, "engine": "deterministic_fallback", "revised": False}
+
+
 def reason_over_ledger(led: Ledger, llm: Optional[LLMClient] = None,
                        case_id: str = "unknown") -> dict:
     llm = llm or LLMClient()
@@ -67,9 +209,20 @@ def reason_over_ledger(led: Ledger, llm: Optional[LLMClient] = None,
         payload.setdefault("contradictions", [])
         payload.setdefault("narrative", "")
         payload["engine"] = "llm"
-        return payload
-    result = _deterministic_reasoning(led)
-    result["engine"] = "deterministic_fallback"
+        result = payload
+    else:
+        result = _deterministic_reasoning(led)
+        result["engine"] = "deterministic_fallback"
+
+    # Stage 4b — the agent attacks its own draft, and may revise it one way.
+    if result["engine"] == "llm":
+        challenge = _challenge(led, result, llm, case_id=case_id)
+    else:
+        challenge = _deterministic_challenge(led, result)
+    if challenge.get("revised"):
+        challenge["from"] = result["recommended_verdict"]
+        result["recommended_verdict"] = "UNVERIFIABLE"
+    result["challenge"] = challenge
     return result
 
 
