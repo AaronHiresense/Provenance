@@ -30,7 +30,7 @@ Read in this order:
 
 | Milestone | Status | Source commit | Railway deployment | Verification |
 |---|---|---|---|---|
-| Planning/handoff | Authored; remote-save result recorded below | Pending commit | Not an application release | Documentation consistency review |
+| Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
 | M0 Release/readiness | Not started | — | — | — |
 | M1 Evidence honesty | Not started | — | — | — |
 | M2 Entities/references | Not started | — | — | — |
@@ -41,6 +41,13 @@ Read in this order:
 | M7 Evaluation/demo | Not started | — | — | — |
 
 Update each row only with observed evidence. Use `in progress`, `implemented`, `verified locally`, `pushed`, `live verified`, or `blocked: reason`; never mark deployment complete after upload alone. Append a concise release record for each milestone, including any design deviations.
+
+Planning source and handoff were remotely saved in commit `7d4e5c3` on
+`codex/hackathon-plan`. A follow-up documentation commit records this evidence.
+Check remote `main` on resumption: normal fast-forward integration is the final
+planning step. No application deployment is needed for these Markdown changes;
+the live baseline remains the deployment recorded above. Temporary test output
+created during assessment was removed after verifying its exact workspace path.
 
 ## First implementation action
 
