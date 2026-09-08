@@ -2,6 +2,11 @@
 
 Guidance for coding agents (and humans) working in this repository.
 
+For the Challenge 07 improvement work or a model handoff, read
+`docs/implementation-status.md` first. It points to the implementation plan,
+evidence/API contracts, and Railway release runbook; update it after each
+milestone with verified Git and live deployment status.
+
 ## What this is
 
 A counterfeit auto-parts **documents & records** investigator (Quessathon

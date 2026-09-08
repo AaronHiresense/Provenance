@@ -1,0 +1,61 @@
+# Implementation status and model handoff
+
+Last planning update: 8 September 2026.
+
+## Read first
+
+The user asked Astra to understand the existing app, create the complete improvement plan, preserve it, and then hand implementation to a lower-cost model. They have time and want completed improvements pushed to Git and deployed to the existing live Railway app. They asked to switch models before application implementation begins. This turn prepares and remotely saves the plan; it does not implement the milestones.
+
+Read in this order:
+
+1. Repository `AGENTS.md` — existing architecture invariants.
+2. `docs/implementation-plan.md` — objective, ordered milestones and done conditions.
+3. `docs/implementation-contracts.md` — evidence, persistence, API, policy and required tests.
+4. `docs/railway-release.md` — verified deployment target, release gates and recovery.
+
+`docs/hackathon-assessment.md` is the earlier assessment; the three implementation documents above supersede its rough sequencing and estimates. The user supplied the full Challenge 07 brief in the conversation. The required behaviors are captured in the plan; do not rely on conversation memory to fill architectural gaps.
+
+## Current baseline
+
+- Repository: `D:\Work_Folders\Provenance`, remote `AaronHiresense/Provenance`.
+- Baseline application revision: `1e84f3b8b1b63279b0ceecd0ce9fe77e4673e033`; matched remote main during planning.
+- Test result: 110 passed. Successful command used `python -m pytest tests/ -q -p no:cacheprovider --basetemp=.test-tmp-hackathon-assessment-20260908`. That directory is disposable test output, not application data; do not commit/upload it.
+- Offline eval: 15/15 exact verdict/subtype, 4 abstentions. Live-model eval was not rerun.
+- Live URL returned HTTP 200; 15 cases; frontend bundle names matched local source-built static files. No browser interaction test was performed in planning.
+- Railway production deployment `77a13bb6-65c7-425e-8b0f-1b29bbeb6a6f` was SUCCESS/RUNNING; `/data` volume READY. Model name configured as `deepseek-chat`; actual provider/fallback must be checked per result, not inferred solely from the model variable.
+- Railway is CLI-uploaded, with no Git repo source currently attached. A Git push does not trigger deployment in this verified configuration.
+- No application code, database data, infrastructure configuration or live deployment was changed during planning.
+
+## Milestone ledger
+
+| Milestone | Status | Source commit | Railway deployment | Verification |
+|---|---|---|---|---|
+| Planning/handoff | Authored; remote-save result recorded below | Pending commit | Not an application release | Documentation consistency review |
+| M0 Release/readiness | Not started | — | — | — |
+| M1 Evidence honesty | Not started | — | — | — |
+| M2 Entities/references | Not started | — | — | — |
+| M3 Origin reconciliation | Not started | — | — | — |
+| M4 Durable investigations | Not started | — | — | — |
+| M5 Evidence/reassessment UI | Not started | — | — | — |
+| M6 PDF/OCR/export | Not started | — | — | — |
+| M7 Evaluation/demo | Not started | — | — | — |
+
+Update each row only with observed evidence. Use `in progress`, `implemented`, `verified locally`, `pushed`, `live verified`, or `blocked: reason`; never mark deployment complete after upload alone. Append a concise release record for each milestone, including any design deviations.
+
+## First implementation action
+
+Begin M0. Inspect the current branch and remote state, create/use an implementation feature branch from the plan-containing base, and add runtime/readiness metadata and a reproducible release path. The following milestones depend on being able to identify exactly what is live.
+
+There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
+
+## Resume prompt
+
+> Implement the saved Challenge 07 plan. Read AGENTS.md and docs/implementation-status.md first, then the linked implementation contracts and Railway runbook. Start at the first unfinished milestone, preserve the five-stage offline architecture, and complete its tests, frontend build when needed, Git push, Railway deployment and live verification. Update the status document with source commits, deployment IDs, verification and remaining work after each milestone. Continue through the plan; do not treat a Git push as a live deployment. Do not lose or overwrite existing case data.
+
+## Open assumptions to verify during implementation
+
+- No enterprise user accounts are required for this hackathon; isolated persistent demo sessions are the chosen scope.
+- Synthetic independent records are acceptable for demonstration when explicitly labeled; real OEM/carrier data integration is not claimed.
+- OCR language starts with English paperwork; mixed-language support should be called out if encountered, not silently guessed.
+- Existing prepared-case expectations are regression policy, not immutable ground truth; justify changes where stronger origin requirements expose gaps.
+- A public internet UI requires honest hosted/model mode labeling and scoped data access before persistent uploads are enabled.
