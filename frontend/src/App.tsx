@@ -125,9 +125,9 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar theme={theme} onToggleTheme={toggleTheme} result={result} busy={busy} desk={desk} onDesk={setDesk} showNew={showTrace} onNew={startNew} />
+      <TopBar theme={theme} onToggleTheme={toggleTheme} busy={busy} desk={desk} onDesk={setDesk} showNew={showTrace} onNew={startNew} />
 
-      <main ref={topRef} className="mx-auto w-full max-w-5xl flex-1 scroll-mt-20 space-y-7 p-4 sm:p-6 lg:p-8" aria-live="polite">
+      <main ref={topRef} className="mx-auto w-full max-w-6xl flex-1 scroll-mt-20 space-y-7 p-4 sm:p-6 lg:p-8" aria-live="polite">
         {!showTrace && <Briefing cases={cases} historyList={runs} busy={busy} rulesOnly={rulesOnly} onRulesOnly={setRulesOnly} onInvestigate={(i) => void investigate(i)} onReopen={reopen} error={error} />}
 
         {showTrace && <AgentTrace steps={agent.steps} running={agent.running} elapsedMs={agent.elapsedMs} />}

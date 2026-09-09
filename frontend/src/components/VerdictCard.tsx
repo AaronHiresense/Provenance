@@ -170,62 +170,62 @@ export function VerdictCard({ result: r }: Props) {
             </div>
 
             {/* 4 Dimension Status Cards */}
-            <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:grid-cols-4">
               {/* 1. Identity */}
-              <div className="flex items-center gap-3 rounded-2xl border border-sky-200/70 bg-sky-50/50 p-3 shadow-2xs dark:border-sky-900/40 dark:bg-sky-950/20">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-sky-200/80 bg-sky-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-sky-900/40 dark:bg-sky-950/20">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
                   <UserIcon className="h-4 w-4" />
                 </div>
-                <div className="min-w-0">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="min-w-0 flex-1">
+                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     1. Identity
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
                     {dimensionLabel("identity")}
                   </span>
                 </div>
               </div>
 
               {/* 2. Certification */}
-              <div className="flex items-center gap-3 rounded-2xl border border-purple-200/70 bg-purple-50/50 p-3 shadow-2xs dark:border-purple-900/40 dark:bg-purple-950/20">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-purple-200/80 bg-purple-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-purple-900/40 dark:bg-purple-950/20">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
                   <FileIcon className="h-4 w-4" />
                 </div>
-                <div className="min-w-0">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="min-w-0 flex-1">
+                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     2. Certification
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
                     {certificationLabel}
                   </span>
                 </div>
               </div>
 
               {/* 3. Custody */}
-              <div className="flex items-center gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/50 p-3 shadow-2xs dark:border-amber-900/40 dark:bg-amber-950/20">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-amber-900/40 dark:bg-amber-950/20">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   <ShieldIcon className="h-4 w-4" />
                 </div>
-                <div className="min-w-0">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="min-w-0 flex-1">
+                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     3. Custody
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
                     {dimensionLabel("custody")}
                   </span>
                 </div>
               </div>
 
               {/* 4. Provenance */}
-              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200/70 bg-emerald-50/50 p-3 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                   <LinkIcon className="h-4 w-4" />
                 </div>
-                <div className="min-w-0">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="min-w-0 flex-1">
+                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     4. Provenance
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-900 dark:text-slate-100">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
                     {r.injection_flags.length ? "Injection flagged" : dimensionLabel("provenance")}
                   </span>
                 </div>
@@ -293,26 +293,26 @@ export function VerdictCard({ result: r }: Props) {
 
         {/* ── RIGHT CARD: MCA REGISTRY DOSSIER ───────────────────────────── */}
         <m.aside
-          className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+          className="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.08 }}
         >
           <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3.5 dark:border-slate-800">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400">
                   <FileIcon className="h-4 w-4" />
                 </div>
-                <h4 className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                <h4 className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap">
                   MCA REGISTRY DOSSIER
                 </h4>
               </div>
 
-              <div className="rounded-xl bg-blue-50/80 px-2.5 py-1 text-right font-mono text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 leading-tight">
-                <div>3.67M MCA registry queried</div>
-                <div className="text-[9.5px] opacity-80">{r.elapsed_ms ?? 19200} ms compute</div>
+              <div className="rounded-xl bg-blue-50/80 px-2.5 py-1 text-right font-mono text-[9.5px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 leading-tight shrink-0 whitespace-nowrap">
+                <div>3.67M MCA queried</div>
+                <div className="text-[9px] opacity-80">{r.elapsed_ms ?? 19200} ms</div>
               </div>
             </div>
 
