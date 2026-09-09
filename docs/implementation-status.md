@@ -31,7 +31,7 @@ Read in this order:
 | Milestone | Status | Source commit | Railway deployment | Verification |
 |---|---|---|---|---|
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
-| M0 Release/readiness | Verified locally; pending Git/Railway | pending | — | 114 tests; frontend build; offline eval 15/15 |
+| M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
 | M1 Evidence honesty | Not started | — | — | — |
 | M2 Entities/references | Not started | — | — | — |
 | M3 Origin reconciliation | Not started | — | — | — |
@@ -61,6 +61,15 @@ excluded operational state, uploads, backups, release metadata and test scratch
 data from source/container uploads. Local verification passed: 114 tests,
 frontend typecheck/build, and 15/15 offline evaluation. Source commit and live
 deployment fields remain pending until observed after commit and release.
+
+Release evidence: the first M0 upload exposed that ignored `release.json` was
+omitted and correctly failed the source-identity smoke check. Commit `7d7b6b8`
+renamed the generated manifest; deployment `7ee5d621-2e69-449d-8fb1-2523b38f7cdb`
+then passed the exact live-commit smoke check. Railway's deployment healthcheck
+was configured to `/api/ready`, producing healthcheck-gated deployment
+`4c6ef526-0a74-4a2b-9cb0-ada0008f393f`, which reached SUCCESS and passed live
+health, readiness, runtime-commit and cases checks. Previous known-good release:
+`7ee5d621-2e69-449d-8fb1-2523b38f7cdb` (same image/source).
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 
