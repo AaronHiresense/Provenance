@@ -109,3 +109,88 @@ export const BuildingIcon = (p: P) => (
     <path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M4 21h16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4" />
   </Icon>
 );
+export const TruckIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M1 3h15v13H1zM16 8h4l3 3v5h-7V8z" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
+  </Icon>
+);
+export const BoxIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+    <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" />
+  </Icon>
+);
+export const FingerprintIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M12 11c0-1.66-1.34-3-3-3s-3 1.34-3 3c0 3.5 2 6 3 7" />
+    <path d="M12 2a10 10 0 00-9.9 8.6c.1 1.1.4 2.2.9 3.2" />
+    <path d="M14 6.5A7.5 7.5 0 0118.5 12c0 2-.5 3.5-1.5 5" />
+    <path d="M17 19.5a10.9 10.9 0 01-5 1.5 11 11 0 01-6.5-2.2" />
+    <path d="M8 14.5c.5 1.5 1.5 2.5 3 2.5" />
+  </Icon>
+);
+export const BadgeCheckIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Icon>
+);
+export const ShieldAlertIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="M12 8v4M12 16h.01" />
+  </Icon>
+);
+export const UserIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </Icon>
+);
+export const LinkIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </Icon>
+);
+export const CopyIcon = (p: P) => (
+  <Icon {...p}>
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </Icon>
+);
+export const TargetIcon = (p: P) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </Icon>
+);
+export const BarChartIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M12 20V10M18 20V4M6 20v-4" />
+  </Icon>
+);
+export const FactoryIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4H2z" />
+    <path d="M17 18h1M12 18h1M7 18h1" />
+  </Icon>
+);
+export const CheckCircleIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <path d="m9 11 3 3L22 4" />
+  </Icon>
+);
+export const BotIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+  </Icon>
+);
+
+

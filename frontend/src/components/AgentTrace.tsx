@@ -4,7 +4,7 @@ import { AnimatePresence } from "motion/react";
 import type { Stage } from "../types";
 import type { StepState } from "../hooks/useAgentRun";
 import { BorderBeam, ShimmerText, StatusDot } from "./effects";
-import { ChevronIcon } from "./Icons";
+import { BotIcon, ChevronIcon } from "./Icons";
 
 const STEP_META: Record<Stage, { title: string; agent: string; blurb: string }> = {
   extract: { title: "Extraction agent", agent: "reads", blurb: "turns each document into typed claims; strips anything that tries to instruct the reviewer" },
@@ -44,36 +44,51 @@ export function AgentTrace({ steps, running, elapsedMs }: Props) {
   const fill = Math.max(0, doneCount - 1) / (steps.length - 1);
 
   return (
-    <m.section className="panel relative overflow-hidden" aria-label="Agent run" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      {running && <BorderBeam radius={12} />}
+    <m.section
+      className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      aria-label="Agent run"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      {running && <BorderBeam radius={16} />}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={expanded}
         disabled={running}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left disabled:cursor-default"
+        className="flex w-full items-center gap-3.5 px-4 sm:px-5 py-3 text-left disabled:cursor-default"
       >
-        <span className="relative flex h-2.5 w-2.5">
-          {running && <m.span className="absolute inset-0 rounded-full bg-blue-500" animate={{ scale: [1, 2.2], opacity: [0.7, 0] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }} />}
-          <span className={`relative h-2.5 w-2.5 rounded-full ${running ? "bg-blue-500" : done ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`} />
-        </span>
-        <span className="text-sm font-semibold text-slate-900 dark:text-white">Agent run</span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {running ? (
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 shadow-2xs dark:bg-blue-400/15 dark:text-blue-400">
+          <BotIcon className="h-4 w-4" />
+        </div>
+
+        <span className="text-sm font-bold text-slate-900 dark:text-white">Agent Run</span>
+
+        {running ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
             <ShimmerText>
-              {steps.find((s) => s.status === "running") ? `${STEP_META[steps.find((s) => s.status === "running")!.stage].title} ${STEP_META[steps.find((s) => s.status === "running")!.stage].agent}…` : "Starting…"}
+              {steps.find((s) => s.status === "running") ? `${STEP_META[steps.find((s) => s.status === "running")!.stage].title}…` : "Running…"}
             </ShimmerText>
-          ) : done ? (
-            `${doneCount} steps${elapsedMs !== null ? ` · ${elapsedMs < 1000 ? `${elapsedMs} ms` : `${(elapsedMs / 1000).toFixed(1)} s`} of compute` : ""}`
-          ) : (
-            "Idle"
-          )}
+          </span>
+        ) : done ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Completed
+          </span>
+        ) : (
+          <span className="text-xs text-slate-400">Idle</span>
+        )}
+
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          {doneCount} steps{elapsedMs !== null ? ` · ${elapsedMs < 1000 ? `${elapsedMs} ms` : `${(elapsedMs / 1000).toFixed(1)} s`} of compute` : ""}
         </span>
-        <span className="ml-auto flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+
+        <span className="ml-auto flex items-center gap-1 rounded-full border border-slate-200/80 bg-slate-50/50 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300">
           {!running && (
             <>
               {open ? "Hide steps" : "Show steps"}
-              <ChevronIcon open={open} className="h-3.5 w-3.5" />
+              <ChevronIcon open={open} className="h-3 w-3 text-slate-400" />
             </>
           )}
         </span>
