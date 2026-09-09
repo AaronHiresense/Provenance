@@ -32,7 +32,7 @@ Read in this order:
 |---|---|---|---|---|
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
 | M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
-| M1 Evidence honesty | Not started | — | — | — |
+| M1 Evidence honesty | Verified locally; pending Git/Railway | pending | — | 114 tests; frontend build; eval 15/15 |
 | M2 Entities/references | Not started | — | — | — |
 | M3 Origin reconciliation | Not started | — | — | — |
 | M4 Durable investigations | Not started | — | — | — |
@@ -70,6 +70,18 @@ was configured to `/api/ready`, producing healthcheck-gated deployment
 `4c6ef526-0a74-4a2b-9cb0-ada0008f393f`, which reached SUCCESS and passed live
 health, readiness, runtime-commit and cases checks. Previous known-good release:
 `7ee5d621-2e69-449d-8fb1-2523b38f7cdb` (same image/source).
+
+### M1 work record — 9 September 2026
+
+Verdict payloads now include deterministic documentary confidence and
+per-dimension status derived from the ledger. The UI reads those values instead
+of deriving BIS/custody claims from the overall verdict. GENUINE and desk-action
+language now preserves human and physical controls; hosted model data flow is
+stated honestly. E-way validity is treated as a moderate record-consistency
+signal rather than truck-speed proof, and company-status, NIC and HSN text no
+longer asserts intent beyond the evidence. Local verification passed: 114 tests,
+frontend typecheck/build and 15/15 offline evaluation. Source and deployment
+remain pending until observed.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 

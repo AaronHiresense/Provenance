@@ -49,7 +49,7 @@ const STEP_MS = 3600;
 const DEMO_HOOKS: Record<string, string> = {
   suspect_velomax: "a certificate dated before the company existed, and a document that tries to instruct the reviewer",
   contrast_cascade: "a supplier the registry says was merged away, where one court order decides the case",
-  suspect_teleport: "a consignment that covers the distance faster than a truck can",
+  suspect_teleport: "an e-way validity claim that does not reconcile with the declared distance",
   genuine_hsi: "a clean paper trail from a manufacturer the registry has known since 1997",
   unverifiable_ghost: "a CIN the registry has never heard of",
   suspect_novakraft: "a GST number registered in a different state from the dispatch",
@@ -524,7 +524,7 @@ function BringYourOwn(p: { busy: boolean; onInvestigate: (i: BriefInput) => void
 
       <dl className="mt-5 grid grid-cols-1 gap-x-8 gap-y-2 border-t border-slate-200 pt-4 sm:grid-cols-3 dark:border-slate-800">
         {([
-          ["GENUINE", "Every claim the documents make is supported by the registry and the rules."],
+          ["GENUINE", "The available records support the submitted documentary claims within the checks performed."],
           ["SUSPECT", "The records contradict the documents. The verdict names which check decided it."],
           ["UNVERIFIABLE", "Not a failure: the evidence does not settle it, so the system abstains and names the one document that would."],
         ] as const).map(([v, meaning]) => (

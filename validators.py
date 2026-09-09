@@ -526,8 +526,10 @@ def company_status_active(identifier: str, row: Optional[dict]) -> Finding:
         result=f"fail (status: {status})",
         direction="supports_suspect", strength="strong",
         source_tier="authoritative", dimension="identity",
-        detail=f"A company with status '{status}' cannot lawfully be "
-               "manufacturing or invoicing parts today.",
+        detail=f"The current MCA snapshot records status '{status}', which "
+               "does not support a present-day active-company claim. The "
+               "snapshot does not establish the historical status on an "
+               "earlier document date.",
     )
 
 
@@ -560,9 +562,9 @@ def nic_is_manufacturing(identifier: str, nic_code: Optional[str]) -> Finding:
             assertion=assertion, check="nic_is_manufacturing", result="fail",
             direction="supports_suspect", strength="strong",
             source_tier="authoritative", dimension="identity",
-            detail=f"NIC {nic} (45xxx) is *trade* of vehicles/parts. A trading "
-                   "company presenting itself as the manufacturer is a "
-                   "classic counterfeit-paperwork pattern.",
+            detail=f"NIC {nic} (45xxx) records trade of vehicles/parts, not "
+                   "manufacturing. The claimed manufacturer role therefore "
+                   "needs an explanation or independent production record.",
         )
     # An NIC outside the known auto ranges is not, by itself, evidence of
     # forgery — NIC classification is coarse and companies diversify. Abstain
@@ -883,9 +885,12 @@ def _route_km(route_from, route_to, claimed_km=None):
 
 def eway_validity_vs_distance(validity_days, route_from=None, route_to=None,
                               claimed_km=None) -> Finding:
-    """CGST Rule 138(10) physics: one validity day per 200 km (or part).
-    An e-way bill whose stated validity cannot cover its own journey was
-    papered by someone who never intended the truck to exist."""
+    """Compare claimed original validity with Rule 138(10) for ordinary cargo.
+
+    This is a document-consistency check, not a travel-time or speed test.
+    Callers must supply original validity days; remaining validity and special
+    cargo categories are outside this bounded rule and should abstain upstream.
+    """
     km, src = _route_km(route_from, route_to, claimed_km)
     assertion = (f"E-way bill validity ({validity_days} day(s)) covers the "
                  f"declared journey"
@@ -910,13 +915,13 @@ def eway_validity_vs_distance(validity_days, route_from=None, route_to=None,
         return Finding(
             assertion=assertion, check="eway_validity_vs_distance",
             result="fail",
-            direction="supports_suspect", strength="strong",
+            direction="supports_suspect", strength="moderate",
             source_tier="derived", dimension="custody",
             detail=f"Rule 138(10): {km:.0f} km ({src}) needs "
                    f"{required} validity day(s) at {EWAY_KM_PER_DAY} km/day; "
-                   f"the bill grants {days:.0f}. Lawful extensions exist and "
-                   "would appear on the bill — none is cited. As papered, "
-                   "the goods travel faster than the rule allows.",
+                   f"the submitted record states {days:.0f}. This mismatch "
+                   "requires the original e-way bill or extension history; "
+                   "it does not measure the truck's travel time.",
         )
     return Finding(
         assertion=assertion, check="eway_validity_vs_distance", result="pass",
@@ -955,10 +960,10 @@ def hsn_matches_part(part_number: str, claimed_hsn: str) -> Finding:
         assertion=assertion, check="hsn_matches_part", result="fail",
         direction="supports_suspect", strength="strong",
         source_tier="derived", dimension="certification",
-        detail=f"Part family {part} belongs under heading {expected}; the "
-               f"invoice declares {claimed4}. Mis-declared HSN is how "
-               "counterfeit consignments dodge duty scrutiny and "
-               "anti-dumping checks.",
+        detail=f"The bounded part-reference table maps {part} to heading "
+               f"{expected}, while the invoice declares {claimed4}. Confirm "
+               "the classification or obtain the supplier's classification "
+               "basis; this mismatch does not establish intent.",
     )
 
 

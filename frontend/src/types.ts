@@ -105,6 +105,18 @@ export interface AnalysisResult {
   missing_artefact: string | null;
   interim_action: string | null;
   lean: Lean | null;
+  confidence: {
+    level: "high" | "medium" | "low" | "none";
+    scope: "documentary_assessment";
+    basis: string[];
+    limitations: string[];
+  };
+  dimension_status: Record<Dimension, {
+    status: "supported" | "contradicted" | "incomplete" | "unavailable" | "not_applicable";
+    support: number;
+    contradictions: number;
+    gaps: number;
+  }>;
   ledger: { findings: Finding[] };
   reasoning: Reasoning | null;
   rules_only: boolean;

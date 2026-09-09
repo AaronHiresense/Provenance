@@ -124,7 +124,9 @@ registry, the checks it will run and which document would unlock more. It
 then runs in front of you and, after the verdict, proposes the next moves
 for your desk (distributor, OEM or service), drafts the supplier request
 for the one missing document, and keeps the lot on the briefing screen
-until that document arrives. Nothing is sent and nothing leaves the machine.
+until that document arrives. Supplier notes remain drafts. In hosted live-model
+mode, sanitised document text is sent from the service to the configured model
+provider; mock mode performs extraction and reasoning locally.
 
 The verdict comes first: one plain sentence, the actions for each desk
 (distributor, OEM, service), then the findings that decided it, strongest

@@ -17,9 +17,9 @@ STATIC_LIMITS = [
     "physical inspection.",
     "Whether a document image was doctored — inputs arrive as text; pixel- "
     "level forensics (fonts, scan artefacts, seal geometry) are out of scope.",
-    "A byte-perfect clone of a genuine, current dossier attached to "
-    "counterfeit goods — detecting dossier reuse needs a seen-lots archive "
-    "(roadmap), not contradiction analysis.",
+    "A first presentation of byte-perfect genuine paperwork attached to "
+    "different goods — desk memory can flag later reuse, but documentary "
+    "analysis cannot inspect the first physical shipment.",
     "GSTIN active/cancelled status — the checksum and state code are "
     "verified offline; whether GSTN has since cancelled the registration "
     "is not.",
@@ -63,6 +63,61 @@ def _cannot_determine(led: Ledger) -> list:
             out.append(f"In this case: {f.check} produced no signal "
                        f"({f.result}).")
     return out
+
+
+def _dimension_status(led: Ledger) -> dict:
+    """Summarise each evidence dimension from its own findings, never verdict."""
+    out = {}
+    for dimension in ("identity", "certification", "provenance", "custody"):
+        rows = led.by_dimension(dimension)
+        directional = [f for f in rows if f.direction != "neutral"]
+        suspect = [f for f in directional
+                   if f.direction == "supports_suspect"
+                   and f.source_tier != "heuristic"]
+        support = [f for f in directional
+                   if f.direction == "supports_genuine"]
+        unavailable = [f for f in rows if "unavailable" in f.result.lower()]
+        abstain = [f for f in rows if "abstain" in f.result.lower()]
+        if suspect:
+            status = "contradicted"
+        elif unavailable and not support:
+            status = "unavailable"
+        elif support and not abstain and not unavailable:
+            status = "supported"
+        else:
+            status = "incomplete"
+        out[dimension] = {
+            "status": status,
+            "support": len(support),
+            "contradictions": len(suspect),
+            "gaps": len(abstain) + len(unavailable),
+        }
+    return out
+
+
+def _confidence(verdict: str, led: Ledger) -> dict:
+    """A bounded evidence assessment, deliberately not a probability."""
+    non_heuristic = [f for f in led.findings
+                     if f.direction != "neutral"
+                     and f.source_tier != "heuristic"]
+    strong = [f for f in non_heuristic if STRENGTH_RANK[f.strength] >= 2]
+    gaps = [f for f in led.findings
+            if "abstain" in f.result.lower() or "unavailable" in f.result.lower()]
+    if verdict == "UNVERIFIABLE":
+        level = "low" if non_heuristic else "none"
+        basis = ["The available records do not support a final documentary conclusion."]
+    elif verdict == "SUSPECT":
+        level = "high" if any(f.strength == "dispositive" for f in strong) else "medium"
+        basis = [f"{len(strong)} strong or dispositive non-heuristic contradiction(s)."]
+    else:
+        level = "medium"
+        basis = [f"{len(non_heuristic)} non-heuristic finding(s) support the documentary assessment without a governing contradiction."]
+    limitations = ["Confidence applies to the documentary assessment, not the physical part."]
+    if gaps:
+        limitations.append(f"{len(gaps)} check(s) abstained or were unavailable.")
+    limitations.append("Independent lot-origin records are not yet connected in this release.")
+    return {"level": level, "scope": "documentary_assessment",
+            "basis": basis, "limitations": limitations}
 
 
 def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
@@ -222,6 +277,8 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         "missing_artefact": missing_artefact,
         "interim_action": interim_action,
         "lean": lean,
+        "confidence": _confidence(verdict, led),
+        "dimension_status": _dimension_status(led),
         "ledger": led.to_dict(),
         "reasoning": (None if rules_only else reasoning),
         "rules_only": rules_only,
@@ -302,12 +359,12 @@ def _most_valuable_missing(led: Ledger) -> str:
 def _actions(verdict: str, subtype: str) -> dict:
     if verdict == "GENUINE":
         return {
-            "oem": "Log the dossier hash in the provenance archive; no "
-                   "action required.",
-            "distributor": "Release the lot to inventory; keep the dossier "
-                           "linked to the lot code.",
-            "service": "Fit the parts normally; record the lot code against "
-                       "the job card.",
+            "oem": "Retain the evidence ledger and apply the normal channel "
+                   "and physical-quality controls.",
+            "distributor": "The documents support release to the next human "
+                           "control; keep the dossier linked to the lot code.",
+            "service": "Confirm the usual physical and approved-channel "
+                       "controls before fitment; record the lot on the job card.",
         }
     if verdict == "SUSPECT":
         return {

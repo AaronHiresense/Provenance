@@ -22,6 +22,9 @@ def test_genuine_hsi():
     assert r["verdict"] == "GENUINE"
     assert r["counts"]["supports_suspect"] == 0
     assert r["aliased"] is False
+    assert r["confidence"]["scope"] == "documentary_assessment"
+    assert r["confidence"]["level"] == "medium"
+    assert "physical part" in r["confidence"]["limitations"][0]
 
 
 def test_genuine_bonfiglioli():
@@ -47,6 +50,8 @@ def test_suspect_velomax_aliased():
     blob = json.dumps(r)
     assert "BIKEBLOOM" not in blob.upper()
     assert "VELOMAX" in blob
+    assert r["confidence"]["level"] in ("medium", "high")
+    assert r["dimension_status"]["identity"]["status"] == "contradicted"
     # the CIN stays real so the record is independently verifiable
     assert "U45200KA2026PTC221821" in blob
 
@@ -278,11 +283,12 @@ def test_typolot_spec_passes():
     assert checks["spec_matches_oem_sheet"]["result"] == "pass"
 
 
-def test_logistics_physics_validators():
+def test_logistics_document_consistency_validators():
     import validators as v
     # Rule 138(10): 2200 km needs 11 days; 1 day cannot cover it
     f = v.eway_validity_vs_distance("1", "Chennai", "Delhi", "2200 km")
-    assert f.result == "fail" and f.strength == "strong"
+    assert f.result == "fail" and f.strength == "moderate"
+    assert "does not measure" in f.detail
     assert v.eway_validity_vs_distance("12", "Chennai", "Delhi",
                                        "2200").result == "pass"
     assert v.eway_validity_vs_distance("1", None, None,

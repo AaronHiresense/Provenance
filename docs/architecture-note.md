@@ -43,7 +43,7 @@ back to the deterministic reasoner instead of reaching the verdict.
 1. **Briefing (in).** A person chooses what to submit — pasted paperwork, dropped files, a dossier JSON, or a bare CIN/GSTIN. Nothing is auto-ingested. Before the run, preflight reports what the agent can see, the registry row it found, the checks it will run, and which document would unlock more.
 2. **Ablation.** The reviewer can switch stage 4 off and re-run the same dossier; the difference between the two answers is the model's contribution, shown rather than claimed.
 3. **The verdict is a recommendation, never an action.** The system never releases, quarantines, pays or emails. It issues the move for each desk — OEM brand protection, distributor incoming-goods QA (primary), showroom / service — and a person executes it.
-4. **The abstention work order.** UNVERIFIABLE names its subtype, the single decisive missing artefact, an interim action and a low-confidence lean, then **drafts** the supplier request for a human to review and send. Nothing leaves the machine.
+4. **The abstention work order.** UNVERIFIABLE names its subtype, the single decisive missing artefact, an interim action and a low-confidence lean, then **drafts** the supplier request for a human to review and send. In hosted live-model mode, sanitised document text is sent to the configured model provider; mock mode stays local.
 5. **Declared limits.** Every verdict ships a case-aware *"what this system cannot determine"* block — physical part, image forensics, a cloned dossier, post-snapshot events, intent — so the human always knows what was not checked.
 
 **Calibration.** 15/15 exact on our 15-case adversarial suite, identical on the mock and live-LLM

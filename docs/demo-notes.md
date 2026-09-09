@@ -23,17 +23,17 @@ signed this certificate is struck off. A dead company signed this warranty."*
 THAT a company is struck off, never WHEN. If asked: that's a stated limit;
 dating the death needs the paid MCA records (roadmap).
 
-## Beat 2 — Impossible paper (90 seconds): logistics physics
+## Beat 2 — The route record does not reconcile (90 seconds)
 
-Run **"the teleporting consignment"**. Identity checks all pass — this
+Run **"the e-way validity mismatch"**. Identity checks all pass — this
 forger borrowed a clean identity. Then:
 
-> "Chennai to Delhi is 2,200 kilometres. The government's own e-way bill
-> rule grants one validity day per 200 km — eleven days minimum. This bill
-> grants ONE. As papered, the truck teleports. And the invoice files brake
-> calipers under 'insulated cable' — that's how consignments dodge duty
-> scrutiny. Genuine goods obey physics. Paper doesn't have to — until
-> something checks."
+> "For ordinary cargo over the declared 2,200-kilometre route, the submitted
+> e-way record's stated one-day original validity does not reconcile with the
+> Rule 138(10) distance table. That does not tell us how fast a truck drove;
+> it tells us to obtain the original bill or extension history. Independently,
+> the invoice classifies brake calipers as insulated cable. Two exact records
+> now need reconciliation."
 
 ## Beat 3 — The ablation (60 seconds): what the LLM actually adds
 
@@ -122,7 +122,7 @@ documents). While it runs, the mutation slide:
 |---|---|
 | 0–1 | one-liner + problem stats |
 | 1–2.5 | cold open (prop + meridian) |
-| 2.5–4 | teleport + impossible paper |
+| 2.5–4 | e-way and classification mismatches |
 | 4–5 | ablation two-beat |
 | 5–6.5 | injection live fire |
 | 6.5–8 | architecture + evidence-not-scores + limits slides |

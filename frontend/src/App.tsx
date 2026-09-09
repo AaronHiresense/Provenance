@@ -156,7 +156,7 @@ export default function App() {
       </main>
 
       <footer className="mt-auto flex flex-col items-center gap-1.5 border-t border-slate-200 py-4 text-center font-mono text-[11px] text-slate-500 dark:border-slate-800/80 dark:text-slate-400">
-        <span>PROVENANCE · offline MCA registry, snapshot 22 Jul 2026 · every verdict ships with its evidence · nothing leaves this machine</span>
+        <span>PROVENANCE · hosted service with an offline MCA registry snapshot · every verdict states its evidence and processing mode</span>
         <DeskMemory refreshKey={runId} />
       </footer>
     </div>

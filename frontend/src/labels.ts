@@ -206,14 +206,14 @@ export function verdictSentence(r: AnalysisResult): string {
   const totalVerified = r.counts.supports_genuine || support.length;
 
   if (r.verdict === "GENUINE") {
-    return `Verified genuine: ${totalVerified} deterministic checks confirm all claims against the MCA company registry, GST rules, and logistics records with zero contradictions.`;
+    return `Documentary support: ${totalVerified} checks support the submitted claims within the records available to this system, with no governing contradiction.`;
   }
   if (r.verdict === "SUSPECT") {
     const parts: string[] = [];
     if (strong) parts.push(`${strong} strong`);
     if (decisive) parts.push(`${decisive} decisive`);
     const qual = parts.length ? ` (${parts.join(" and ")})` : "";
-    return `Suspect documentation: ${suspect.length} check${suspect.length === 1 ? "" : "s"} contradict${suspect.length === 1 ? "s" : ""} official MCA registry records and supply-chain rules${qual}.`;
+    return `Suspect documentation: ${suspect.length} check${suspect.length === 1 ? "" : "s"} expose${suspect.length === 1 ? "s" : ""} unresolved record or rule inconsistencies${qual}.`;
   }
   return "Unverifiable documentation: Mandatory supply-chain records are missing or unconfirmed in the current dossier.";
 }

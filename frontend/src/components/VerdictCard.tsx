@@ -39,6 +39,14 @@ export function VerdictCard({ result: r }: Props) {
   const statusBad = status !== null && status.toLowerCase() !== "active";
   const nic = row?.nic_code ?? null;
   const trader = nic?.startsWith("45");
+  const bis = r.ledger.findings.find((f) => f.check === "bis_licence_valid");
+  const dimensionLabel = (dimension: keyof AnalysisResult["dimension_status"]) => {
+    const value = r.dimension_status[dimension];
+    return value.status === "supported" ? `${value.support} supported` :
+      value.status === "contradicted" ? `${value.contradictions} contradicted` :
+      value.status === "unavailable" ? "Unavailable" : "Incomplete";
+  };
+  const certificationLabel = bis?.result === "pass" ? "Demo BIS record matched" : dimensionLabel("certification");
 
   return (
     <m.section
@@ -61,7 +69,7 @@ export function VerdictCard({ result: r }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-          <span>3.67M MCA Registry Queryed</span>
+          <span>3.67M MCA registry queried</span>
           {r.elapsed_ms !== undefined && <span className="rounded bg-slate-200/60 px-2 py-0.5 dark:bg-slate-800">{r.elapsed_ms} ms compute</span>}
         </div>
       </div>
@@ -90,31 +98,34 @@ export function VerdictCard({ result: r }: Props) {
             <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-800/80 dark:bg-slate-950/40">
               <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">1. Identity</span>
               <span className="mt-0.5 block text-xs font-semibold text-slate-900 dark:text-slate-100">
-                {row ? "Registry Verified" : "No Registry Record"}
+                {dimensionLabel("identity")}
               </span>
             </div>
             <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-800/80 dark:bg-slate-950/40">
               <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">2. Certification</span>
               <span className="mt-0.5 block text-xs font-semibold text-slate-900 dark:text-slate-100">
-                {r.verdict === "GENUINE" ? "BIS Valid" : "Audit Signals"}
+                {certificationLabel}
               </span>
             </div>
             <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-800/80 dark:bg-slate-950/40">
-              <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">3. Logistics</span>
+              <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">3. Custody</span>
               <span className="mt-0.5 block text-xs font-semibold text-slate-900 dark:text-slate-100">
-                {r.verdict === "GENUINE" ? "Route Plausible" : "Custody Checked"}
+                {dimensionLabel("custody")}
               </span>
             </div>
             <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 p-2.5 dark:border-slate-800/80 dark:bg-slate-950/40">
-              <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">4. Tampering</span>
+              <span className="block text-[10.5px] font-semibold text-slate-500 dark:text-slate-400">4. Provenance</span>
               <span className="mt-0.5 block text-xs font-semibold text-slate-900 dark:text-slate-100">
-                {r.injection_flags.length ? "Injection Flagged" : "Hygiene Passed"}
+                {r.injection_flags.length ? "Injection flagged" : dimensionLabel("provenance")}
               </span>
             </div>
           </div>
 
           {/* Evidence Count Badges */}
           <m.div className="flex flex-wrap items-center gap-2 pt-1" variants={list} initial="hidden" animate="show">
+            <m.span variants={item} className={`chip ${s.chip}`}>
+              {r.confidence.level} confidence · documentary scope
+            </m.span>
             {r.verdict !== "GENUINE" && (
               <m.span variants={item} className={`chip ${suspect.length ? "chip-sus" : "chip-neu"}`}>
                 <CountUp value={suspect.length} />
@@ -136,6 +147,9 @@ export function VerdictCard({ result: r }: Props) {
               {r.rules_only ? "Deterministic checks only" : "All 5 pipeline stages evaluated"}
             </m.span>
           </m.div>
+          <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            {r.confidence.basis[0]} {r.confidence.limitations[0]}
+          </p>
         </div>
 
         {/* Right Column: MCA Registry Inspector Panel */}
