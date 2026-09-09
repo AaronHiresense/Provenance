@@ -34,7 +34,7 @@ const GROUP_ICONS: Record<Dimension, typeof ShieldIcon> = {
 function StatusBadge({ kind }: { kind: ReturnType<typeof resultKind> }) {
   if (kind === "contradicts") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 font-mono text-[11px] font-bold text-rose-700 dark:text-rose-400">
+      <span className="inline-flex items-center gap-1 rounded-md border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 font-mono text-[10.5px] font-bold text-rose-700 dark:text-rose-400">
         <XIcon className="h-3 w-3 shrink-0" />
         FAIL
       </span>
@@ -42,14 +42,14 @@ function StatusBadge({ kind }: { kind: ReturnType<typeof resultKind> }) {
   }
   if (kind === "supports") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
         <CheckIcon className="h-3 w-3 shrink-0" />
         PASS
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-slate-300/60 bg-slate-100/70 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+    <span className="inline-flex items-center gap-1 rounded-md border border-slate-300/60 bg-slate-100/70 px-2 py-0.5 font-mono text-[10.5px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
       <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
       NEUTRAL
     </span>
@@ -89,11 +89,11 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
           {/* Source Tier & Document Column */}
           <div className="px-3 py-3">
             <div className="flex flex-col items-start gap-0.5">
-              <span className="inline-flex rounded border border-slate-200/80 bg-slate-100/70 px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              <span className="inline-flex rounded border border-slate-200/80 bg-slate-100/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                 {SOURCE_LABELS[f.source_tier]}
               </span>
               {f.source_doc && (
-                <span className="font-mono text-[10px] text-slate-400 truncate max-w-[130px]">
+                <span className="font-mono text-[9.5px] text-slate-400 truncate max-w-[130px]">
                   {f.source_doc}
                 </span>
               )}
@@ -126,7 +126,7 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
                   {f.detail}
                 </div>
                 <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="rounded bg-slate-200/70 px-1.5 py-0.5 dark:bg-slate-800">
+                  <span className="rounded bg-slate-200/70 px-1.5 py-0.5 dark:bg-slate-800 font-bold">
                     Strength: {STRENGTH_LABELS[f.strength]}
                   </span>
                   {f.result && (
@@ -144,7 +144,7 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
                     Forensic Duality & Reasoning
                   </span>
                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block mb-1">
                         🛡️ Benign Reading (Innocent)
                       </span>
@@ -153,7 +153,7 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
                       </p>
                     </div>
 
-                    <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3">
+                    <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 block mb-1">
                         🚨 Malicious Reading (Forgery)
                       </span>
@@ -163,7 +163,7 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
                     <span className={`chip shrink-0 ${rulingLabel(f, c).cls}`}>
                       {rulingLabel(f, c).text}
                     </span>
@@ -187,18 +187,32 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
 export function AllChecks({ result: r }: { result: AnalysisResult }) {
   const findings = r.ledger.findings;
   const reasoning = useMemo(() => pairReasoning(findings, r.reasoning), [findings, r.reasoning]);
+  const [filter, setFilter] = useState<"all" | "fail" | "pass" | "neutral">("all");
+
+  const filteredFindings = useMemo(() => {
+    if (filter === "all") return findings;
+    if (filter === "fail") return findings.filter((f) => f.direction === "supports_suspect");
+    if (filter === "pass") return findings.filter((f) => f.direction === "supports_genuine");
+    return findings.filter((f) => f.direction === "neutral");
+  }, [findings, filter]);
+
   const grouped = useMemo(() => {
     const m = new Map<Dimension, Finding[]>();
     for (const g of GROUPS) m.set(g.key, []);
-    for (const f of findings) m.get(f.dimension)?.push(f);
+    for (const f of filteredFindings) m.get(f.dimension)?.push(f);
     for (const list of m.values()) list.sort(byConsequence);
     return m;
-  }, [findings]);
+  }, [filteredFindings]);
 
-  // Open the group holding the most consequential finding by default.
+  // Open groups with contradictions by default
   const [openGroups, setOpenGroups] = useState<Set<Dimension>>(() => {
-    const top = [...findings].sort(byConsequence)[0];
-    return new Set(top && top.direction !== "neutral" ? [top.dimension] : []);
+    const s = new Set<Dimension>();
+    for (const f of findings) {
+      if (f.direction === "supports_suspect") s.add(f.dimension);
+    }
+    // If none failed, open the first group
+    if (s.size === 0 && GROUPS[0]) s.add(GROUPS[0].key);
+    return s;
   });
 
   const toggle = (k: Dimension) =>
@@ -213,21 +227,56 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
 
   return (
     <Section
-      title={`All ${findings.length} checks`}
+      title={`Forensic Check Matrix (${findings.length} Total Checks)`}
       aside={
-        <div className="flex items-center gap-2 font-mono text-xs">
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              filter === "all"
+                ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            All ({findings.length})
+          </button>
           {c.supports_suspect > 0 && (
-            <span className="inline-flex items-center gap-1 rounded border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-rose-700 dark:text-rose-400 font-bold">
-              <XIcon className="h-3 w-3" /> {c.supports_suspect} Fail
-            </span>
+            <button
+              type="button"
+              onClick={() => setFilter("fail")}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                filter === "fail"
+                  ? "bg-rose-600 text-white shadow-2xs"
+                  : "text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+              }`}
+            >
+              🚨 {c.supports_suspect} Fail
+            </button>
           )}
-          <span className="inline-flex items-center gap-1 rounded border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-400 font-bold">
-            <CheckIcon className="h-3 w-3" /> {c.supports_genuine} Pass
-          </span>
+          <button
+            type="button"
+            onClick={() => setFilter("pass")}
+            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              filter === "pass"
+                ? "bg-emerald-600 text-white shadow-2xs"
+                : "text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+            }`}
+          >
+            ✔ {c.supports_genuine} Pass
+          </button>
           {c.neutral > 0 && (
-            <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-              {c.neutral} Neutral
-            </span>
+            <button
+              type="button"
+              onClick={() => setFilter("neutral")}
+              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                filter === "neutral"
+                  ? "bg-white text-slate-900 shadow-2xs dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              }`}
+            >
+              ⚪ {c.neutral} Neutral
+            </button>
           )}
         </div>
       }
@@ -235,64 +284,97 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
       <div className="flex flex-col gap-3">
         {GROUPS.map((g) => {
           const list = grouped.get(g.key) ?? [];
-          if (!list.length) return null;
+          if (!list.length && filter !== "all") return null;
           const bad = list.filter((f) => f.direction === "supports_suspect").length;
           const good = list.filter((f) => f.direction === "supports_genuine").length;
+          const total = list.length;
           const open = openGroups.has(g.key);
           const GroupIcon = GROUP_ICONS[g.key];
 
-          // Edge accent styling based on findings within this pillar
-          const accentBorder = bad > 0 ? "border-l-4 border-l-rose-500" : "border-l-4 border-l-emerald-500";
+          const passPercent = total > 0 ? (good / total) * 100 : 0;
+          const failPercent = total > 0 ? (bad / total) * 100 : 0;
 
           return (
             <div
               key={g.key}
-              className={`overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900 ${accentBorder}`}
+              className={`overflow-hidden rounded-2xl border transition-all shadow-2xs ${
+                bad > 0
+                  ? "border-rose-300 bg-white ring-1 ring-rose-500/10 dark:border-rose-900/60 dark:bg-slate-900"
+                  : "border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900"
+              }`}
             >
+              {/* Header Button with Micro-Progress Segment */}
               <button
                 type="button"
                 onClick={() => toggle(g.key)}
                 aria-expanded={open}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50/90 dark:hover:bg-slate-800/50 cursor-pointer"
+                className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 cursor-pointer"
               >
-                <div
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
-                    bad > 0
-                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  }`}
-                >
-                  <GroupIcon className="h-4 w-4" />
-                </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                      bad > 0
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    <GroupIcon className="h-5 w-5" />
+                  </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-bold text-slate-900 dark:text-slate-100">
-                      {g.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
-                      ({list.length} check{list.length === 1 ? "" : "s"})
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {g.name}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">
+                        ({total} check{total === 1 ? "" : "s"})
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block truncate mt-0.5 max-w-xl">
+                      {g.description}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block truncate mt-0.5">
-                    {g.description}
-                  </span>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                  {bad > 0 ? (
-                    <span className="font-mono text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                      {bad} Contradiction{bad === 1 ? "" : "s"}
-                    </span>
-                  ) : (
-                    <span className="font-mono text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      {good} Verified
-                    </span>
-                  )}
-                  <ChevronIcon open={open} className="h-4 w-4 text-slate-400 transition-transform" />
+                {/* Right side: Mini-Integrity Progress Bar & Status Pill */}
+                <div className="flex items-center gap-3 shrink-0">
+                  {/* Micro Progress Bar */}
+                  <div className="hidden sm:flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-1.5 font-mono text-[10.5px]">
+                      {bad > 0 ? (
+                        <span className="font-bold text-rose-600 dark:text-rose-400">
+                          {bad} Contradiction{bad === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {good}/{total} Verified
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="h-1.5 w-24 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                      {failPercent > 0 && (
+                        <div
+                          style={{ width: `${failPercent}%` }}
+                          className="h-full bg-rose-500"
+                        />
+                      )}
+                      {passPercent > 0 && (
+                        <div
+                          style={{ width: `${passPercent}%` }}
+                          className="h-full bg-emerald-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:text-slate-600">
+                    <ChevronIcon open={open} className="h-3.5 w-3.5" />
+                  </div>
                 </div>
               </button>
 
+              {/* Table Ledger Drawer */}
               <AnimatePresence initial={false}>
                 {open && (
                   <m.div
@@ -336,3 +418,4 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
     </Section>
   );
 }
+
