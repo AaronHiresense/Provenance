@@ -173,12 +173,16 @@ export interface AnalysisResult {
     scope: "documentary_assessment";
     basis: string[];
     limitations: string[];
+    coverage: Record<Dimension, unknown>;
+    provenance: "synthetic_demo" | "submitted_and_registry_only";
   };
   dimension_status: Record<Dimension, {
     status: "supported" | "contradicted" | "incomplete" | "unavailable" | "not_applicable";
     support: number;
     contradictions: number;
     gaps: number;
+    deciding_findings: string[];
+    source_scope: string[];
   }>;
   ledger: { findings: Finding[] };
   reasoning: Reasoning | null;
@@ -190,6 +194,14 @@ export interface AnalysisResult {
   extraction: { engine: "llm" | "fallback_parser"; dropped_assertions: number };
   assertions: Assertion[];
   evidence: TypedEvidence;
+  genuine_eligibility: {
+    eligible: boolean;
+    identity: boolean;
+    dispatch: boolean;
+    custody: boolean;
+    conflict: boolean;
+    missing: string[];
+  };
   injection_flags: { source_doc: string; content: string }[];
   registry_row: RegistryRow | null;
   llm_provider: "mock" | "anthropic" | "openai_compat";

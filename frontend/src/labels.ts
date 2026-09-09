@@ -31,6 +31,12 @@ const CHECK_LABELS: Record<string, string> = {
   successor_registry_lookup: "Successor company found in the registry",
   dossier_reuse: "This paperwork has not been seen before",
   lot_code_collision: "This lot code carries one paper trail",
+  lot_matches_dispatch: "Lot and part match the independent OEM dispatch",
+  shipment_parties_reconcile: "Shipment parties match linked transfers",
+  distributor_authorization_valid: "Distributor authorization covers this shipment",
+  custody_sequence_reconciles: "Independent custody sequence reconciles",
+  quantity_allocation_reconciles: "Quantity fits the verified allocation",
+  source_record_conflict: "Independent records agree on the event",
 };
 
 export function checkLabel(check: string): string {
@@ -65,6 +71,12 @@ const FAIL_LABELS: Record<string, string> = {
   route_distance_sanity: "Claimed route distance is implausible",
   cross_doc_field_drift: "Fields differ across documents",
   injection_screen: "A document tried to instruct the reviewer",
+  lot_matches_dispatch: "Lot or part conflicts with the independent OEM dispatch",
+  shipment_parties_reconcile: "Shipment parties conflict with linked transfers",
+  distributor_authorization_valid: "Distributor authorization does not cover this shipment",
+  custody_sequence_reconciles: "Independent custody sequence does not reconcile",
+  quantity_allocation_reconciles: "Quantity exceeds the verified allocation",
+  source_record_conflict: "Independent records conflict on the same event",
 };
 
 /** Label for a finding in its own outcome: what went wrong when it

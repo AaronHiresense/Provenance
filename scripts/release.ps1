@@ -45,7 +45,7 @@ Remove-Item -LiteralPath (Join-Path $stage "source.tar")
 $manifest = [ordered]@{
     source_commit = $commit
     built_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    policy_version = "legacy-v1"
+    policy_version = "origin-v2"
     schema_version = "none"
 }
 $manifestJson = $manifest | ConvertTo-Json

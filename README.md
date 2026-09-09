@@ -23,7 +23,7 @@ python -m uvicorn app:app --port 8321
 # open http://localhost:8321
 ```
 
-Tests (offline, no key needed): `python -m pytest tests/ -q` · 110 passing.
+Tests (offline, no key needed): `python -m pytest tests/ -q` · 128 passing.
 
 ## Data setup — where the registry comes from
 
@@ -223,10 +223,12 @@ publicly fetchable, so the volume upload above is the better default.
 
 ## Roadmap (known, named future work)
 
-Dossier-hash / lot-reuse registry (the cloned-genuine-paperwork attack —
-stated as a limit on every verdict today) · live BIS + GSTN lookups where
-connectivity exists · multi-party dossier verification · nightly registry
-sync · OCR/image ingestion. See `docs/business-note.md`.
+Durable session-scoped investigations and immutable revisions · live BIS +
+GSTN integrations where connectivity exists · nightly registry sync ·
+OCR/image ingestion. The current release already links typed parties,
+shipments and lots to a versioned synthetic OEM/carrier reference snapshot;
+that snapshot is a demo integration and is labeled as such in every result.
+See `docs/business-note.md`.
 
 ## Written deliverables
 

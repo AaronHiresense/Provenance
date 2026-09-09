@@ -9,6 +9,7 @@ explicit "what this system cannot determine" block.
 from __future__ import annotations
 
 from ledger import Ledger, STRENGTH_RANK
+from policy import genuine_eligibility
 
 # System-wide limits: always true of this system, shipped with every verdict.
 STATIC_LIMITS = [
@@ -25,9 +26,9 @@ STATIC_LIMITS = [
     "is not.",
     "Events after the registry snapshot date — a company registered or "
     "struck off after the MCA snapshot is assessed as unknown, not guessed.",
-    "Multi-party dossiers — checks are anchored to the entity claiming the "
-    "manufacturer role; secondary parties (carriers, distributors) are not "
-    "independently verified.",
+    "Party identity scope — strong identifiers ground the manufacturer; "
+    "name-only carrier, distributor and recipient roles remain unresolved "
+    "unless a linked record identifies them.",
     "Intent — a failed check proves an inconsistency, not who created it "
     "or why.",
 ]
@@ -91,6 +92,9 @@ def _dimension_status(led: Ledger) -> dict:
             "support": len(support),
             "contradictions": len(suspect),
             "gaps": len(abstain) + len(unavailable),
+            "deciding_findings": [f.finding_id for f in (suspect or support)[:3]],
+            "source_scope": sorted({f.reference_version or f.source_tier
+                                    for f in rows}),
         }
     return out
 
@@ -115,9 +119,15 @@ def _confidence(verdict: str, led: Ledger) -> dict:
     limitations = ["Confidence applies to the documentary assessment, not the physical part."]
     if gaps:
         limitations.append(f"{len(gaps)} check(s) abstained or were unavailable.")
-    limitations.append("Independent lot-origin records are not yet connected in this release.")
+    if any(f.reference_version for f in led.findings):
+        limitations.append("Independent records come from a bounded synthetic demo snapshot, not a live OEM or carrier system.")
+        provenance = "synthetic_demo"
+    else:
+        limitations.append("No exactly linked independent origin record was available.")
+        provenance = "submitted_and_registry_only"
     return {"level": level, "scope": "documentary_assessment",
-            "basis": basis, "limitations": limitations}
+            "basis": basis, "limitations": limitations,
+            "coverage": _dimension_status(led), "provenance": provenance}
 
 
 def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
@@ -250,6 +260,28 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
     else:
         verdict = "GENUINE"
 
+    eligibility = genuine_eligibility(led)
+    source_conflict = any(f.check == "source_record_conflict" and
+                          f.status == "fail" for f in led.findings)
+    separate_dispositive = any(
+        f.direction == "supports_suspect" and f.strength == "dispositive"
+        and f.check not in {"lot_matches_dispatch", "source_record_conflict"}
+        for f in led.findings)
+    if source_conflict and not separate_dispositive:
+        verdict, subtype = "UNVERIFIABLE", "contradictory"
+        missing_artefact = ("A certified source record for the conflicting "
+                            "independent shipment event.")
+        interim_action = ("Hold the lot and ask the named record issuers to "
+                          "resolve the exact shipment event in writing.")
+    elif verdict == "GENUINE" and not eligibility["eligible"]:
+        verdict, subtype = "UNVERIFIABLE", "insufficient"
+        missing_artefact = (
+            "The independent OEM dispatch and linked receiving record for "
+            "this exact shipment, part and lot." if not eligibility["dispatch"]
+            else "A linked downstream receipt completing custody for this exact shipment.")
+        interim_action = ("Hold the lot and request the named independent "
+                          "record; re-run without replacing the earlier evidence.")
+
     # BIS-only inaccessibility note: if the only reason we can't say more is
     # the stubbed BIS lookup, surface it
     bis_unavailable = any(
@@ -279,6 +311,7 @@ def decide(led: Ledger, reasoning: dict, rules_only: bool = False,
         "lean": lean,
         "confidence": _confidence(verdict, led),
         "dimension_status": _dimension_status(led),
+        "genuine_eligibility": eligibility,
         "ledger": led.to_dict(),
         "reasoning": (None if rules_only else reasoning),
         "rules_only": rules_only,

@@ -67,6 +67,12 @@ PLAN = [
     ("spec_matches_oem_sheet", [{"part_number", "spec_standard"}], "the part number and the standard it is certified to"),
     ("lot_code_grammar", [{"lot_code"}], "a lot or batch code"),
     ("cross_doc_field_drift", [], "two or more documents for a meaningful comparison"),
+    ("lot_matches_dispatch", [], "an exact OEM dispatch reference for this lot and part"),
+    ("shipment_parties_reconcile", [], "linked independent transfer records"),
+    ("distributor_authorization_valid", [], "a scoped distributor authorization"),
+    ("custody_sequence_reconciles", [], "linked dispatch and receipt records"),
+    ("quantity_allocation_reconciles", [], "quantities in the same explicit unit"),
+    ("source_record_conflict", [], "independent records for the exact event"),
 ]
 
 # Attributes some check actually consumes. Two are consumed without being a

@@ -71,6 +71,12 @@ def public_evidence(snapshot: ReferenceSnapshot, dossier: dict) -> list[dict]:
             matched = bool(record.lot in lots and record.part in parts)
         if matched:
             out.append(record.to_dict())
+    related = {record_id for record in out
+               for record_id in record.get("related_record_ids", [])}
+    if related:
+        present = {record["record_id"] for record in out}
+        out.extend(record.to_dict() for record in snapshot.records
+                   if record.record_id in related and record.record_id not in present)
     return out
 
 

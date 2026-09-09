@@ -21,6 +21,7 @@ import registry
 import reference_store
 import validators
 from extract import build_typed_evidence, extract_assertions
+from evidence import stable_id
 from ledger import Finding
 from llm import LLMClient
 from reason import reason_over_ledger
@@ -111,8 +112,24 @@ def analyze_events(dossier: dict, rules_only: bool = False,
     # stage 2 + 3 — deterministic validators fill the ledger
     yield ev(stage="validate", status="running", ms=ms(),
              detail="Checking every claim against the MCA registry, GSTN "
-                    "rules and the logistics tables")
-    led = validators.run_all(assertions)
+                    "rules, logistics tables and the selected origin snapshot")
+    led = validators.run_all(
+        assertions, independent_records,
+        reference_summary.get("version") if reference_snapshot else None)
+    by_doc = {}
+    for assertion in assertions:
+        by_doc.setdefault(assertion.source_doc, []).append(assertion)
+    for finding in led.findings:
+        claims = by_doc.get(finding.source_doc, []) if finding.source_doc else []
+        if claims and not finding.source_refs:
+            finding.source_refs = [a.source_ref for a in claims if a.source_ref]
+        if claims and not finding.entity_ids:
+            finding.entity_ids = sorted({a.entity_id for a in claims if a.entity_id})
+        if claims and not finding.shipment_ids:
+            finding.shipment_ids = sorted({a.shipment_id for a in claims if a.shipment_id})
+        finding.finding_id = stable_id(
+            "fnd", finding.check, ",".join(finding.entity_ids),
+            ",".join(finding.shipment_ids), finding.assertion)
 
     # instruction-like content inside documents is itself evidence of
     # tampering with the review process

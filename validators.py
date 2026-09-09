@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Optional
 
 import registry
+from evidence import SourceRef
 from ledger import Assertion, Finding, Ledger
 
 # ---------------------------------------------------------------------------
@@ -1112,9 +1114,14 @@ def cross_doc_field_drift(assertions: list) -> list:
     """
     by_attr = {}
     for a in assertions:
-        by_attr.setdefault((_norm_entity(a.entity), a.attribute), []).append(a)
+        if a.attribute in {"shipment_id", "dispatch_reference", "distributor",
+                           "carrier", "recipient", "quantity", "unit",
+                           "effective_from", "effective_to", "territory"}:
+            continue
+        by_attr.setdefault((_norm_entity(a.entity), a.shipment_id or "",
+                            a.attribute), []).append(a)
     out = []
-    for (_entity, attr), group in by_attr.items():
+    for (_entity, _shipment, attr), group in by_attr.items():
         values = {}
         for a in group:
             key = re.sub(r"\s+", " ", str(a.value).strip().upper())
@@ -1133,6 +1140,176 @@ def cross_doc_field_drift(assertions: list) -> list:
     return out
 
 
+def reconcile_independent_records(assertions: list, records: list,
+                                  reference_version: str | None) -> list:
+    """Compare exact shipment/lot claims with the immutable reference slice."""
+    if not assertions:
+        return []
+    shipment_ids = {str(a.value).strip() for a in assertions
+                    if a.attribute in ("shipment_id", "dispatch_reference")}
+    lots = {str(a.value).strip() for a in assertions if a.attribute == "lot_code"}
+    parts = {str(a.value).strip() for a in assertions if a.attribute == "part_number"}
+    # reference_store already returned only exact matches and their explicitly
+    # related records. Keep related authorization records even though they do
+    # not themselves carry a shipment ID.
+    linked = list(records)
+    claim_refs = [a.source_ref for a in assertions
+                  if a.attribute in ("shipment_id", "dispatch_reference",
+                                     "lot_code", "part_number") and a.source_ref]
+    refs = claim_refs + [SourceRef(record_id=str(r["record_id"]), quote=str(r["record_id"]),
+                      grounding="verified") for r in linked]
+
+    def finding(check, result, direction, strength, dimension, detail,
+                selected_refs=None):
+        return Finding(
+            assertion=check.replace("_", " "), check=check, result=result,
+            direction=direction, strength=strength, source_tier="derived",
+            dimension=dimension, detail=detail,
+            source_refs=selected_refs if selected_refs is not None else refs,
+            shipment_ids=sorted(shipment_ids), reference_version=reference_version,
+            reason_code=f"{check}.{result}", status=result)
+
+    dispatches = [r for r in linked if r.get("kind") == "oem_dispatch"]
+    if not dispatches:
+        lot_check = finding(
+            "lot_matches_dispatch", "abstain", "neutral", "moderate",
+            "provenance", "No exactly linked OEM dispatch exists in this partial "
+            "reference snapshot. Absence is a gap, not proof of substitution.")
+    else:
+        conflicts = [r for r in dispatches if
+                     (lots and r.get("lot") not in lots) or
+                     (parts and r.get("part") not in parts)]
+        # Every submitted lot/part tied to the shipment must reconcile.
+        record_lots = {str(r.get("lot")) for r in dispatches if r.get("lot")}
+        record_parts = {str(r.get("part")) for r in dispatches if r.get("part")}
+        if conflicts or (lots and not lots <= record_lots) or \
+                (parts and not parts <= record_parts):
+            lot_check = finding(
+                "lot_matches_dispatch", "fail", "supports_suspect", "strong",
+                "provenance", f"Submitted lot/part {sorted(lots)}/{sorted(parts)} "
+                f"does not reconcile with linked dispatch "
+                f"{sorted(record_lots)}/{sorted(record_parts)}.")
+        else:
+            lot_check = finding(
+                "lot_matches_dispatch", "pass", "supports_genuine", "strong",
+                "provenance", f"The linked OEM dispatch records the same lot "
+                f"and part: {sorted(record_lots)} / {sorted(record_parts)}.")
+
+    distributors = {str(a.value) for a in assertions if a.attribute == "distributor"}
+    auths = [r for r in linked if r.get("kind") == "distributor_authorization"]
+    if not distributors:
+        auth_check = finding("distributor_authorization_valid", "abstain",
+                             "neutral", "weak", "custody",
+                             "No distributor role is claimed for this shipment.", [])
+    else:
+        event_dates = [str(a.value) for a in assertions
+                       if a.attribute in ("ship_date", "invoice_date", "receive_date")]
+        event_date = min(event_dates) if event_dates else None
+        territories = {_norm_entity(a.value) for a in assertions
+                       if a.attribute == "territory"}
+        valid_auth = [r for r in auths if
+                      _norm_entity(r.get("to_party", "")) in
+                      {_norm_entity(v) for v in distributors} and
+                      (not parts or r.get("part") in parts) and
+                      (not event_date or not r.get("effective_from") or
+                       str(r["effective_from"]) <= event_date) and
+                      (not event_date or not r.get("effective_to") or
+                       event_date <= str(r["effective_to"])) and
+                      (not territories or not r.get("territory") or
+                       _norm_entity(r["territory"]) in territories)]
+        auth_check = finding(
+            "distributor_authorization_valid",
+            "pass" if valid_auth else "abstain",
+            "supports_genuine" if valid_auth else "neutral", "moderate",
+            "custody", "A scoped distributor authorization covers this part."
+            if valid_auth else "No matching scoped authorization was found; "
+            "this is a relationship gap, not proof the goods are counterfeit.",
+            [SourceRef(record_id=str(r["record_id"]), quote=str(r["record_id"]),
+                       grounding="verified") for r in valid_auth])
+
+    dated = [r for r in linked if r.get("recorded_at")]
+    ordered = sorted(dated, key=lambda r: str(r["recorded_at"]))
+    has_dispatch = bool(dispatches)
+    receipts = [r for r in linked if
+                r.get("kind") in ("carrier_receipt", "goods_receipt")]
+    has_receipt = bool(receipts)
+    impossible_order = bool(
+        has_dispatch and has_receipt and
+        min(str(r["recorded_at"]) for r in receipts if r.get("recorded_at")) <
+        min(str(r["recorded_at"]) for r in dispatches if r.get("recorded_at"))) \
+        if all(r.get("recorded_at") for r in dispatches + receipts) else False
+    custody_check = finding(
+        "custody_sequence_reconciles", "fail" if impossible_order else
+        ("pass" if has_dispatch and has_receipt else "abstain"),
+        "supports_suspect" if impossible_order else
+        ("supports_genuine" if has_dispatch and has_receipt else "neutral"), "moderate",
+        "custody", "A linked receipt predates its dispatch." if impossible_order else
+        "Linked dispatch and receipt records form a non-decreasing date "
+        "sequence." if has_dispatch and has_receipt else
+        "A linked dispatch and downstream receipt are both required; missing "
+        "date-only events are treated as gaps.",
+        [SourceRef(record_id=str(r["record_id"]), quote=str(r["record_id"]),
+                   grounding="verified") for r in ordered])
+
+    recipients = {str(a.value) for a in assertions if a.attribute == "recipient"}
+    independent_recipients = {str(r.get("to_party")) for r in linked
+                              if r.get("to_party")}
+    explicit_party_conflict = bool(recipients and independent_recipients and
+        not {_norm_entity(v) for v in recipients} &
+            {_norm_entity(v) for v in independent_recipients})
+    parties_check = finding(
+        "shipment_parties_reconcile",
+        "fail" if explicit_party_conflict else ("pass" if linked else "abstain"),
+        "supports_suspect" if explicit_party_conflict else
+        ("supports_genuine" if linked else "neutral"),
+        "moderate", "custody",
+        "The claimed recipient conflicts with every linked transfer record."
+        if explicit_party_conflict else "Claimed parties do not conflict with "
+        "the linked records." if linked else "No linked transfer record is available.")
+
+    quantities = []
+    units = {str(a.value).strip().lower() for a in assertions if a.attribute == "unit"}
+    for a in assertions:
+        if a.attribute == "quantity":
+            try:
+                quantities.append(Decimal(re.findall(r"\d+(?:\.\d+)?", str(a.value))[0]))
+            except (IndexError, InvalidOperation):
+                pass
+    allocations = {(r.get("record_id"), r.get("quantity"), str(r.get("unit") or "").lower())
+                   for r in dispatches if r.get("quantity")}
+    allocation_units = {u for _, _, u in allocations if u}
+    common_unit = next(iter(units | allocation_units), "unknown unit")
+    if not quantities or not allocations or len(units | allocation_units) != 1:
+        quantity_check = finding(
+            "quantity_allocation_reconciles", "abstain", "neutral", "weak",
+            "custody", "Quantity or an exact common unit is unavailable; no conversion is guessed.")
+    else:
+        allocated = sum(Decimal(str(q)) for _, q, _ in allocations)
+        claimed = max(quantities)
+        excess = claimed > allocated
+        quantity_check = finding(
+            "quantity_allocation_reconciles", "fail" if excess else "pass",
+            "supports_suspect" if excess else "supports_genuine",
+            "strong" if excess else "moderate", "custody",
+            f"Claimed quantity {claimed} versus unique verified allocation {allocated} "
+            f"{common_unit}.")
+
+    event_keys = {}
+    for r in linked:
+        key = (r.get("kind"), r.get("shipment_id"))
+        event_keys.setdefault(key, set()).add((r.get("lot"), r.get("part")))
+    record_conflict = any(len(values) > 1 for values in event_keys.values())
+    conflict_check = finding(
+        "source_record_conflict", "fail" if record_conflict else
+        ("pass" if linked else "abstain"), "neutral", "strong", "provenance",
+        "Independent records conflict for the same exact event; a certified "
+        "source record is required to resolve them." if record_conflict else
+        "No exact-event conflict exists among the linked independent records."
+        if linked else "No linked independent records are available.")
+    return [lot_check, parties_check, auth_check, custody_check,
+            quantity_check, conflict_check]
+
+
 # ---------------------------------------------------------------------------
 # orchestrator
 
@@ -1143,7 +1320,8 @@ def _first(assertions: list, attribute: str) -> Optional[Assertion]:
     return None
 
 
-def run_all(assertions: list) -> Ledger:
+def run_all(assertions: list, independent_records: list | None = None,
+            reference_version: str | None = None) -> Ledger:
     """Map extracted assertions onto every applicable validator.
 
     Identifier assertions are picked from the manufacturer-role entity when
@@ -1317,4 +1495,6 @@ def run_all(assertions: list) -> Ledger:
                                  a_ship.value if a_ship else None))
 
     led.extend(cross_doc_field_drift(assertions))
+    led.extend(reconcile_independent_records(
+        assertions, independent_records or [], reference_version))
     return led

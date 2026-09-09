@@ -42,20 +42,21 @@ def clean_archive(tmp_path, monkeypatch):
 # -- counterfactuals ---------------------------------------------------------
 
 def test_counterfactual_names_the_load_bearing_finding():
-    """The struck-off status is the whole case; remove it and it's GENUINE."""
+    """The struck-off status decides suspicion; removal still needs origin."""
     r = pipeline.analyze(_load("suspect_meridian"))
     cf = r["counterfactual"]
     assert cf["baseline"] == "SUSPECT"
     decisive = {d["check"]: d["becomes"] for d in cf["decisive"]}
-    assert decisive.get("company_status_active") == "GENUINE"
+    assert decisive.get("company_status_active") == "UNVERIFIABLE (insufficient)"
 
 
-def test_counterfactual_reports_joint_support_when_no_single_row_decides():
+def test_counterfactual_names_required_origin_support():
     r = pipeline.analyze(_load("genuine_hsi"))
     cf = r["counterfactual"]
     assert cf["baseline"] == "GENUINE"
-    assert cf["decisive"] == []
-    assert "jointly" in cf["note"]
+    decisive = {d["check"]: d["becomes"] for d in cf["decisive"]}
+    assert decisive["lot_matches_dispatch"] == "UNVERIFIABLE (insufficient)"
+    assert decisive["custody_sequence_reconciles"] == "UNVERIFIABLE (insufficient)"
 
 
 def test_counterfactual_baseline_always_equals_the_real_verdict():
