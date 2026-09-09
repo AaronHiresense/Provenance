@@ -8,9 +8,11 @@
 
 import { useState } from "react";
 import * as m from "motion/react-m";
-import type { AnalysisResult } from "../types";
+import { AnimatePresence } from "motion/react";
+import type { AnalysisResult, Dimension } from "../types";
 import { SUBTYPE_LABELS, formatDate, humanize, splitEvidence, titleCase, verdictSentence } from "../labels";
 import { CountUp, LetterReveal, TextGenerate } from "./effects";
+import { PillarModal } from "./PillarModal";
 import {
   BarChartIcon,
   BuildingIcon,
@@ -34,6 +36,7 @@ interface Props {
 
 export function VerdictCard({ result: r }: Props) {
   const [copied, setCopied] = useState(false);
+  const [selectedPillar, setSelectedPillar] = useState<Dimension | null>(null);
   const { primary, weaker, suspect, support } = splitEvidence(r.ledger.findings);
   const decisive = primary.filter((f) => f.strength === "dispositive").length;
   const total = r.ledger.findings.length;
@@ -169,67 +172,91 @@ export function VerdictCard({ result: r }: Props) {
               </div>
             </div>
 
-            {/* 4 Dimension Status Cards */}
+            {/* 4 Dimension Status Cards (Click to Inspect Modal) */}
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 md:grid-cols-4">
               {/* 1. Identity */}
-              <div className="flex items-center gap-2.5 rounded-2xl border border-sky-200/80 bg-sky-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-sky-900/40 dark:bg-sky-950/20">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
+              <button
+                type="button"
+                onClick={() => setSelectedPillar("identity")}
+                className="group flex items-center gap-2.5 rounded-2xl border border-sky-200/80 bg-sky-50/60 p-2.5 sm:p-3 shadow-2xs transition-all hover:bg-sky-100/70 hover:border-sky-300 hover:scale-[1.02] text-left dark:border-sky-900/40 dark:bg-sky-950/20 dark:hover:bg-sky-900/30 cursor-pointer"
+                title="Click to view Identity evidence dossier"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-600 group-hover:scale-105 transition-transform dark:text-sky-400">
                   <UserIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
+                  <span className="flex items-center justify-between font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     1. Identity
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-sky-600 dark:text-sky-400">↗</span>
                   </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
                     {dimensionLabel("identity")}
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* 2. Certification */}
-              <div className="flex items-center gap-2.5 rounded-2xl border border-purple-200/80 bg-purple-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-purple-900/40 dark:bg-purple-950/20">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
+              <button
+                type="button"
+                onClick={() => setSelectedPillar("certification")}
+                className="group flex items-center gap-2.5 rounded-2xl border border-purple-200/80 bg-purple-50/60 p-2.5 sm:p-3 shadow-2xs transition-all hover:bg-purple-100/70 hover:border-purple-300 hover:scale-[1.02] text-left dark:border-purple-900/40 dark:bg-purple-950/20 dark:hover:bg-purple-900/30 cursor-pointer"
+                title="Click to view Certification evidence dossier"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-600 group-hover:scale-105 transition-transform dark:text-purple-400">
                   <FileIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
+                  <span className="flex items-center justify-between font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     2. Certification
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-purple-600 dark:text-purple-400">↗</span>
                   </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
                     {certificationLabel}
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* 3. Custody */}
-              <div className="flex items-center gap-2.5 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-amber-900/40 dark:bg-amber-950/20">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <button
+                type="button"
+                onClick={() => setSelectedPillar("custody")}
+                className="group flex items-center gap-2.5 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-2.5 sm:p-3 shadow-2xs transition-all hover:bg-amber-100/70 hover:border-amber-300 hover:scale-[1.02] text-left dark:border-amber-900/40 dark:bg-amber-950/20 dark:hover:bg-amber-900/30 cursor-pointer"
+                title="Click to view Custody evidence dossier"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
                   <ShieldIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
+                  <span className="flex items-center justify-between font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     3. Custody
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-amber-600 dark:text-amber-400">↗</span>
                   </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
                     {dimensionLabel("custody")}
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* 4. Provenance */}
-              <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-2.5 sm:p-3 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <button
+                type="button"
+                onClick={() => setSelectedPillar("provenance")}
+                className="group flex items-center gap-2.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-2.5 sm:p-3 shadow-2xs transition-all hover:bg-emerald-100/70 hover:border-emerald-300 hover:scale-[1.02] text-left dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 cursor-pointer"
+                title="Click to view Provenance evidence dossier"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
                   <LinkIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
+                  <span className="flex items-center justify-between font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
                     4. Provenance
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-emerald-600 dark:text-emerald-400">↗</span>
                   </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
                     {r.injection_flags.length ? "Injection flagged" : dimensionLabel("provenance")}
                   </span>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Badges Ribbon */}
@@ -423,6 +450,17 @@ export function VerdictCard({ result: r }: Props) {
           )}
         </m.div>
       )}
+
+      {/* Deep-Dive Pillar Forensic Modal */}
+      <AnimatePresence>
+        {selectedPillar && (
+          <PillarModal
+            dimension={selectedPillar}
+            onClose={() => setSelectedPillar(null)}
+            result={r}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
