@@ -32,7 +32,7 @@ Read in this order:
 |---|---|---|---|---|
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
 | M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
-| M1 Evidence honesty | Verified locally; pending Git/Railway | pending | — | 114 tests; frontend build; eval 15/15 |
+| M1 Evidence honesty | Live verified | `aa97a43` | `3d105938-acc6-4720-8a9e-f3321eb030f8` | 114 tests; frontend build; eval 15/15; live health/ready/runtime/cases and exact source commit |
 | M2 Entities/references | Not started | — | — | — |
 | M3 Origin reconciliation | Not started | — | — | — |
 | M4 Durable investigations | Not started | — | — | — |
@@ -81,7 +81,10 @@ stated honestly. E-way validity is treated as a moderate record-consistency
 signal rather than truck-speed proof, and company-status, NIC and HSN text no
 longer asserts intent beyond the evidence. Local verification passed: 114 tests,
 frontend typecheck/build and 15/15 offline evaluation. Source and deployment
-remain pending until observed.
+Release `aa97a43` was pushed to `main` and deployed as
+`3d105938-acc6-4720-8a9e-f3321eb030f8`. Railway reported SUCCESS with a running
+instance and the `/api/ready` healthcheck. The live smoke suite passed health,
+readiness, runtime identity for the full commit, and cases checks.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 
