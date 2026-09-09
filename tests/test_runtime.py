@@ -1,4 +1,5 @@
 """Public operational endpoints expose health without secrets or paths."""
+import json
 import os
 import sys
 from pathlib import Path
@@ -7,6 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ["PROVENANCE_LLM_PROVIDER"] = "mock"
 
 import app
+
+CASES = Path(__file__).resolve().parents[1] / "cases"
+
+
+def _load(name):
+    return json.loads((CASES / f"{name}.json").read_text(encoding="utf-8-sig"))
 
 
 def test_health_is_liveness_only():
@@ -41,3 +48,32 @@ def test_missing_dependency_is_not_ready(monkeypatch):
         assert exc.detail["registry"] is False
     else:
         raise AssertionError("readiness must fail without the registry")
+
+
+def test_prepared_case_clicks_never_poison_the_reuse_archive(tmp_path, monkeypatch):
+    """A prepared lot (req.case) is clicked repeatedly by every visitor — by
+    design, not by mistake. It must never be treated as a desk submission, or
+    the second person to click 'genuine_hsi' gets SUSPECT for a case the
+    product itself sells as a one-click, always-right reference."""
+    monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
+    for _ in range(3):
+        r = app.analyze(app.AnalyzeRequest(case="genuine_hsi"))
+        checks = {f["check"] for f in r["ledger"]["findings"]}
+        assert "dossier_reuse" not in checks
+        assert r["verdict"] == "GENUINE"
+    assert not (tmp_path / "lots.jsonl").exists()
+
+
+def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
+    """The archive fix must exempt prepared clicks only — a genuine desk
+    submission (someone's own pasted paperwork) presented twice is still the
+    cloned-paperwork attack the archive exists to catch."""
+    monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
+    dossier = _load("genuine_hsi")
+    first = app.analyze(app.AnalyzeRequest(dossier=dossier))
+    assert first["verdict"] == "GENUINE"
+
+    second = app.analyze(app.AnalyzeRequest(dossier=dossier))
+    reuse = [f for f in second["ledger"]["findings"] if f["check"] == "dossier_reuse"]
+    assert reuse and reuse[0]["direction"] == "supports_suspect"
+    assert second["verdict"] == "SUSPECT"

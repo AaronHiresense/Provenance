@@ -258,8 +258,12 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
 
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
-    return pipeline.analyze(_dossier_from_request(req),
-                            rules_only=req.rules_only, archive_run=True)
+    # A prepared reference case (req.case) is clicked repeatedly by design —
+    # every visitor, every demo, every judge sees the same 21 lots. Only a
+    # genuine submission (raw_text/dossier, someone's own paperwork) is a
+    # desk submission the reuse archive should remember or check against.
+    return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only,
+                            archive_run=req.case is None)
 
 
 @app.get("/api/archive")
@@ -302,7 +306,7 @@ def analyze_stream(req: AnalyzeRequest) -> StreamingResponse:
 
     def lines():
         for event in pipeline.analyze_events(dossier, rules_only=req.rules_only,
-                                            archive_run=True):
+                                            archive_run=req.case is None):
             yield json.dumps(event, default=str) + "\n"
 
     return StreamingResponse(lines(), media_type="application/x-ndjson",
