@@ -64,6 +64,25 @@ def test_prepared_case_clicks_never_poison_the_reuse_archive(tmp_path, monkeypat
     assert not (tmp_path / "lots.jsonl").exists()
 
 
+def test_check_the_work_yourself_samples_never_poison_the_archive(tmp_path, monkeypatch):
+    """The six downloadable 'check the work yourself' samples run through the
+    raw-text path with a generic case_id — the same shape a reviewer's own
+    paste uses. They must still be recognised as reference content and never
+    archived, or the second visitor to click 'Run as text' gets a different
+    verdict than the one the page promises."""
+    monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
+    combined = Path(__file__).resolve().parents[1] / "samples" / "combined"
+    sample_files = sorted(combined.glob("*.txt"))
+    assert sample_files, "no sample fixtures found to test against"
+    for path in sample_files:
+        text = path.read_text(encoding="utf-8-sig")
+        for _ in range(2):
+            r = app.analyze(app.AnalyzeRequest(raw_text=text, case_id="live"))
+            checks = {f["check"] for f in r["ledger"]["findings"]}
+            assert "dossier_reuse" not in checks, path.name
+    assert not (tmp_path / "lots.jsonl").exists()
+
+
 def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
     """The archive fix must exempt prepared clicks only — a genuine desk
     submission (someone's own pasted paperwork) presented twice is still the

@@ -25,6 +25,20 @@ BASE = Path(__file__).resolve().parent
 CASES_DIR = BASE / "cases"
 SAMPLES_DIR = BASE / "samples"
 
+
+def _known_sample_texts() -> frozenset:
+    """The exact text of every 'check the work yourself' sample. Run through
+    the composer's raw-text path with a generic case_id, so this is the only
+    way to tell a demo sample apart from a reviewer's own pasted paperwork."""
+    combined = SAMPLES_DIR / "combined"
+    if not combined.is_dir():
+        return frozenset()
+    return frozenset(p.read_text(encoding="utf-8-sig").strip()
+                      for p in combined.glob("*.txt"))
+
+
+_SAMPLE_TEXTS = _known_sample_texts()
+
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 
 
@@ -256,14 +270,23 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
     return dossier
 
 
+def _is_reference_request(req: AnalyzeRequest) -> bool:
+    """True for a prepared lot or a 'check the work yourself' sample — both
+    are demo/reference views clicked repeatedly by every visitor, by design,
+    never a reviewer's own desk submission. Only these two are exempt from
+    the seen-lots archive; a genuine paste or dossier still gets archived and
+    checked for reuse."""
+    if req.case is not None:
+        return True
+    if req.raw_text is not None and req.raw_text.strip() in _SAMPLE_TEXTS:
+        return True
+    return False
+
+
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
-    # A prepared reference case (req.case) is clicked repeatedly by design —
-    # every visitor, every demo, every judge sees the same 21 lots. Only a
-    # genuine submission (raw_text/dossier, someone's own paperwork) is a
-    # desk submission the reuse archive should remember or check against.
     return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only,
-                            archive_run=req.case is None)
+                            archive_run=not _is_reference_request(req))
 
 
 @app.get("/api/archive")
@@ -303,10 +326,11 @@ def analyze_stream(req: AnalyzeRequest) -> StreamingResponse:
     transition so the UI can show each agent's real progress. The last line
     carries the full result exactly as /api/analyze would return it."""
     dossier = _dossier_from_request(req)
+    archive_run = not _is_reference_request(req)
 
     def lines():
         for event in pipeline.analyze_events(dossier, rules_only=req.rules_only,
-                                            archive_run=req.case is None):
+                                            archive_run=archive_run):
             yield json.dumps(event, default=str) + "\n"
 
     return StreamingResponse(lines(), media_type="application/x-ndjson",
