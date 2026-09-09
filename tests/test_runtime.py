@@ -83,12 +83,29 @@ def test_check_the_work_yourself_samples_never_poison_the_archive(tmp_path, monk
     assert not (tmp_path / "lots.jsonl").exists()
 
 
-def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
-    """The archive fix must exempt prepared clicks only — a genuine desk
-    submission (someone's own pasted paperwork) presented twice is still the
-    cloned-paperwork attack the archive exists to catch."""
+def test_composers_own_prefilled_dossier_never_poisons_the_archive(tmp_path, monkeypatch):
+    """The Dossier JSON tab opens pre-filled with genuine_hsi's own
+    documents, verbatim, so a reviewer sees a real example instead of an
+    empty box. Submitted as req.dossier (not req.case), that default must
+    still be recognised as a reference view, not a desk submission."""
     monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
-    dossier = _load("genuine_hsi")
+    dossier = {"case_id": "genuine_hsi", "documents": _load("genuine_hsi")["documents"]}
+    for _ in range(3):
+        r = app.analyze(app.AnalyzeRequest(dossier=dossier))
+        checks = {f["check"] for f in r["ledger"]["findings"]}
+        assert "dossier_reuse" not in checks
+        assert r["verdict"] == "GENUINE"
+    assert not (tmp_path / "lots.jsonl").exists()
+
+
+def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
+    """The archive fix must exempt prepared clicks and known reference
+    dossiers only — a genuine desk submission of a lot that matches none of
+    the shipped cases, presented twice, is still the cloned-paperwork attack
+    the archive exists to catch."""
+    monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
+    base = _load("genuine_hsi")
+    dossier = {"case_id": "a-reviewers-own-lot", "documents": base["documents"]}
     first = app.analyze(app.AnalyzeRequest(dossier=dossier))
     assert first["verdict"] == "GENUINE"
 

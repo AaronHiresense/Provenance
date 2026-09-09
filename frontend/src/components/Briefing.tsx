@@ -34,6 +34,72 @@ const MODES: { key: Mode; label: string; Icon: typeof FileIcon }[] = [
 
 const SNAPSHOT = new Date("2026-07-22");
 
+/** Every composer opens with real paperwork already in it, not an empty box
+ *  with a hint — a reviewer should see what a dossier looks like before
+ *  they've typed anything. All three examples describe the same genuine lot
+ *  (HSI Automotives, BC-2209) in the three shapes the composer accepts, so
+ *  switching tabs shows the same evidence in a different envelope. Every
+ *  example matches a shipped sample or prepared case exactly, so the seen-
+ *  lots archive already knows to treat repeat runs of it as a reference
+ *  view, not a desk submission — see app.py's _is_reference_request. */
+const SAMPLE_PAPERWORK = `CERTIFICATE OF CONFORMITY
+Manufacturer: HSI AUTOMOTIVES PRIVATE LIMITED
+CIN: U29309TN1997PTC039462
+State: Tamil Nadu
+Role: manufacturer
+Part Number: BC-2209
+Certificate No: HSI-COC-33108
+Certificate Date: 2024-05-10
+BIS Licence: CM/L-7411032
+TAC Number: TAC-ARAI-2023-1187
+TAC Issue Date: 2023-08-12
+We certify these brake caliper assemblies conform to IS 15100 and were produced at our Sriperumbudur plant.
+---
+TAX INVOICE
+Supplier: HSI AUTOMOTIVES PRIVATE LIMITED
+CIN: U29309TN1997PTC039462
+GSTIN: 33AABCH4501R1ZK
+State: Tamil Nadu
+Invoice No: HSI/2024/07751
+Invoice Date: 2024-05-15
+Part Number: BC-2209
+Lot Code: SPB-240420-00412
+Qty: 24 units front brake caliper assemblies
+---
+DISPATCH NOTE
+Company: HSI AUTOMOTIVES PRIVATE LIMITED
+Part Number: BC-2209
+Lot Code: SPB-240420-00412
+Manufacturing Date: 2024-04-20
+Ship Date: 2024-05-15
+Carrier: BlueDart Surface, Chennai hub`;
+
+const SAMPLE_JSON = `{
+  "case_id": "genuine_hsi",
+  "documents": [
+    {
+      "doc_id": "DOC-1",
+      "doc_type": "certificate_of_conformity",
+      "date": "2024-05-10",
+      "text": "CERTIFICATE OF CONFORMITY\\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\\nCIN: U29309TN1997PTC039462\\nState: Tamil Nadu\\nRole: manufacturer\\nPart Number: BC-2209\\nCertificate No: HSI-COC-33108\\nCertificate Date: 2024-05-10\\nBIS Licence: CM/L-7411032\\nTAC Number: TAC-ARAI-2023-1187\\nTAC Issue Date: 2023-08-12\\nWe certify these brake caliper assemblies conform to IS 15100 and were produced at our Sriperumbudur plant."
+    },
+    {
+      "doc_id": "DOC-2",
+      "doc_type": "tax_invoice",
+      "date": "2024-05-15",
+      "text": "TAX INVOICE\\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\\nCIN: U29309TN1997PTC039462\\nGSTIN: 33AABCH4501R1ZK\\nState: Tamil Nadu\\nInvoice No: HSI/2024/07751\\nInvoice Date: 2024-05-15\\nPart Number: BC-2209\\nLot Code: SPB-240420-00412\\nQty: 24 units front brake caliper assemblies"
+    },
+    {
+      "doc_id": "DOC-3",
+      "doc_type": "dispatch_note",
+      "date": "2024-05-15",
+      "text": "DISPATCH NOTE\\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\\nPart Number: BC-2209\\nLot Code: SPB-240420-00412\\nManufacturing Date: 2024-04-20\\nShip Date: 2024-05-15\\nCarrier: BlueDart Surface, Chennai hub"
+    }
+  ]
+}`;
+
+const SAMPLE_LOOKUP = "U29309TN1997PTC039462";
+
 /** The run, told one stage at a time in the agent's voice. The headline
  *  steps through these; the rail beneath shows where it is. */
 const STEPS = [
@@ -123,9 +189,9 @@ function partOfDay(): string {
 
 export function Briefing(p: Props) {
   const [mode, setMode] = useState<Mode>("paperwork");
-  const [text, setText] = useState("");
-  const [jsonText, setJsonText] = useState("");
-  const [lookup, setLookup] = useState("");
+  const [text, setText] = useState(SAMPLE_PAPERWORK);
+  const [jsonText, setJsonText] = useState(SAMPLE_JSON);
+  const [lookup, setLookup] = useState(SAMPLE_LOOKUP);
   const [pf, setPf] = useState<PreflightData | null>(null);
   const [pfLoading, setPfLoading] = useState(false);
   const [pfError, setPfError] = useState<string | null>(null);

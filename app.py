@@ -39,6 +39,28 @@ def _known_sample_texts() -> frozenset:
 
 _SAMPLE_TEXTS = _known_sample_texts()
 
+
+def _dossier_key(case_id, documents) -> str:
+    return json.dumps({"case_id": case_id, "documents": documents}, sort_keys=True)
+
+
+def _known_case_dossiers() -> frozenset:
+    """The exact {case_id, documents} shape of every prepared case. The
+    composer's Dossier JSON tab opens pre-filled with one of these (so a
+    reviewer sees a real, complete example instead of an empty box) — that
+    default must be recognised as a reference view too, the same as clicking
+    the prepared case directly, or the second run of the page's own example
+    would flip it to SUSPECT via dossier_reuse."""
+    out = set()
+    for p in CASES_DIR.glob("*.json"):
+        d = json.loads(p.read_text(encoding="utf-8-sig"))
+        if isinstance(d.get("documents"), list):
+            out.add(_dossier_key(d.get("case_id"), d["documents"]))
+    return frozenset(out)
+
+
+_CASE_DOSSIER_SHAPES = _known_case_dossiers()
+
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 
 
@@ -271,15 +293,20 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
 
 
 def _is_reference_request(req: AnalyzeRequest) -> bool:
-    """True for a prepared lot or a 'check the work yourself' sample — both
-    are demo/reference views clicked repeatedly by every visitor, by design,
-    never a reviewer's own desk submission. Only these two are exempt from
-    the seen-lots archive; a genuine paste or dossier still gets archived and
-    checked for reuse."""
+    """True for a prepared lot, a 'check the work yourself' sample, or the
+    composer's own pre-filled example dossier — all three are demo/reference
+    views opened or clicked repeatedly by every visitor, by design, never a
+    reviewer's own desk submission. Only these are exempt from the seen-lots
+    archive; a genuine paste or dossier still gets archived and checked for
+    reuse."""
     if req.case is not None:
         return True
     if req.raw_text is not None and req.raw_text.strip() in _SAMPLE_TEXTS:
         return True
+    if isinstance(req.dossier, dict) and isinstance(req.dossier.get("documents"), list):
+        key = _dossier_key(req.dossier.get("case_id"), req.dossier["documents"])
+        if key in _CASE_DOSSIER_SHAPES:
+            return True
     return False
 
 
