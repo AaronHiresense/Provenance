@@ -113,3 +113,50 @@ def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch)
     reuse = [f for f in second["ledger"]["findings"] if f["check"] == "dossier_reuse"]
     assert reuse and reuse[0]["direction"] == "supports_suspect"
     assert second["verdict"] == "SUSPECT"
+
+
+def _aliased_case_name():
+    for p in CASES.glob("*.json"):
+        d = json.loads(p.read_text(encoding="utf-8-sig"))
+        if d.get("display_aliases"):
+            return p.stem, list(d["display_aliases"].keys())
+    raise AssertionError("no aliased case found in cases/ to test against")
+
+
+def test_get_case_route_never_leaks_the_real_name_or_the_alias_map():
+    """A prepared case marked aliased must not be de-anonymisable by simply
+    fetching its own case file: /api/analyze and /api/analyze/stream already
+    alias their output, but GET /api/cases/{name} served the raw fixture —
+    real name, real registry status, and the display_aliases map itself,
+    unauthenticated, to anyone who guessed or was shown the URL."""
+    case_name, real_names = _aliased_case_name()
+    result = app.get_case(case_name)
+    assert "display_aliases" not in result
+    assert result["aliased"] is True
+    blob = json.dumps(result).lower()
+    for real in real_names:
+        assert real.lower() not in blob, f"real name {real!r} leaked via GET /api/cases/{{name}}"
+
+
+def test_preflight_never_leaks_the_real_name_for_an_aliased_case():
+    """preflight_mod.preflight() must see the real dossier (it looks up the
+    real CIN against the real registry), but its response — identifiers,
+    registry row, claims — reached the client unaliased. Same fix applied
+    to /api/analyze already; preflight needs it independently since it has
+    its own code path that never touched pipeline._apply_aliases."""
+    case_name, real_names = _aliased_case_name()
+    result = app.preflight(app.AnalyzeRequest(case=case_name))
+    assert result["aliased"] is True
+    blob = json.dumps(result).lower()
+    for real in real_names:
+        assert real.lower() not in blob, f"real name {real!r} leaked via /api/preflight"
+
+
+def test_dossier_from_request_still_sees_the_real_case_for_analysis():
+    """The scrub is a display-layer fix, not a pipeline change: /api/analyze
+    must still validate the real CIN against the real registry row, or the
+    aliasing fix would have silently broken every prepared-case verdict."""
+    case_name, _ = _aliased_case_name()
+    result = app.analyze(app.AnalyzeRequest(case=case_name))
+    assert result["registry_row"] is not None, \
+        "the pipeline lost the real dossier and could not resolve the registry row"

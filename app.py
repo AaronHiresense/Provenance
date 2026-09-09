@@ -267,12 +267,25 @@ def list_samples() -> list:
     return out
 
 
-@app.get("/api/cases/{name}")
-def get_case(name: str) -> dict:
+def _read_case(name: str) -> dict:
+    """The real, unaliased dossier from disk. Internal use only — the
+    pipeline must see the real company name to check it against the real
+    registry. Never return this directly from a public route; see
+    get_case()."""
     path = CASES_DIR / f"{Path(name).name}.json"
     if not path.exists():
         raise HTTPException(404, f"unknown case '{name}'")
     return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+@app.get("/api/cases/{name}")
+def get_case(name: str) -> dict:
+    dossier = _read_case(name)
+    aliases = dossier.get("display_aliases") or {}
+    safe = pipeline._apply_aliases(dossier, aliases) if aliases else dict(dossier)
+    safe.pop("display_aliases", None)
+    safe["aliased"] = bool(aliases)
+    return safe
 
 
 def _dossier_from_request(req: AnalyzeRequest) -> dict:
@@ -284,7 +297,7 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
     elif req.dossier is not None:
         dossier = req.dossier
     elif req.case:
-        dossier = get_case(req.case)
+        dossier = _read_case(req.case)
     else:
         raise HTTPException(422, "provide 'case', 'dossier', or 'raw_text'")
     if not isinstance(dossier.get("documents"), list):
@@ -343,8 +356,16 @@ def preflight(req: AnalyzeRequest) -> dict:
     """What the agent understands before it runs: documents recognised,
     fields read offline, the registry record for the CIN, and which checks
     the dossier can support. No LLM call, so it is safe to call on every
-    edit of the paste box."""
-    return preflight_mod.preflight(_dossier_from_request(req))
+    edit of the paste box.
+
+    preflight_mod.preflight() reads the real dossier (it needs the real name
+    to look up the real registry row) — its result is only display-safe
+    once run through the same aliasing /api/analyze already applies, so a
+    prepared case's real identity never reaches this response either."""
+    dossier = _dossier_from_request(req)
+    result = preflight_mod.preflight(dossier)
+    aliases = dossier.get("display_aliases") or {}
+    return pipeline._apply_aliases(result, aliases) if aliases else result
 
 
 @app.post("/api/analyze/stream")
