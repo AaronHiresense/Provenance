@@ -12,7 +12,6 @@ import { Briefing, type BriefInput } from "./components/Briefing";
 import { AgentTrace } from "./components/AgentTrace";
 import { VerdictCard } from "./components/VerdictCard";
 import { Checkpoints } from "./components/Checkpoints";
-import { Actions } from "./components/Actions";
 import { WhyFindings } from "./components/Findings";
 import { Notices } from "./components/Notices";
 import { AllChecks } from "./components/AllChecks";
@@ -142,8 +141,7 @@ export default function App() {
             <m.div key={`run-${runId}`} className="space-y-7" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
               <VerdictCard result={result} />
               <Challenge result={result} />
-              <Checkpoints result={result} desk={desk} record={record} onStatus={setStatus} />
-              <Actions actions={result.actions} />
+              <Checkpoints result={result} desk={desk} onDesk={setDesk} record={record} onStatus={setStatus} />
               <WhyFindings result={result} />
               <Counterfactual result={result} />
               <Notices result={result} />
