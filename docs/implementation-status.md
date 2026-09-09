@@ -34,7 +34,7 @@ Read in this order:
 | M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
 | M1 Evidence honesty | Live verified | `aa97a43` | `3d105938-acc6-4720-8a9e-f3321eb030f8` | 114 tests; frontend build; eval 15/15; live health/ready/runtime/cases and exact source commit |
 | M2 Entities/references | Live verified | `d0e1a80` | `256b0b51-c7f3-43a0-bfeb-55837abc4fd4` | 121 tests; frontend build; eval 21/21; live source identity and reference provenance |
-| M3 Origin reconciliation | Verified locally; pending Git/Railway | pending | — | 128 tests; frontend build; eval 21/21 |
+| M3 Origin reconciliation | Live verified | `8b73de1` | `1caa547e-7fd4-4b9b-b87d-e3715ea057ea` | 128 tests; frontend build; eval 21/21; live paired-flow verification |
 | M4 Durable investigations | Not started | — | — | — |
 | M5 Evidence/reassessment UI | Not started | — | — | — |
 | M6 PDF/OCR/export | Not started | — | — | — |
@@ -126,8 +126,12 @@ expectations changed as planned: the wrong linked lot is SUSPECT, the absent
 dispatch is UNVERIFIABLE/insufficient, and a later exact dispatch reference is
 GENUINE. Synthetic anchors for the existing prepared clean cases are explicit
 in `demo-v1` and cap confidence at medium. Local verification passed: 128
-tests, frontend typecheck/build, and 21/21 offline evaluation. Source and
-deployment remain pending until observed.
+tests, frontend typecheck/build, and 21/21 offline evaluation. Commit
+`8b73de1` was pushed to `main`; Railway deployment
+`1caa547e-7fd4-4b9b-b87d-e3715ea057ea` reached SUCCESS. The live smoke suite
+matched the full commit, and production analyses returned GENUINE for the
+authorized late distributor, SUSPECT for the linked lot substitution, and
+UNVERIFIABLE/insufficient for the absent dispatch, all on `demo-v1`.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 
