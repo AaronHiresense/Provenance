@@ -1,6 +1,12 @@
 frontend/node_modules/
 __pycache__/
 .pytest_cache/
+.test-tmp-*/
+.state/
+investigations.sqlite3*
+uploads/
+backups/
+.release-staging/
 .git/
 mca.duckdb
 *.duckdb

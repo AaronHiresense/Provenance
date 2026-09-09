@@ -10,6 +10,7 @@ mca.duckdb
 __pycache__/
 *.pyc
 .pytest_cache/
+.test-tmp-*/
 .venv/
 
 # OS / editor noise
@@ -25,3 +26,9 @@ samples/*.zip
 
 # the seen-lots archive is desk state, not source
 lot-archive.jsonl
+.state/
+investigations.sqlite3*
+uploads/
+backups/
+release.json
+.release-staging/

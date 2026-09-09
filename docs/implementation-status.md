@@ -31,7 +31,7 @@ Read in this order:
 | Milestone | Status | Source commit | Railway deployment | Verification |
 |---|---|---|---|---|
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
-| M0 Release/readiness | Not started | — | — | — |
+| M0 Release/readiness | Verified locally; pending Git/Railway | pending | — | 114 tests; frontend build; offline eval 15/15 |
 | M1 Evidence honesty | Not started | — | — | — |
 | M2 Entities/references | Not started | — | — | — |
 | M3 Origin reconciliation | Not started | — | — | — |
@@ -52,6 +52,15 @@ created during assessment was removed after verifying its exact workspace path.
 ## First implementation action
 
 Begin M0. Inspect the current branch and remote state, create/use an implementation feature branch from the plan-containing base, and add runtime/readiness metadata and a reproducible release path. The following milestones depend on being able to identify exactly what is live.
+
+### M0 work record — 9 September 2026
+
+Added public liveness, readiness and safe runtime provenance endpoints; added
+tracked-file Railway release staging and non-mutating live smoke tooling; and
+excluded operational state, uploads, backups, release metadata and test scratch
+data from source/container uploads. Local verification passed: 114 tests,
+frontend typecheck/build, and 15/15 offline evaluation. Source commit and live
+deployment fields remain pending until observed after commit and release.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 

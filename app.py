@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -25,6 +26,90 @@ CASES_DIR = BASE / "cases"
 SAMPLES_DIR = BASE / "samples"
 
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
+
+
+def _release_metadata() -> dict:
+    """Public, non-secret identity for the exact source bundle being served."""
+    try:
+        value = json.loads((BASE / "release.json").read_text(encoding="utf-8"))
+        if isinstance(value, dict):
+            return {
+                "source_commit": str(value.get("source_commit") or "unknown"),
+                "built_at": value.get("built_at"),
+                "policy_version": str(value.get("policy_version") or "legacy-v1"),
+                "schema_version": str(value.get("schema_version") or "none"),
+            }
+    except (OSError, ValueError):
+        pass
+    return {"source_commit": "development", "built_at": None,
+            "policy_version": "legacy-v1", "schema_version": "none"}
+
+
+def _registry_status() -> tuple[bool, Optional[str]]:
+    import registry
+    try:
+        # Query the data, rather than treating the presence of a large file as
+        # readiness. This stays local and never calls the language model.
+        registry._con().execute("SELECT 1 FROM companies LIMIT 1").fetchone()
+        return True, registry.snapshot_date()
+    except Exception:
+        return False, None
+
+
+def _storage_ready() -> bool:
+    """Check that future operational state has a writable home, without writes."""
+    target = Path(os.environ.get("PROVENANCE_STATE_DB") or
+                  (Path(os.environ["RAILWAY_VOLUME_MOUNT_PATH"]) /
+                   "investigations.sqlite3")
+                  if os.environ.get("RAILWAY_VOLUME_MOUNT_PATH") else
+                  (BASE / ".state" / "investigations.sqlite3"))
+    parent = target.parent
+    return parent.is_dir() and os.access(parent, os.W_OK)
+
+
+@app.get("/api/health")
+def health() -> dict:
+    """Process liveness only; safe even while the registry volume is empty."""
+    return {"status": "ok"}
+
+
+@app.get("/api/ready")
+def ready() -> dict:
+    registry_ok, snapshot = _registry_status()
+    storage_ok = _storage_ready()
+    if not registry_ok or not storage_ok:
+        raise HTTPException(503, detail={
+            "status": "not_ready", "registry": registry_ok,
+            "storage": storage_ok,
+        })
+    return {"status": "ready", "registry": True, "storage": True,
+            "registry_snapshot": snapshot}
+
+
+@app.get("/api/runtime")
+def runtime() -> dict:
+    """Capabilities and provenance, deliberately excluding keys and paths."""
+    import registry
+    from llm import LLMClient
+    client = LLMClient()
+    registry_ok, snapshot = _registry_status()
+    release = _release_metadata()
+    return {
+        **release,
+        "processing": {
+            "provider": client.provider,
+            "model": None if client.provider == "mock" else client.model,
+            "external_model": client.provider != "mock",
+        },
+        "registry": {"available": registry_ok, "snapshot": snapshot},
+        "capabilities": {
+            "streaming_analysis": True,
+            "preflight": True,
+            "persistent_desk_memory": _storage_ready(),
+            "pdf_or_image_intake": False,
+            "independent_origin_records": False,
+        },
+    }
 
 # Hashed JS/CSS/font bundles emitted by the frontend build. Guarded so the API
 # still starts on a clone that has not built the UI yet.
