@@ -21,6 +21,10 @@ export function CouldNotCheck({ result: r }: { result: AnalysisResult }) {
   return (
     <Section
       title="Audit Scope & Unverified Claims Disclosure"
+      badge="AUDIT BOUNDARIES & SCOPE"
+      subtitle="Extracted document fields and inherent offline verification boundaries"
+      tint="slate"
+      icon={InfoIcon}
       aside={
         caseLines.length || unchecked.length ? (
           <div className="flex items-center gap-1.5 font-mono text-xs">

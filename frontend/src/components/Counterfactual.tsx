@@ -29,11 +29,15 @@ export function Counterfactual({ result: r }: { result: AnalysisResult }) {
   return (
     <Section
       title="What-If Stress Testing & Sensitivity Analysis"
+      badge="STAGE 05 · SENSITIVITY LAB"
+      subtitle="Deterministic counterfactual testing: isolating load-bearing findings where removing one observation pivots the verdict"
+      tint="purple"
+      icon={ShieldAlertIcon}
       aside={
         decisive.length ? (
           <div className="flex items-center gap-1.5 font-mono text-xs">
             <span className="text-slate-400">Sensitivity Index:</span>
-            <span className="font-bold text-amber-700 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full dark:text-amber-300">
+            <span className="font-bold text-purple-700 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full dark:text-purple-300">
               {decisive.length} Load-Bearing Anchor{decisive.length === 1 ? "" : "s"}
             </span>
           </div>

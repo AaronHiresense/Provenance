@@ -449,7 +449,14 @@ export function WhyFindings({ result: r }: { result: AnalysisResult }) {
   const takeaways = r.reasoning?.narrative ? extractExecutiveTakeaways(r) : [];
 
   return (
-    <Section title={title} aside={aside}>
+    <Section
+      title={title}
+      badge="STAGE 04 · REASONING & FINDINGS"
+      subtitle="Dialectic dual hypotheses (benign vs forgery) and definitive ledger findings"
+      tint="amber"
+      icon={ShieldIcon}
+      aside={aside}
+    >
       {/* ── 1. PRIMARY FINDINGS LIST ────────────────────────────────────── */}
       <m.div className="flex flex-col gap-3" variants={listV} initial="hidden" animate="show">
         {lead.map((f, i) => {

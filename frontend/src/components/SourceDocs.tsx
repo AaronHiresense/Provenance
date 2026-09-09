@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AnalysisResult, Dossier } from "../types";
-import { ChevronIcon } from "./Icons";
+import { ChevronIcon, FileIcon } from "./Icons";
 import { Section } from "./Section";
 
 interface Props {
@@ -15,10 +15,19 @@ export function SourceDocs({ dossier, result: r }: Props) {
   const docs = dossier?.documents ?? [];
   return (
     <Section
-      title="Source documents and extracted claims"
+      title="Source Documents & Extracted Claims"
+      badge="RAW MATERIAL · DOSSIER"
+      subtitle="Original uploaded paperwork and grounded claims ledger"
+      tint="slate"
+      icon={FileIcon}
       aside={
-        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="inline-flex items-center gap-1 font-medium text-blue-700 hover:underline dark:text-blue-400">
-          {open ? "Hide" : "Show"} <ChevronIcon open={open} className="h-3.5 w-3.5" />
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+        >
+          {open ? "Hide Dossier" : "View Dossier"} <ChevronIcon open={open} className="h-3.5 w-3.5" />
         </button>
       }
     >

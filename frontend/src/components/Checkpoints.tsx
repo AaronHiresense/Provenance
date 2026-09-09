@@ -276,10 +276,16 @@ export function Checkpoints({ result, desk, onDesk, record, onStatus }: Props) {
   return (
     <Section
       title="Operational Action & Playbook Center"
+      badge="STAGE 03 · ACTION CENTER"
+      subtitle="Role-tailored directives, ERP inventory holds, and statutory referral notices"
+      tint="blue"
+      icon={TruckIcon}
       aside={
         <div className="flex items-center gap-1.5 font-mono text-xs">
-          <span className="text-slate-400">Desk Focus:</span>
-          <span className="font-bold text-slate-800 dark:text-slate-200">{activeCfg.name}</span>
+          <span className="text-slate-400">Active Focus:</span>
+          <span className="font-bold text-blue-700 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full dark:text-blue-300">
+            {activeCfg.name}
+          </span>
         </div>
       }
     >

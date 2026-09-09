@@ -228,6 +228,10 @@ export function AllChecks({ result: r }: { result: AnalysisResult }) {
   return (
     <Section
       title={`Forensic Check Matrix (${findings.length} Total Checks)`}
+      badge="FORENSIC MATRIX · 22 CHECKS"
+      subtitle="Comprehensive statutory cross-examination across all 4 regulatory dimensions"
+      tint="emerald"
+      icon={BadgeCheckIcon}
       aside={
         <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
           <button
