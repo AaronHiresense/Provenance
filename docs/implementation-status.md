@@ -33,7 +33,7 @@ Read in this order:
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
 | M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
 | M1 Evidence honesty | Live verified | `aa97a43` | `3d105938-acc6-4720-8a9e-f3321eb030f8` | 114 tests; frontend build; eval 15/15; live health/ready/runtime/cases and exact source commit |
-| M2 Entities/references | Verified locally; pending Git/Railway | pending | — | 121 tests; frontend build; eval 21/21 |
+| M2 Entities/references | Live verified | `d0e1a80` | `256b0b51-c7f3-43a0-bfeb-55837abc4fd4` | 121 tests; frontend build; eval 21/21; live source identity and reference provenance |
 | M3 Origin reconciliation | Not started | — | — | — |
 | M4 Durable investigations | Not started | — | — | — |
 | M5 Evidence/reassessment UI | Not started | — | — | — |
@@ -104,7 +104,11 @@ abstain as insufficient. Until M4 introduces owned sessions and immutable saved
 results, matching records are returned only inside the current analysis or
 preflight response; there is no reference-store listing or mutation route.
 Local verification passed: 121 tests, frontend typecheck/build and 21/21 offline
-evaluation. Source and deployment remain pending until observed.
+evaluation. Commit `d0e1a80` was pushed to `main` and Railway deployment
+`256b0b51-c7f3-43a0-bfeb-55837abc4fd4` reached SUCCESS. Live smoke checks
+matched the full source commit and passed health, readiness and cases; runtime
+reported reference version `demo-v1`, provenance `synthetic_demo`, and the
+independent-origin capability available.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 
