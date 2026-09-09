@@ -22,14 +22,15 @@ const cardV: Variants = {
 };
 
 /**
- * Highlights key terms, numbers, checks, and decisive conclusions in text.
+ * Highlights key terms, numbers, tiers, checks, and decisive conclusions in text.
  */
 function highlightKeywords(text: string): React.ReactNode {
   if (!text) return null;
-  const regex = /([a-z]+(?:_[a-z0-9]+)+|\b\d+\s+(?:prior presentations|times before|presentations)\b|'[^']+'|cloned-dossier attack|benign repeat-order|governance rules|dispositive|innocent mechanism|administrative error)/gi;
+  const regex = /(Authoritative-tier|Derived-tier|Heuristic-tier|\b\d+\s+units claimed versus \d+\s+units verified\b|\b\d+\s+(?:prior presentations|times before|presentations)\b|NIC\s+\d+|CIN|GSTIN|PAN|BIS licence|TAC|OEM sheet|OEM dispatch records|lot code grammar|custody sequence|source-record conflicts?|cloned-dossier attack|benign repeat-order|governance rules|dispositive|innocent mechanism|administrative error|'[^']+'|[a-z]+(?:_[a-z0-9]+)+)/gi;
   const tokens = text.split(regex);
 
   return tokens.map((tok, i) => {
+    const lower = tok.toLowerCase();
     if (tok.includes("_")) {
       return (
         <code key={i} className="font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-1 py-0.5 rounded text-[11px]">
@@ -37,11 +38,64 @@ function highlightKeywords(text: string): React.ReactNode {
         </code>
       );
     }
-    if (/^\b\d+\s+(?:prior presentations|times before|presentations)\b$/i.test(tok)) {
+    if (lower === "authoritative-tier") {
       return (
-        <span key={i} className="font-bold text-rose-700 dark:text-rose-300 bg-rose-500/10 px-1 py-0.5 rounded">
+        <span key={i} className="font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded text-[11px]">
+          Authoritative-tier
+        </span>
+      );
+    }
+    if (lower === "derived-tier") {
+      return (
+        <span key={i} className="font-mono font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded text-[11px]">
+          Derived-tier
+        </span>
+      );
+    }
+    if (lower === "heuristic-tier") {
+      return (
+        <span key={i} className="font-mono font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded text-[11px]">
+          Heuristic-tier
+        </span>
+      );
+    }
+    if (/^\b\d+\s+units claimed versus \d+\s+units verified\b$/i.test(tok)) {
+      return (
+        <span key={i} className="font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/20">
           {tok}
         </span>
+      );
+    }
+    if (/^\b\d+\s+(?:prior presentations|times before|presentations)\b$/i.test(tok)) {
+      return (
+        <span key={i} className="font-bold text-rose-700 dark:text-rose-300 bg-rose-500/15 px-1.5 py-0.5 rounded border border-rose-500/20">
+          {tok}
+        </span>
+      );
+    }
+    if (/^NIC\s+\d+$/i.test(tok)) {
+      return (
+        <span key={i} className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-200/70 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px]">
+          {tok}
+        </span>
+      );
+    }
+    if (
+      lower === "cin" ||
+      lower === "gstin" ||
+      lower === "pan" ||
+      lower === "bis licence" ||
+      lower === "tac" ||
+      lower === "oem sheet" ||
+      lower === "oem dispatch records" ||
+      lower === "lot code grammar" ||
+      lower === "custody sequence" ||
+      lower.startsWith("source-record conflict")
+    ) {
+      return (
+        <strong key={i} className="font-bold text-slate-900 dark:text-white underline decoration-blue-500/40">
+          {tok}
+        </strong>
       );
     }
     if (tok.startsWith("'") && tok.endsWith("'")) {
@@ -52,18 +106,106 @@ function highlightKeywords(text: string): React.ReactNode {
       );
     }
     if (
-      tok.toLowerCase() === "cloned-dossier attack" ||
-      tok.toLowerCase() === "dispositive" ||
-      tok.toLowerCase() === "governance rules"
+      lower === "cloned-dossier attack" ||
+      lower === "dispositive" ||
+      lower === "governance rules" ||
+      lower === "benign repeat-order"
     ) {
       return (
-        <strong key={i} className="font-bold text-slate-900 dark:text-white underline decoration-amber-500/40">
+        <strong key={i} className="font-bold text-slate-950 dark:text-white underline decoration-amber-500/50">
           {tok}
         </strong>
       );
     }
     return tok;
   });
+}
+
+/**
+ * Formats the full legal forensic narrative with structured visual paragraphs and highlighted anchors.
+ */
+function renderRichForensicNarrative(narrative: string): React.ReactNode {
+  if (!narrative) return null;
+
+  // Split narrative by sentences
+  const sentences = narrative.split(/(?<=\.\s+)/).map((s) => s.trim()).filter(Boolean);
+
+  return (
+    <div className="space-y-2.5">
+      {sentences.map((sentence, idx) => {
+        const isOpening = idx === 0;
+        const isConclusion =
+          sentence.toLowerCase().includes("no findings point toward suspicion") ||
+          sentence.toLowerCase().includes("dispositive indicator of fraud") ||
+          sentence.toLowerCase().includes("consistent with a legitimate partial shipment");
+        const isDiscrepancy =
+          sentence.toLowerCase().includes("notable observation") ||
+          sentence.toLowerCase().includes("however, the") ||
+          sentence.toLowerCase().includes("check fails");
+
+        if (isOpening) {
+          return (
+            <div
+              key={idx}
+              className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-[12.5px] font-semibold text-slate-900 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-100"
+            >
+              <span className="mr-1.5 font-mono text-[10.5px] uppercase tracking-wider text-blue-600 dark:text-blue-400 font-bold block sm:inline">
+                Executive Baseline:
+              </span>
+              {highlightKeywords(sentence)}
+            </div>
+          );
+        }
+
+        if (isConclusion) {
+          const isPositive = sentence.toLowerCase().includes("no findings point toward suspicion") || sentence.toLowerCase().includes("consistent with a legitimate");
+          return (
+            <div
+              key={idx}
+              className={`rounded-xl border p-3 text-[12.5px] font-bold ${
+                isPositive
+                  ? "border-emerald-200/80 bg-emerald-50/50 text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200"
+                  : "border-rose-200/80 bg-rose-50/50 text-rose-950 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-200"
+              }`}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                {isPositive ? (
+                  <CheckCircleIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                ) : (
+                  <ShieldAlertIcon className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                )}
+                <span className="font-mono text-[10.5px] uppercase tracking-wider font-bold">
+                  Final Adjudication:
+                </span>
+              </div>
+              <p className="leading-relaxed font-semibold">{highlightKeywords(sentence)}</p>
+            </div>
+          );
+        }
+
+        if (isDiscrepancy) {
+          return (
+            <div
+              key={idx}
+              className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-3 text-[12px] text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200"
+            >
+              <span className="font-mono text-[10.5px] uppercase tracking-wider font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
+                Observed Variance:
+              </span>
+              <p className="leading-relaxed">{highlightKeywords(sentence)}</p>
+            </div>
+          );
+        }
+
+        // Standard forensic evaluation sentence
+        return (
+          <p key={idx} className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-sans pl-1">
+            {highlightKeywords(sentence)}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 interface CardProps {
@@ -435,11 +577,9 @@ export function WhyFindings({ result: r }: { result: AnalysisResult }) {
               ))}
             </div>
           ) : (
-            /* Mode 2: Full Forensic Narrative with Highlighted Anchors */
+            /* Mode 2: Full Forensic Narrative with Structured Highlights & Badges */
             <div className="pt-3">
-              <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
-                {highlightKeywords(r.reasoning.narrative)}
-              </p>
+              {renderRichForensicNarrative(r.reasoning.narrative)}
             </div>
           )}
         </div>
