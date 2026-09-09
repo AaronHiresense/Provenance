@@ -118,7 +118,7 @@ export const TIER_RANK: Record<SourceTier, number> = { authoritative: 3, derived
 export const GROUPS: { key: Dimension; name: string; description: string }[] = [
   { key: "identity", name: "Identity", description: "who the supplier is, per the MCA registry and GSTN" },
   { key: "certification", name: "Certification", description: "certificates, BIS licence, type approval, specification" },
-  { key: "custody", name: "Custody", description: "dates, distances and geography of the shipment" },
+  { key: "custody", name: "Dispatch & Transfer Chain", description: "dates, transit distances, shipment parties and transfer authorization" },
   { key: "provenance", name: "Provenance", description: "lot codes, cross-document consistency, tampering" },
 ];
 

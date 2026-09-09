@@ -82,9 +82,7 @@ function Row({ f, reasoning }: { f: Finding; reasoning: ReturnType<typeof pairRe
               {contradicts ? findingLabel(f) : checkLabel(f.check)}
             </p>
             <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-1">
-              {contradicts
-                ? f.detail
-                : f.assertion || f.detail || "Verified against statutory / cross-document record"}
+              {f.detail || f.assertion || "Verified against statutory / cross-document record"}
             </p>
           </div>
 

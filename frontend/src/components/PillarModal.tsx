@@ -42,7 +42,7 @@ const PILLAR_DESCRIPTIONS: Record<Dimension, string> = {
   certification:
     "Conformity assessment, Bureau of Indian Standards (BIS) license validity, ARAI/ICAT Type Approval Certificates (TAC), and OEM specification fidelity.",
   custody:
-    "Physical & logistical lineage, e-way bill distance vs. transit time sanity, port of entry consistency, and chain-of-custody transfer integrity.",
+    "Factory dispatch reconciliation, authorized transfer parties, e-way bill transit validity, and chronological handover integrity.",
   provenance:
     "Documentary authenticity, OEM batch grammar syntax, anti-tampering heuristics, duplicate paperwork screening, and dispatch reconciliation.",
 };

@@ -216,19 +216,19 @@ export function VerdictCard({ result: r }: Props) {
                 </div>
               </button>
 
-              {/* 3. Custody */}
+              {/* 3. Dispatch & Transfer */}
               <button
                 type="button"
                 onClick={() => setSelectedPillar("custody")}
                 className="group flex items-center gap-2.5 rounded-2xl border border-amber-200/80 bg-amber-50/60 p-2.5 sm:p-3 shadow-2xs transition-all hover:bg-amber-100/70 hover:border-amber-300 hover:scale-[1.02] text-left dark:border-amber-900/40 dark:bg-amber-950/20 dark:hover:bg-amber-900/30 cursor-pointer"
-                title="Click to view Custody evidence dossier"
+                title="Click to view Dispatch & Transfer Chain evidence dossier"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
                   <ShieldIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="flex items-center justify-between font-mono text-[10.5px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
-                    3. Custody
+                    3. Dispatch & Transfer
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-amber-600 dark:text-amber-400">↗</span>
                   </span>
                   <span className="mt-0.5 block text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">
