@@ -23,6 +23,8 @@ import {
   UserIcon,
 } from "./Icons";
 
+import logoUrl from "../assets/logo.jpg";
+
 interface Props {
   theme: Theme;
   onToggleTheme: () => void;
@@ -88,12 +90,17 @@ export function TopBar({ theme, onToggleTheme, busy, desk, onDesk, showNew, onNe
           className="group flex items-center gap-2.5 text-left cursor-pointer"
           aria-label="Provenance Home"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 font-mono text-sm font-bold text-white shadow-xs transition-transform group-hover:scale-105 dark:bg-white dark:text-slate-900">
-            P
-          </span>
-          <span className="font-mono text-sm font-bold tracking-tight text-slate-900 dark:text-white">
-            PROVENANCE
-          </span>
+          <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-slate-700/50 bg-[#0c0e12] shadow-xs transition-all group-hover:scale-105 group-hover:border-amber-500/60 group-hover:shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+            <img src={logoUrl} alt="Provenance Logo" className="h-full w-full object-cover scale-125" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-mono text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+              PROVENANCE
+            </span>
+            <span className="font-mono text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mt-0.5">
+              FORENSIC INTEL
+            </span>
+          </div>
         </button>
 
         {showNew && (
