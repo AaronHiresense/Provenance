@@ -31,7 +31,7 @@ app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 def _release_metadata() -> dict:
     """Public, non-secret identity for the exact source bundle being served."""
     try:
-        value = json.loads((BASE / "release.json").read_text(encoding="utf-8"))
+        value = json.loads((BASE / "release-manifest.json").read_text(encoding="utf-8"))
         if isinstance(value, dict):
             return {
                 "source_commit": str(value.get("source_commit") or "unknown"),

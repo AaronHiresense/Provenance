@@ -30,5 +30,4 @@ lot-archive.jsonl
 investigations.sqlite3*
 uploads/
 backups/
-release.json
 .release-staging/

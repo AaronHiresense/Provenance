@@ -50,7 +50,7 @@ $manifest = [ordered]@{
 }
 $manifestJson = $manifest | ConvertTo-Json
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText((Join-Path $stage "release.json"), $manifestJson, $utf8NoBom)
+[System.IO.File]::WriteAllText((Join-Path $stage "release-manifest.json"), $manifestJson, $utf8NoBom)
 
 $env:RAILWAY_CALLER = "skill:use-railway@1.2.1"
 $env:RAILWAY_AGENT_SESSION = "provenance-release-$($commit.Substring(0, 12))"
