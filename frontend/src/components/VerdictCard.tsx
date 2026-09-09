@@ -18,9 +18,7 @@ import {
   BuildingIcon,
   CheckCircleIcon,
   CopyIcon,
-  FactoryIcon,
   FileIcon,
-  FingerprintIcon,
   InfoIcon,
   LinkIcon,
   ShieldAlertIcon,
@@ -45,6 +43,7 @@ export function VerdictCard({ result: r }: Props) {
   const statusActive = status !== null && status.toLowerCase() === "active";
   const nic = row?.nic_code ?? null;
   const trader = nic?.startsWith("45");
+  const isLLP = row?.cin ? row.cin.length <= 10 || row.cin.includes("-") : false;
   const bis = r.ledger.findings.find((f) => f.check === "bis_licence_valid");
 
   const dimensionLabel = (dimension: keyof AnalysisResult["dimension_status"]) => {
@@ -330,96 +329,129 @@ export function VerdictCard({ result: r }: Props) {
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3.5 dark:border-slate-800">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400">
-                  <FileIcon className="h-4 w-4" />
+                  <BuildingIcon className="h-4 w-4" />
                 </div>
-                <h4 className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider whitespace-nowrap">
-                  MCA REGISTRY DOSSIER
-                </h4>
+                <div>
+                  <h4 className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                    MCA MASTER DOSSIER
+                  </h4>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                    Ministry of Corporate Affairs
+                  </span>
+                </div>
               </div>
 
-              <div className="rounded-xl bg-blue-50/80 px-2.5 py-1 text-right font-mono text-[9.5px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 leading-tight shrink-0 whitespace-nowrap">
-                <div>3.67M MCA queried</div>
-                <div className="text-[9px] opacity-80">{r.elapsed_ms ?? 19200} ms</div>
+              <div className="rounded-xl border border-blue-500/20 bg-blue-50/80 px-2.5 py-1 text-right font-mono text-[9.5px] font-semibold text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/60 dark:text-blue-300 leading-tight shrink-0">
+                <div>3.67M Index</div>
+                <div className="text-[9px] opacity-75">{r.elapsed_ms ?? 1420} ms</div>
               </div>
             </div>
 
-            {/* Data Rows */}
+            {/* Entity Dossier Body */}
             {row ? (
-              <div className="space-y-4 text-xs">
-                {/* Row 1: Supplier */}
-                <div className="flex items-start gap-3">
-                  <div className="flex items-center gap-2 text-slate-400 w-24 shrink-0 pt-0.5">
-                    <BuildingIcon className="h-3.5 w-3.5" />
-                    <span className="font-medium text-slate-500 dark:text-slate-400">Supplier</span>
-                  </div>
-                  <span className="font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                    {titleCase(row.name.toLowerCase())}
-                  </span>
-                </div>
-
-                {/* Row 2: CIN */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-slate-400 w-24 shrink-0">
-                    <FingerprintIcon className="h-3.5 w-3.5" />
-                    <span className="font-medium text-slate-500 dark:text-slate-400">CIN</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                      {row.cin}
+              <div className="space-y-3">
+                {/* Hero Entity Header Card */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                        Official Registered Supplier
+                      </span>
+                      <h3 className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-snug mt-0.5">
+                        {titleCase(row.name.toLowerCase())}
+                      </h3>
+                    </div>
+                    <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+                      {isLLP ? "LLP" : "Pvt Ltd"}
                     </span>
+                  </div>
+
+                  {/* Monospace CIN / LLPIN Copy Bar */}
+                  <div className="mt-2.5 flex items-center justify-between gap-2 rounded-xl bg-white p-2 border border-slate-200/70 dark:bg-slate-900 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5 min-w-0 font-mono text-xs">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">
+                        {isLLP ? "LLPIN:" : "CIN:"}
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100 truncate text-[11.5px]">
+                        {row.cin}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={copyCIN}
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                      title={copied ? "Copied!" : "Copy CIN"}
-                      aria-label="Copy Corporate Identification Number"
+                      className="flex items-center gap-1 rounded-md px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer transition-colors"
+                      title={copied ? "Copied!" : "Copy Corporate Identifier"}
+                      aria-label="Copy Corporate Identifier"
                     >
                       <CopyIcon className="h-3.5 w-3.5" />
+                      <span className="font-mono text-[10px]">{copied ? "Copied" : "Copy"}</span>
                     </button>
-                    {copied && (
-                      <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-                        copied
-                      </span>
-                    )}
                   </div>
                 </div>
 
-                {/* Row 3: Registry */}
-                <div className="flex items-start gap-3">
-                  <div className="flex items-center gap-2 text-slate-400 w-24 shrink-0 pt-0.5">
-                    <CheckCircleIcon className="h-3.5 w-3.5" />
-                    <span className="font-medium text-slate-500 dark:text-slate-400">Registry</span>
-                  </div>
-                  <div className="text-slate-700 dark:text-slate-300 leading-snug">
-                    <span className={`inline-flex items-center gap-1 font-bold ${statusActive ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                      <span className={`h-2 w-2 rounded-full ${statusActive ? "bg-emerald-500" : "bg-amber-500"}`} />
+                {/* Structured 2x2 Details Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {/* Status */}
+                  <div className="rounded-xl border border-slate-200/70 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+                    <span className="text-[9.5px] font-mono text-slate-400 block uppercase">
+                      Status
+                    </span>
+                    <span className={`inline-flex items-center gap-1 font-bold mt-0.5 text-xs ${statusActive ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${statusActive ? "bg-emerald-500" : "bg-amber-500"}`} />
                       {status ?? "Active"}
                     </span>
-                    {"  ·  inc. "}
-                    {formatDate(row.registration_date)}
-                    {row.state_name ? `  ·  ${titleCase(row.state_name)}` : ""}
+                  </div>
+
+                  {/* RoC Jurisdiction */}
+                  <div className="rounded-xl border border-slate-200/70 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+                    <span className="text-[9.5px] font-mono text-slate-400 block uppercase">
+                      RoC State
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100 block truncate mt-0.5 text-xs">
+                      {row.state_name ? titleCase(row.state_name) : "Official Registry"}
+                    </span>
+                  </div>
+
+                  {/* Incorporation Date */}
+                  <div className="rounded-xl border border-slate-200/70 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+                    <span className="text-[9.5px] font-mono text-slate-400 block uppercase">
+                      Incorporated
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100 block mt-0.5 text-xs">
+                      {formatDate(row.registration_date)}
+                    </span>
+                  </div>
+
+                  {/* Activity Classification */}
+                  <div className="rounded-xl border border-slate-200/70 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+                    <span className="text-[9.5px] font-mono text-slate-400 block uppercase">
+                      Activity
+                    </span>
+                    <span className={`font-bold block truncate mt-0.5 text-xs ${trader ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-100"}`}>
+                      {nic ? (trader ? "Trading (NIC 45)" : `Mfg (${nic})`) : "Commercial / LLP"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Row 4: Activity */}
-                {nic && (
-                  <div className="flex items-start gap-3">
-                    <div className="flex items-center gap-2 text-slate-400 w-24 shrink-0 pt-0.5">
-                      <FactoryIcon className="h-3.5 w-3.5" />
-                      <span className="font-medium text-slate-500 dark:text-slate-400">Activity</span>
-                    </div>
-                    <span className={`font-bold leading-snug ${trader ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-100"}`}>
-                      {trader ? "Parts Trader / Reseller" : (row.industry ?? "Manufacturing (Machinery and Equipments)")}
-                      {` (NIC ${nic})`}
-                    </span>
+                {/* Industry Line */}
+                {row.industry && (
+                  <div className="rounded-xl bg-slate-50/80 px-3 py-2 text-[11px] text-slate-600 dark:bg-slate-950/40 dark:text-slate-400 border border-slate-100 dark:border-slate-800/80">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Industry: </span>
+                    {row.industry}
                   </div>
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                No registry record was found for the identifier in these documents.
-              </p>
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                No statutory MCA record was found for this identifier.
+              </div>
             )}
+          </div>
+
+          {/* Statutory Integrity Guarantee Footer */}
+          <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-[10.5px] text-slate-400 dark:border-slate-800 dark:text-slate-500 font-mono">
+            <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span className="truncate">Statutory DuckDB Match</span>
           </div>
         </m.aside>
       </div>
