@@ -20,6 +20,9 @@ def test_runtime_is_safe_and_describes_capabilities():
     assert "path" not in str(result).lower()
     assert "key" not in str(result).lower()
     assert result["capabilities"]["streaming_analysis"] is True
+    assert result["capabilities"]["independent_origin_records"] is True
+    assert result["reference_snapshot"]["provenance"] == "synthetic_demo"
+    assert result["reference_snapshot"]["available"] is True
 
 
 def test_ready_checks_registry_and_storage(monkeypatch):

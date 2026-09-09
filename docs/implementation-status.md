@@ -33,7 +33,7 @@ Read in this order:
 | Planning/handoff | Committed and pushed to `codex/hackathon-plan` | `7d4e5c3` | Not an application release | Documentation consistency review; Git push succeeded |
 | M0 Release/readiness | Live verified | `7d7b6b8` | `4c6ef526-0a74-4a2b-9cb0-ada0008f393f` | 114 tests; build; eval 15/15; live health/ready/runtime/cases; healthcheck configured |
 | M1 Evidence honesty | Live verified | `aa97a43` | `3d105938-acc6-4720-8a9e-f3321eb030f8` | 114 tests; frontend build; eval 15/15; live health/ready/runtime/cases and exact source commit |
-| M2 Entities/references | Not started | — | — | — |
+| M2 Entities/references | Verified locally; pending Git/Railway | pending | — | 121 tests; frontend build; eval 21/21 |
 | M3 Origin reconciliation | Not started | — | — | — |
 | M4 Durable investigations | Not started | — | — | — |
 | M5 Evidence/reassessment UI | Not started | — | — | — |
@@ -85,6 +85,26 @@ Release `aa97a43` was pushed to `main` and deployed as
 `3d105938-acc6-4720-8a9e-f3321eb030f8`. Railway reported SUCCESS with a running
 instance and the `/api/ready` healthcheck. The live smoke suite passed health,
 readiness, runtime identity for the full commit, and cases checks.
+
+### M2 work record — 9 September 2026
+
+Added additive evidence contracts for stable assertions/findings, verified
+source spans, document hashes, separate entities and role participations, and
+typed shipment relationships. Added a server-selected, immutable `demo-v1`
+reference snapshot whose synthetic provenance and limited coverage are exposed
+with every matching analysis; submitted reference versions, source tiers and
+independent records are ignored. Added six HSI fixtures covering a supported
+late distributor, a lot substitution, missing dispatch coverage, split
+shipments, a corrected document and a later dispatch reference. The final
+verdict policy is deliberately unchanged until M3: therefore the substitution
+and missing-dispatch fixtures retain the legacy GENUINE expectation in M2, and
+M3 must change them when independent reconciliation becomes decisive. The
+corrected and reassessment inputs retain their original documents and currently
+abstain as insufficient. Until M4 introduces owned sessions and immutable saved
+results, matching records are returned only inside the current analysis or
+preflight response; there is no reference-store listing or mutation route.
+Local verification passed: 121 tests, frontend typecheck/build and 21/21 offline
+evaluation. Source and deployment remain pending until observed.
 
 There is no need to ask again whether to implement, commit, push or deploy ordinary milestone changes: the user already requested those actions. Preserve existing data, keep irreversible changes separate, and report concrete blockers. Never request users to paste secrets into this document.
 

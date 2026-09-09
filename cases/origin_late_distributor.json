@@ -1,0 +1,10 @@
+{
+  "case_id": "origin_late_distributor",
+  "title": "HSI brake caliper — late distributor with scoped authorization",
+  "expected": {"verdict": "GENUINE", "subtype": null},
+  "documents": [
+    {"doc_id":"DOC-CERT","doc_type":"certificate_of_conformity","date":"2024-05-10","text":"CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BC-2209\nCertificate No: HSI-COC-33108\nCertificate Date: 2024-05-10\nBIS Licence: CM/L-7411032\nTAC Number: TAC-ARAI-2023-1187\nTAC Issue Date: 2023-08-12\nStandard: IS 15100"},
+    {"doc_id":"DOC-INV","doc_type":"tax_invoice","date":"2024-05-15","text":"TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\nState: Tamil Nadu\nInvoice No: HSI/2024/07751\nInvoice Date: 2024-05-15\nShipment ID: SHIP-HSI-1001\nPart Number: BC-2209\nLot Code: SPB-240420-00412\nQty: 24\nUnit: units\nDistributor: Northstar Auto Distribution"},
+    {"doc_id":"DOC-AUTH","doc_type":"distributor_authorization","date":"2024-05-14","text":"DISTRIBUTOR AUTHORIZATION\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nDistributor: Northstar Auto Distribution\nPart Number: BC-2209\nTerritory: Karnataka\nEffective From: 2024-05-01\nEffective To: 2025-04-30\nDispatch Reference: SHIP-HSI-1001"}
+  ]
+}

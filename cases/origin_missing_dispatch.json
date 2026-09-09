@@ -1,0 +1,9 @@
+{
+  "case_id": "origin_missing_dispatch",
+  "title": "HSI brake caliper — independent dispatch not in demo snapshot",
+  "expected": {"verdict": "GENUINE", "subtype": null},
+  "documents": [
+    {"doc_id":"DOC-CERT","doc_type":"certificate_of_conformity","date":"2024-06-02","text":"CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BC-2209\nCertificate Date: 2024-06-02\nBIS Licence: CM/L-7411032\nTAC Issue Date: 2023-08-12\nStandard: IS 15100"},
+    {"doc_id":"DOC-INV","doc_type":"tax_invoice","date":"2024-06-03","text":"TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\nState: Tamil Nadu\nInvoice Date: 2024-06-03\nShipment ID: SHIP-HSI-UNKNOWN\nPart Number: BC-2209\nLot Code: SPB-240520-00111\nQty: 24\nUnit: units"}
+  ]
+}

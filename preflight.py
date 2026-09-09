@@ -15,7 +15,8 @@ import re
 
 import registry
 import validators
-from extract import _fallback_extract, sanitize_document
+import reference_store
+from extract import _fallback_extract, build_typed_evidence, sanitize_document
 
 # Human-facing guesses of what each pasted document is, from its first line.
 _KIND_PATTERNS = [
@@ -74,6 +75,9 @@ PLAN = [
 CONSUMED_ATTRS = set().union(
     *[req for _c, options, _u in PLAN for req in options]) | {
         "pan", "role", "bis_licence"}
+CONSUMED_ATTRS |= {"shipment_id", "dispatch_reference", "distributor",
+                   "carrier", "recipient", "unit", "territory",
+                   "effective_from", "effective_to"}
 
 # Attributes we read but deliberately do not treat as checkable claims:
 # they identify the paperwork rather than assert anything about the goods.
@@ -129,6 +133,10 @@ def preflight(dossier: dict) -> dict:
                      "chars": len(d.get("text", "")), "date": d.get("date")})
 
     assertions = _fallback_extract(clean_docs)
+    # The offline parser receives the same grounding treatment as a full run.
+    from extract import _ground_assertions
+    _ground_assertions(assertions, clean_docs)
+    typed_evidence = build_typed_evidence(dossier, assertions)
     have = {a.attribute for a in assertions}
     claims = [a.to_dict() for a in assertions]
 
@@ -194,6 +202,15 @@ def preflight(dossier: dict) -> dict:
     unlocks.sort(key=lambda u: -len(u["checks"]))
 
     runnable = sum(1 for p in plan if p["will_run"])
+    try:
+        snapshot = reference_store.load_snapshot()
+        reference = snapshot.summary()
+        reference["matching_records"] = len(
+            reference_store.public_evidence(snapshot, dossier))
+    except (OSError, ValueError, KeyError):
+        reference = {"version": reference_store.configured_version(),
+                     "available": False, "matching_records": 0}
+
     return {
         "documents": docs,
         "claims": claims,
@@ -205,5 +222,7 @@ def preflight(dossier: dict) -> dict:
         "total": len(plan),
         "unlocks": unlocks[:3],
         "unchecked_claims": unchecked_claims(assertions),
+        "evidence": typed_evidence,
+        "reference_snapshot": reference,
         "aliased": bool(dossier.get("display_aliases")),
     }

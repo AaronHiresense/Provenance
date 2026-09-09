@@ -1,0 +1,10 @@
+{
+  "case_id": "origin_substitution",
+  "title": "HSI brake caliper — recipient lot substitution",
+  "expected": {"verdict": "GENUINE", "subtype": null},
+  "documents": [
+    {"doc_id":"DOC-CERT","doc_type":"certificate_of_conformity","date":"2024-05-10","text":"CERTIFICATE OF CONFORMITY\nManufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\nPart Number: BC-2209\nCertificate Date: 2024-05-10\nBIS Licence: CM/L-7411032\nTAC Issue Date: 2023-08-12\nStandard: IS 15100"},
+    {"doc_id":"DOC-DISPATCH","doc_type":"dispatch_note","date":"2024-05-15","text":"DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nShipment ID: SHIP-HSI-1001\nPart Number: BC-2209\nLot Code: SPB-240420-00412\nManufacturing Date: 2024-04-20\nShip Date: 2024-05-15\nQty: 24\nUnit: units"},
+    {"doc_id":"DOC-GRN","doc_type":"goods_receipt","date":"2024-05-17","text":"GOODS RECEIPT NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nShipment ID: SHIP-HSI-1001\nPart Number: BC-2209\nLot Code: SPB-240421-00999\nReceive Date: 2024-05-17\nQty: 24\nUnit: units\nRecipient: Central Auto Service"}
+  ]
+}

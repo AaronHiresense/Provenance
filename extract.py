@@ -13,6 +13,7 @@ from typing import Optional
 
 from ledger import Assertion
 from llm import LLMClient
+from evidence import Entity, Relationship, document_descriptor, locate_source_ref, stable_id
 
 # -- injection hygiene -------------------------------------------------------
 
@@ -113,6 +114,12 @@ _LABEL_MAP = {
     "qty": "quantity", "quantity": "quantity",
     "dispatch from": "dispatch_state", "dispatch state": "dispatch_state",
     "origin state": "dispatch_state", "shipped from": "dispatch_state",
+    "shipment id": "shipment_id", "shipment no": "shipment_id",
+    "dispatch reference": "dispatch_reference", "dispatch ref": "dispatch_reference",
+    "distributor": "distributor", "carrier": "carrier",
+    "recipient": "recipient", "consignee": "recipient",
+    "unit": "unit", "territory": "territory",
+    "effective from": "effective_from", "effective to": "effective_to",
 }
 
 _EXTRACT_SYSTEM = """You convert supply-chain documents into typed assertions.
@@ -130,7 +137,9 @@ cert_date, cert_id, mfg_date, ship_date, receive_date, lot_code, part_number,
 bis_licence, tac_number, tac_issue_date, invoice_no, invoice_date, role,
 quantity, dispatch_state, spec_standard (the standard the certificate
 claims the part conforms to, e.g. "IS 15100"), eway_validity_days,
-route_from, route_to, route_distance_km, hsn_code, entry_port, entry_mode.
+route_from, route_to, route_distance_km, hsn_code, entry_port, entry_mode,
+shipment_id, dispatch_reference, distributor, carrier, recipient, unit,
+territory, effective_from, effective_to.
 Use ISO dates (YYYY-MM-DD) where possible. entity = the company the claim is
 about. date = the document's own date if stated, else null.
 Copy identifier values (CIN, LLPIN, GSTIN, PAN, licence numbers) EXACTLY as
@@ -148,6 +157,8 @@ ALLOWED_ATTRIBUTES = {
     "invoice_no", "invoice_date", "role", "quantity", "dispatch_state",
     "spec_standard", "eway_validity_days", "route_from", "route_to",
     "route_distance_km", "hsn_code", "entry_port", "entry_mode",
+    "shipment_id", "dispatch_reference", "distributor", "carrier",
+    "recipient", "unit", "territory", "effective_from", "effective_to",
 }
 _ATTR_NORMALIZE = {
     "gst_number": "gstin", "gst_no": "gstin", "gst": "gstin",
@@ -161,6 +172,8 @@ _ATTR_NORMALIZE = {
     "batch_code": "lot_code", "batch_no": "lot_code", "lot_no": "lot_code",
     "bis_license": "bis_licence", "bis_licence_no": "bis_licence",
     "qty": "quantity",
+    "shipment": "shipment_id", "shipment_no": "shipment_id",
+    "dispatch_ref": "dispatch_reference",
 }
 
 
@@ -219,7 +232,103 @@ def extract_assertions(dossier: dict, llm: Optional[LLMClient] = None) -> tuple:
         assertions = _fallback_extract(clean_docs)
         meta = {"engine": "fallback_parser", "dropped_assertions": 0}
 
+    _ground_assertions(assertions, clean_docs)
     return assertions, injection_flags, meta
+
+
+def _ground_assertions(assertions: list[Assertion], docs: list[dict]) -> None:
+    """Attach server-verified spans; invented document IDs remain unlocated."""
+    by_id = {str(d.get("doc_id", "?")): str(d.get("text") or "") for d in docs}
+    for assertion in assertions:
+        text = by_id.get(assertion.source_doc, "")
+        assertion.source_ref = locate_source_ref(
+            assertion.source_doc, text, assertion.value)
+
+
+def build_typed_evidence(dossier: dict, assertions: list[Assertion]) -> dict:
+    """Build entities and shipment relationships without guessing identities."""
+    docs = {str(d.get("doc_id", "?")): d for d in dossier.get("documents", [])}
+    grouped: dict[str, list[Assertion]] = {}
+    for a in assertions:
+        grouped.setdefault(a.source_doc, []).append(a)
+
+    entities: dict[str, Entity] = {}
+    doc_entity: dict[str, str] = {}
+    for doc_id, claims in grouped.items():
+        def value(attr):
+            return next((str(a.value) for a in claims if a.attribute == attr), None)
+        name = value("company_name") or next((a.entity for a in claims), "unresolved")
+        cin, gstin = value("cin"), value("gstin")
+        identity_key = cin or gstin
+        entity_id = stable_id("ent", identity_key or f"{doc_id}:{name}")
+        entities.setdefault(entity_id, Entity(
+            entity_id=entity_id, display_name=name, cin=cin, gstin=gstin,
+            resolved=bool(identity_key)))
+        doc_entity[doc_id] = entity_id
+        for a in claims:
+            a.entity_id = entity_id
+            if a.attribute == "shipment_id":
+                a.shipment_id = str(a.value)
+
+    relationships = []
+    participations = []
+    kind_map = {
+        "authorization": "distributor_authorization",
+        "dispatch": "oem_dispatch",
+        "carrier": "carrier_receipt",
+        "goods_receipt": "goods_receipt",
+    }
+    for doc_id, claims in grouped.items():
+        values = {a.attribute: str(a.value) for a in claims}
+        doc_type = str(docs.get(doc_id, {}).get("doc_type") or "").lower()
+        kind = next((v for token, v in kind_map.items() if token in doc_type), None)
+        shipment_id = values.get("shipment_id") or values.get("dispatch_reference")
+        if not kind and not shipment_id:
+            continue
+        kind = kind or "shipment_claim"
+        participant_ids = {}
+        for role in ("distributor", "carrier", "recipient"):
+            if not values.get(role):
+                continue
+            entity_id = stable_id("ent", f"name:{values[role].casefold()}")
+            entities.setdefault(entity_id, Entity(
+                entity_id=entity_id, display_name=values[role], resolved=False))
+            participant_ids[role] = entity_id
+        if kind == "distributor_authorization":
+            to_entity = participant_ids.get("distributor")
+        else:
+            to_entity = participant_ids.get("recipient") or participant_ids.get("distributor")
+        rel = Relationship(
+            relationship_id=stable_id("rel", doc_id, kind, shipment_id),
+            kind=kind, shipment_id=shipment_id,
+            from_entity_id=doc_entity.get(doc_id),
+            to_entity_id=to_entity,
+            lot=values.get("lot_code"), part=values.get("part_number"),
+            quantity=values.get("quantity"), unit=values.get("unit"),
+            effective_from=values.get("effective_from"),
+            effective_to=values.get("effective_to"),
+            source_refs=[a.source_ref for a in claims if a.source_ref],
+        )
+        relationships.append(rel)
+        declared_role = values.get("role")
+        if declared_role in ("manufacturer", "distributor", "carrier", "recipient"):
+            participations.append({"entity_id": doc_entity.get(doc_id),
+                                   "role": declared_role, "document_id": doc_id,
+                                   "relationship_id": rel.relationship_id})
+        for role, entity_id in participant_ids.items():
+            participations.append({"entity_id": entity_id, "role": role,
+                                   "document_id": doc_id,
+                                   "relationship_id": rel.relationship_id})
+        for a in claims:
+            if shipment_id:
+                a.shipment_id = shipment_id
+
+    return {
+        "documents": [document_descriptor(d) for d in dossier.get("documents", [])],
+        "entities": [e.to_dict() for e in entities.values()],
+        "relationships": [r.to_dict() for r in relationships],
+        "participations": participations,
+    }
 
 
 def _build_user_prompt(docs: list) -> str:

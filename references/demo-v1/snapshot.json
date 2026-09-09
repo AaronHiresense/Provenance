@@ -1,0 +1,14 @@
+{
+  "version": "demo-v1",
+  "provenance": "synthetic_demo",
+  "coverage": "Curated synthetic HSI brake-caliper dispatch, authorization, carrier and receiving records for the paired hackathon scenarios only. This is not a live OEM or carrier integration; absence is not evidence that a shipment did not exist.",
+  "as_of": "2024-06-30",
+  "records": [
+    {"record_id":"OEM-DSP-1001","kind":"oem_dispatch","issuer_entity":"HSI-OEM","recorded_at":"2024-05-15","shipment_id":"SHIP-HSI-1001","lot":"SPB-240420-00412","part":"BC-2209","from_party":"HSI-OEM","to_party":"DISTRIBUTOR-NORTHSTAR","quantity":"24","unit":"units","related_record_ids":["AUTH-NS-2024","CAR-1001","GRN-1001"]},
+    {"record_id":"AUTH-NS-2024","kind":"distributor_authorization","issuer_entity":"HSI-OEM","recorded_at":"2024-05-14","effective_from":"2024-05-01","effective_to":"2025-04-30","part":"BC-2209","from_party":"HSI-OEM","to_party":"DISTRIBUTOR-NORTHSTAR","territory":"Karnataka","related_record_ids":["OEM-DSP-1001"]},
+    {"record_id":"CAR-1001","kind":"carrier_receipt","issuer_entity":"CARRIER-BLUEDART","recorded_at":"2024-05-15","shipment_id":"SHIP-HSI-1001","lot":"SPB-240420-00412","part":"BC-2209","from_party":"HSI-OEM","to_party":"DISTRIBUTOR-NORTHSTAR","quantity":"24","unit":"units","related_record_ids":["OEM-DSP-1001"]},
+    {"record_id":"GRN-1001","kind":"goods_receipt","issuer_entity":"RECIPIENT-CENTRAL-AUTO","recorded_at":"2024-05-17","shipment_id":"SHIP-HSI-1001","lot":"SPB-240420-00412","part":"BC-2209","from_party":"DISTRIBUTOR-NORTHSTAR","to_party":"RECIPIENT-CENTRAL-AUTO","quantity":"24","unit":"units","related_record_ids":["OEM-DSP-1001"]},
+    {"record_id":"OEM-DSP-SPLIT-A","kind":"oem_dispatch","issuer_entity":"HSI-OEM","recorded_at":"2024-05-20","shipment_id":"SHIP-HSI-SPLIT-A","lot":"SPB-240420-00412","part":"BC-2209","from_party":"HSI-OEM","to_party":"RECIPIENT-CENTRAL-AUTO","quantity":"12","unit":"units","related_record_ids":[]},
+    {"record_id":"OEM-DSP-SPLIT-B","kind":"oem_dispatch","issuer_entity":"HSI-OEM","recorded_at":"2024-05-21","shipment_id":"SHIP-HSI-SPLIT-B","lot":"SPB-240420-00412","part":"BC-2209","from_party":"HSI-OEM","to_party":"RECIPIENT-CENTRAL-AUTO","quantity":"12","unit":"units","related_record_ids":[]}
+  ]
+}

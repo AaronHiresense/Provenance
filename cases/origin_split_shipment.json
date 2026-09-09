@@ -1,0 +1,7 @@
+{
+  "case_id":"origin_split_shipment","title":"HSI brake caliper — two allocations for one lot","expected":{"verdict":"GENUINE","subtype":null},
+  "documents":[
+    {"doc_id":"DOC-A","doc_type":"dispatch_note","date":"2024-05-20","text":"DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nShipment ID: SHIP-HSI-SPLIT-A\nPart Number: BC-2209\nLot Code: SPB-240420-00412\nManufacturing Date: 2024-04-20\nShip Date: 2024-05-20\nQty: 12\nUnit: units"},
+    {"doc_id":"DOC-B","doc_type":"dispatch_note","date":"2024-05-21","text":"DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nState: Tamil Nadu\nShipment ID: SHIP-HSI-SPLIT-B\nPart Number: BC-2209\nLot Code: SPB-240420-00412\nManufacturing Date: 2024-04-20\nShip Date: 2024-05-21\nQty: 12\nUnit: units"}
+  ]
+}

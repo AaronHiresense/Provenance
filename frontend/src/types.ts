@@ -7,6 +7,15 @@ export type Strength = "weak" | "moderate" | "strong" | "dispositive";
 export type SourceTier = "authoritative" | "derived" | "self_reported" | "heuristic";
 export type Dimension = "identity" | "certification" | "provenance" | "custody";
 
+export interface SourceRef {
+  record_id: string;
+  page: number | null;
+  start: number | null;
+  end: number | null;
+  quote: string;
+  grounding: "verified" | "unlocated" | "user_confirmed";
+}
+
 export interface Finding {
   assertion: string;
   check: string;
@@ -17,6 +26,13 @@ export interface Finding {
   dimension: Dimension;
   detail: string;
   source_doc: string;
+  finding_id: string;
+  entity_ids: string[];
+  shipment_ids: string[];
+  source_refs: SourceRef[];
+  status: "pass" | "fail" | "abstain" | "unavailable";
+  reference_version: string | null;
+  reason_code: string;
 }
 
 export interface Assertion {
@@ -25,6 +41,53 @@ export interface Assertion {
   value: string;
   source_doc: string;
   date: string | null;
+  assertion_id: string;
+  entity_id: string | null;
+  shipment_id: string | null;
+  source_ref: SourceRef | null;
+}
+
+export interface EvidenceEntity {
+  entity_id: string;
+  display_name: string;
+  cin: string | null;
+  gstin: string | null;
+  resolved: boolean;
+}
+
+export interface EvidenceRelationship {
+  relationship_id: string;
+  kind: string;
+  shipment_id: string | null;
+  from_entity_id: string | null;
+  to_entity_id: string | null;
+  lot: string | null;
+  part: string | null;
+  quantity: string | null;
+  unit: string | null;
+  effective_from: string | null;
+  effective_to: string | null;
+  source_refs: SourceRef[];
+}
+
+export interface ReferenceSnapshot {
+  version: string;
+  provenance?: "synthetic_demo" | string;
+  coverage?: string;
+  as_of?: string;
+  record_count?: number;
+  content_hash?: string;
+  available?: boolean;
+  matching_records?: number;
+}
+
+export interface TypedEvidence {
+  documents: Array<Record<string, unknown>>;
+  entities: EvidenceEntity[];
+  relationships: EvidenceRelationship[];
+  participations: Array<{ entity_id: string; role: string; document_id: string; relationship_id: string }>;
+  reference_snapshot: ReferenceSnapshot;
+  independent_records: Array<Record<string, unknown>>;
 }
 
 export interface Contradiction {
@@ -126,6 +189,7 @@ export interface AnalysisResult {
   case_id: string;
   extraction: { engine: "llm" | "fallback_parser"; dropped_assertions: number };
   assertions: Assertion[];
+  evidence: TypedEvidence;
   injection_flags: { source_doc: string; content: string }[];
   registry_row: RegistryRow | null;
   llm_provider: "mock" | "anthropic" | "openai_compat";
@@ -189,6 +253,8 @@ export interface Preflight {
   runnable: number;
   total: number;
   unlocks: { document: string; checks: string[] }[];
+  evidence: Omit<TypedEvidence, "reference_snapshot" | "independent_records">;
+  reference_snapshot: ReferenceSnapshot;
   aliased: boolean;
 }
 

@@ -18,8 +18,9 @@ import archive
 import counterfactual
 import preflight
 import registry
+import reference_store
 import validators
-from extract import extract_assertions
+from extract import build_typed_evidence, extract_assertions
 from ledger import Finding
 from llm import LLMClient
 from reason import reason_over_ledger
@@ -88,6 +89,17 @@ def analyze_events(dossier: dict, rules_only: bool = False,
                     f" with the {'language model' if llm.provider != 'mock' else 'offline extractor'}")
     assertions, injection_flags, extraction_meta = \
         extract_assertions(dossier, llm)
+    typed_evidence = build_typed_evidence(dossier, assertions)
+    try:
+        reference_snapshot = reference_store.load_snapshot()
+        reference_summary = reference_snapshot.summary()
+        independent_records = reference_store.public_evidence(
+            reference_snapshot, dossier)
+    except (OSError, ValueError, KeyError):
+        reference_snapshot = None
+        reference_summary = {"version": reference_store.configured_version(),
+                             "available": False}
+        independent_records = []
     yield ev(stage="extract", status="done", ms=ms(),
              detail=f"{len(assertions)} typed claims read"
                     + (f" · {len(injection_flags)} instruction-like line"
@@ -204,6 +216,11 @@ def analyze_events(dossier: dict, rules_only: bool = False,
     result["case_id"] = case_id
     result["extraction"] = extraction_meta
     result["assertions"] = [a.to_dict() for a in assertions]
+    result["evidence"] = {
+        **typed_evidence,
+        "reference_snapshot": reference_summary,
+        "independent_records": independent_records,
+    }
     result["injection_flags"] = injection_flags
     result["registry_row"] = row
     # Claims the agent read but has no checker for. Saying so is part of the

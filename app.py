@@ -90,10 +90,17 @@ def ready() -> dict:
 def runtime() -> dict:
     """Capabilities and provenance, deliberately excluding keys and paths."""
     import registry
+    import reference_store
     from llm import LLMClient
     client = LLMClient()
     registry_ok, snapshot = _registry_status()
     release = _release_metadata()
+    try:
+        reference = reference_store.load_snapshot().summary()
+        reference_available = True
+    except (OSError, ValueError, KeyError):
+        reference = {"version": reference_store.configured_version()}
+        reference_available = False
     return {
         **release,
         "processing": {
@@ -102,12 +109,13 @@ def runtime() -> dict:
             "external_model": client.provider != "mock",
         },
         "registry": {"available": registry_ok, "snapshot": snapshot},
+        "reference_snapshot": {**reference, "available": reference_available},
         "capabilities": {
             "streaming_analysis": True,
             "preflight": True,
             "persistent_desk_memory": _storage_ready(),
             "pdf_or_image_intake": False,
-            "independent_origin_records": False,
+            "independent_origin_records": reference_available,
         },
     }
 

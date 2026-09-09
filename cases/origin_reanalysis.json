@@ -1,0 +1,7 @@
+{
+  "case_id":"origin_reanalysis","title":"HSI brake caliper — dispatch reference supplied for reassessment","expected":{"verdict":"UNVERIFIABLE","subtype":"insufficient"},
+  "documents":[
+    {"doc_id":"DOC-INV","doc_type":"tax_invoice","date":"2024-05-15","text":"TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\nState: Tamil Nadu\nShipment ID: SHIP-HSI-1001\nPart Number: BC-2209\nLot Code: SPB-240420-00412\nQty: 24\nUnit: units"},
+    {"doc_id":"DOC-REF","doc_type":"dispatch_reference","date":"2024-05-18","text":"DISPATCH REFERENCE NOTICE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\nCIN: U29309TN1997PTC039462\nDispatch Reference: SHIP-HSI-1001\nPart Number: BC-2209\nLot Code: SPB-240420-00412"}
+  ]
+}

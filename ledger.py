@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
+from evidence import SourceRef, stable_id
+
 # -- controlled vocabularies -------------------------------------------------
 
 DIRECTIONS = ("supports_genuine", "supports_suspect", "neutral")
@@ -30,6 +32,15 @@ class Assertion:
     value: str
     source_doc: str
     date: Optional[str] = None
+    assertion_id: str = ""
+    entity_id: Optional[str] = None
+    shipment_id: Optional[str] = None
+    source_ref: Optional[SourceRef] = None
+
+    def __post_init__(self) -> None:
+        if not self.assertion_id:
+            self.assertion_id = stable_id(
+                "ast", self.source_doc, self.entity, self.attribute, self.value)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -47,6 +58,13 @@ class Finding:
     dimension: str          # identity | certification | provenance | custody
     detail: str = ""        # free-text explanation for the UI / reasoning stage
     source_doc: str = ""    # the document whose assertion this check consumed
+    finding_id: str = ""
+    entity_ids: list[str] = field(default_factory=list)
+    shipment_ids: list[str] = field(default_factory=list)
+    source_refs: list[SourceRef] = field(default_factory=list)
+    status: str = ""
+    reference_version: Optional[str] = None
+    reason_code: str = ""
 
     def __post_init__(self) -> None:
         if self.direction not in DIRECTIONS:
@@ -57,6 +75,15 @@ class Finding:
             raise ValueError(f"bad source_tier: {self.source_tier}")
         if self.dimension not in DIMENSIONS:
             raise ValueError(f"bad dimension: {self.dimension}")
+        if not self.status:
+            token = str(self.result).split(" ", 1)[0].lower()
+            self.status = token if token in ("pass", "fail", "abstain", "unavailable") else "abstain"
+        if not self.finding_id:
+            self.finding_id = stable_id(
+                "fnd", self.check, ",".join(self.entity_ids),
+                ",".join(self.shipment_ids), self.assertion)
+        if not self.reason_code:
+            self.reason_code = f"{self.check}.{self.status}"
 
     def to_dict(self) -> dict:
         return asdict(self)
