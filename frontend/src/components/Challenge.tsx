@@ -1,15 +1,104 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as m from "motion/react-m";
 import { AnimatePresence } from "motion/react";
 import type { AnalysisResult } from "../types";
 import { checkLabel } from "../labels";
 import { AlertIcon, ChevronIcon, CpuIcon, ShieldIcon } from "./Icons";
 
+/**
+ * Highlights key forensic terms, check IDs, quoted phrases, and concluding sentences
+ * so that presenters and evaluators can instantly spot the decisive arguments.
+ */
+function renderForensicHighlights(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // Split by sentences or significant delimiters
+  const parts = text.split(/(Therefore,[\s\S]*?$|The draft survives because[\s\S]*?$|The draft fails because[\s\S]*?$|The draft's conclusion hinges entirely on[\s\S]*?(?:,|\.)|The draft's conclusion rests entirely on[\s\S]*?(?:,|\.))/g);
+
+  return parts.map((part, idx) => {
+    // If it's a decisive conclusion or core premise sentence
+    if (
+      part.startsWith("Therefore,") ||
+      part.startsWith("The draft survives because") ||
+      part.startsWith("The draft fails because")
+    ) {
+      return (
+        <span key={idx} className="block mt-2 font-bold text-slate-950 dark:text-white bg-amber-500/10 dark:bg-amber-400/10 px-2 py-1 rounded-lg border-l-2 border-amber-500">
+          {formatSubTokens(part)}
+        </span>
+      );
+    }
+
+    if (
+      part.startsWith("The draft's conclusion hinges entirely on") ||
+      part.startsWith("The draft's conclusion rests entirely on")
+    ) {
+      return (
+        <strong key={idx} className="font-bold text-slate-950 dark:text-white">
+          {formatSubTokens(part)}
+        </strong>
+      );
+    }
+
+    return <React.Fragment key={idx}>{formatSubTokens(part)}</React.Fragment>;
+  });
+}
+
+function formatSubTokens(str: string): React.ReactNode {
+  // Regex matches check_names_with_underscores, quoted phrases '...', or numbers with prior presentations
+  const regex = /([a-z]+(?:_[a-z0-9]+)+|\b\d+\s+(?:prior presentations|times before|presentations)\b|'[^']+'|cloned-dossier attack|benign repeat-order|governance rules|dispositive)/gi;
+  const tokens = str.split(regex);
+
+  return tokens.map((tok, i) => {
+    if (tok.includes("_")) {
+      // Check code like dossier_reuse or source_record_conflict
+      return (
+        <code
+          key={i}
+          className="font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-500/10 px-1 py-0.5 rounded text-[12px]"
+        >
+          {tok}
+        </code>
+      );
+    }
+    if (/^\b\d+\s+(?:prior presentations|times before|presentations)\b$/i.test(tok)) {
+      return (
+        <span
+          key={i}
+          className="font-bold text-rose-700 dark:text-rose-300 bg-rose-500/10 px-1 py-0.5 rounded"
+        >
+          {tok}
+        </span>
+      );
+    }
+    if (tok.startsWith("'") && tok.endsWith("'")) {
+      return (
+        <span key={i} className="font-semibold italic text-slate-900 dark:text-slate-100">
+          {tok}
+        </span>
+      );
+    }
+    if (
+      tok.toLowerCase() === "cloned-dossier attack" ||
+      tok.toLowerCase() === "benign repeat-order" ||
+      tok.toLowerCase() === "governance rules" ||
+      tok.toLowerCase() === "dispositive"
+    ) {
+      return (
+        <strong key={i} className="font-bold text-slate-900 dark:text-white underline decoration-amber-500/50">
+          {tok}
+        </strong>
+      );
+    }
+    return tok;
+  });
+}
+
 /** The agent's attack on its own draft.
  *
  *  Closed by default with a high-density summary chip. When opened, it reveals
  *  the full reasoning and adversarial attack progressively like Claude/ChatGPT
- *  thinking traces.
+ *  thinking traces with bolded presentation highlights.
  */
 export function Challenge({ result: r }: { result: AnalysisResult }) {
   const ch = r.reasoning?.challenge;
@@ -43,8 +132,8 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
     setIsStreaming(true);
     setStreamProgress(0);
 
-    const step = 8; // characters per tick
-    const intervalMs = 18; // smooth high-speed streaming
+    const step = 9; // characters per tick
+    const intervalMs = 16; // smooth high-speed streaming
 
     timerRef.current = window.setInterval(() => {
       setStreamProgress((prev) => {
@@ -152,7 +241,7 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
             className="overflow-hidden border-t border-slate-100 bg-slate-50/40 dark:border-slate-800/80 dark:bg-slate-950/20"
           >
             <div className="p-4 sm:p-5 space-y-4">
-              {/* Header Bar with Skip Streaming button */}
+              {/* Header Bar with Key Points Tag & Skip Streaming button */}
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500 dark:text-slate-400">
                   {isStreaming ? (
@@ -161,8 +250,11 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
                       Streaming Adversarial Defense Trace...
                     </span>
                   ) : (
-                    <span className="text-slate-600 dark:text-slate-300 font-semibold">
-                      Adversarial Attack & Governance Audit
+                    <span className="text-slate-700 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                      <span>Adversarial Attack & Governance Audit</span>
+                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                        Key terms bolded for demo
+                      </span>
                     </span>
                   )}
                 </div>
@@ -178,20 +270,26 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
                 )}
               </div>
 
-              {/* 1. The Attack Text (Progressively Streamed) */}
+              {/* 1. The Attack Text (Progressively Streamed with Highlights) */}
               <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <AlertIcon className="h-4 w-4 text-amber-500" />
-                  <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-800 dark:text-slate-200">
-                    The Adversarial Attack
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <AlertIcon className="h-4 w-4 text-amber-500" />
+                    <span className="font-mono text-xs font-bold uppercase tracking-wide text-slate-800 dark:text-slate-200">
+                      The Adversarial Attack
+                    </span>
+                  </div>
+                  <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                    Self-Challenger Hypothesis
                   </span>
                 </div>
-                <p className="text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
-                  {visibleAttack}
+
+                <div className="text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 font-sans">
+                  {renderForensicHighlights(visibleAttack)}
                   {isStreaming && (
                     <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-amber-500 animate-pulse align-middle" />
                   )}
-                </p>
+                </div>
               </div>
 
               {/* 2. Secondary Sections (Revealed smoothly) */}
@@ -208,9 +306,9 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
                       <span className="font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
                         {ch.revised ? "Why the attack landed" : "Why the answer held"}
                       </span>
-                      <p className="text-[12.5px] leading-relaxed text-slate-700 dark:text-slate-300">
-                        {ch.why}
-                      </p>
+                      <div className="text-[12.5px] leading-relaxed text-slate-700 dark:text-slate-300">
+                        {renderForensicHighlights(ch.why)}
+                      </div>
                     </div>
                   )}
 
@@ -223,9 +321,9 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
                           Governance Rule Enforcement (Overruled Attack)
                         </span>
                       </div>
-                      <p className="text-[12.5px] leading-relaxed text-rose-900/90 dark:text-rose-200">
-                        {ch.override_reason}
-                      </p>
+                      <div className="text-[12.5px] leading-relaxed text-rose-900/90 dark:text-rose-200">
+                        {renderForensicHighlights(ch.override_reason)}
+                      </div>
                     </div>
                   )}
 
@@ -235,9 +333,9 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
                       <span className="font-mono text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
                         Why it changed nothing
                       </span>
-                      <p className="text-[12.5px] leading-relaxed text-slate-700 dark:text-slate-300">
-                        {ch.blocked_reason}
-                      </p>
+                      <div className="text-[12.5px] leading-relaxed text-slate-700 dark:text-slate-300">
+                        {renderForensicHighlights(ch.blocked_reason)}
+                      </div>
                     </div>
                   )}
 
@@ -275,4 +373,5 @@ export function Challenge({ result: r }: { result: AnalysisResult }) {
     </div>
   );
 }
+
 
