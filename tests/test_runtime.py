@@ -98,16 +98,99 @@ def test_composers_own_prefilled_dossier_never_poisons_the_archive(tmp_path, mon
     assert not (tmp_path / "lots.jsonl").exists()
 
 
-def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
-    """The archive fix must exempt prepared clicks and known reference
-    dossiers only — a genuine desk submission of a lot that matches none of
-    the shipped cases, presented twice, is still the cloned-paperwork attack
-    the archive exists to catch."""
+def test_editing_a_prefilled_field_the_fingerprint_ignores_still_reads_as_reference(
+        tmp_path, monkeypatch):
+    """Reported live: a visitor removed the BIS Licence line from the
+    pre-filled Paperwork example (to see how the pipeline reacts to a
+    missing field) and got SUSPECT/UNVERIFIABLE via dossier_reuse — a
+    finding with nothing to do with the edit they made. BIS licence isn't
+    one of archive.FINGERPRINT_ATTRS, so the edited dossier's identity
+    fingerprint is byte-identical to the public pre-filled default every
+    visitor's browser already shares; it must still read as a reference
+    view, not a stranger's reused paperwork."""
     monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
-    base = _load("genuine_hsi")
-    dossier = {"case_id": "a-reviewers-own-lot", "documents": base["documents"]}
+    edited_text = (
+        "CERTIFICATE OF CONFORMITY\n"
+        "Manufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+        "CIN: U29309TN1997PTC039462\nState: Tamil Nadu\nRole: manufacturer\n"
+        "Part Number: BC-2209\nCertificate No: HSI-COC-33108\n"
+        "Certificate Date: 2024-05-10\n"
+        "We certify these brake caliper assemblies conform to IS 15100 and "
+        "were produced at our Sriperumbudur plant.\n"
+        "---\n"
+        "TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+        "CIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\n"
+        "State: Tamil Nadu\nInvoice No: HSI/2024/07751\n"
+        "Invoice Date: 2024-05-15\nPart Number: BC-2209\n"
+        "Lot Code: SPB-240420-00412\nQty: 24 units front brake caliper assemblies\n"
+        "---\n"
+        "DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+        "Part Number: BC-2209\nLot Code: SPB-240420-00412\n"
+        "Manufacturing Date: 2024-04-20\nShip Date: 2024-05-15\n"
+        "Carrier: BlueDart Surface, Chennai hub"
+    )
+    req = app.AnalyzeRequest(raw_text=edited_text, case_id="live")
+    dossier = app._dossier_from_request(req)
+    assert app._is_reference_request(req, dossier) is True
+
+    r = app.analyze(req)
+    checks = {f["check"] for f in r["ledger"]["findings"]}
+    assert "dossier_reuse" not in checks
+    assert r["verdict"] == "GENUINE"
+    assert not (tmp_path / "lots.jsonl").exists()
+
+
+def test_a_real_submission_still_triggers_reuse_detection(tmp_path, monkeypatch):
+    """The archive fix must exempt known reference identities only — a
+    genuine desk submission of a lot whose identity-and-goods fields match
+    none of the shipped cases or samples, presented twice, is still the
+    cloned-paperwork attack the archive exists to catch. Deliberately not
+    genuine_hsi's own documents under a different case_id: that dossier's
+    fingerprint *is* a known demo identity regardless of its label, so it
+    is correctly exempt now — this test needs paperwork that shares no
+    fingerprint with any of the 21 cases or 6 samples.
+
+    A lot outside the synthetic demo-v1 reference snapshot has no
+    independent dispatch anchor to match, so the first submission abstains
+    at UNVERIFIABLE(insufficient) rather than reaching GENUINE — that cap
+    is a real, documented property of the current custody-reconciliation
+    policy, not something this test is asserting incidentally."""
+    monkeypatch.setenv("PROVENANCE_ARCHIVE", str(tmp_path / "lots.jsonl"))
+    # Real CIN (HSI, already used across several demo cases) so registry
+    # identity checks resolve genuinely — but a lot code, invoice and cert
+    # number not used by any of the 21 cases, so the *fingerprint* (which is
+    # what must trigger reuse detection, not the company) is genuinely novel.
+    dossier = {
+        "case_id": "a-reviewers-own-lot",
+        "documents": [{
+            "doc_id": "DOC-1", "doc_type": "certificate_of_conformity",
+            "date": "2025-09-01",
+            "text": "CERTIFICATE OF CONFORMITY\n"
+                    "Manufacturer: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+                    "CIN: U29309TN1997PTC039462\nState: Tamil Nadu\n"
+                    "Role: manufacturer\nPart Number: BC-2209\n"
+                    "Certificate No: HSI-COC-99001\nCertificate Date: 2025-09-01\n"
+                    "We certify these brake caliper assemblies conform to IS 15100.",
+        }, {
+            "doc_id": "DOC-2", "doc_type": "tax_invoice", "date": "2025-09-05",
+            "text": "TAX INVOICE\nSupplier: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+                    "CIN: U29309TN1997PTC039462\nGSTIN: 33AABCH4501R1ZK\n"
+                    "State: Tamil Nadu\nInvoice No: HSI/2025/90210\n"
+                    "Invoice Date: 2025-09-05\nPart Number: BC-2209\n"
+                    "Lot Code: ZZZ-250901-77001\nQty: 60 units front brake caliper assemblies",
+        }, {
+            "doc_id": "DOC-3", "doc_type": "dispatch_note", "date": "2025-09-05",
+            "text": "DISPATCH NOTE\nCompany: HSI AUTOMOTIVES PRIVATE LIMITED\n"
+                    "Part Number: BC-2209\nLot Code: ZZZ-250901-77001\n"
+                    "Manufacturing Date: 2025-08-28\nShip Date: 2025-09-05\n"
+                    "Carrier: BlueDart Surface, Chennai hub",
+        }],
+    }
     first = app.analyze(app.AnalyzeRequest(dossier=dossier))
-    assert first["verdict"] == "GENUINE"
+    assert (first["verdict"], first.get("subtype")) == ("UNVERIFIABLE", "insufficient")
+    first_reuse = [f for f in first["ledger"]["findings"] if f["check"] == "dossier_reuse"]
+    assert first_reuse and first_reuse[0]["direction"] != "supports_suspect", \
+        "a first sighting must record itself, not accuse itself"
 
     second = app.analyze(app.AnalyzeRequest(dossier=dossier))
     reuse = [f for f in second["ledger"]["findings"] if f["check"] == "dossier_reuse"]

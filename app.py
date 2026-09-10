@@ -20,6 +20,7 @@ from pydantic import BaseModel
 import archive
 import pipeline
 import preflight as preflight_mod
+from extract import _fallback_extract, sanitize_document
 
 BASE = Path(__file__).resolve().parent
 CASES_DIR = BASE / "cases"
@@ -60,6 +61,57 @@ def _known_case_dossiers() -> frozenset:
 
 
 _CASE_DOSSIER_SHAPES = _known_case_dossiers()
+
+
+def _offline_fingerprint(dossier: dict) -> Optional[str]:
+    """The same identity-and-goods fingerprint archive.py hashes for reuse
+    detection, computed offline (no LLM) from whatever a request submitted.
+    Used only to recognise a known demo dossier under an unrelated edit —
+    never to judge a genuine submission, which archive.py still fingerprints
+    for real once the pipeline actually runs."""
+    docs = dossier.get("documents")
+    if not isinstance(docs, list) or not docs:
+        return None
+    clean_docs = []
+    for d in docs:
+        clean, _flags = sanitize_document(d.get("text", ""))
+        clean_docs.append({**d, "text": clean})
+    assertions = _fallback_extract(clean_docs)
+    fp = archive.fingerprint(assertions)
+    return fp["hash"] if fp else None
+
+
+def _known_demo_fingerprints() -> frozenset:
+    """The identity-and-goods fingerprint of every prepared case and every
+    'check the work yourself' sample. A visitor is explicitly invited to
+    edit the composer's pre-filled example (change a date, drop a field) to
+    see the pipeline react — an edit to a field the fingerprint doesn't use
+    (BIS licence, TAC number, ...) leaves this fingerprint unchanged, so
+    without this, resubmitting a tweaked copy of a public demo dossier reads
+    as reuse of someone else's paperwork. Exact-text and exact-shape
+    matching (above) only catch an *unedited* resubmission; this catches an
+    edited one, by the same identity fields archive.py itself keys on."""
+    out = set()
+    for p in CASES_DIR.glob("*.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8-sig"))
+        except json.JSONDecodeError:
+            continue
+        fp = _offline_fingerprint(d)
+        if fp:
+            out.add(fp)
+    combined = SAMPLES_DIR / "combined"
+    if combined.is_dir():
+        for p in combined.glob("*.txt"):
+            dossier = pipeline.dossier_from_raw_text(
+                p.read_text(encoding="utf-8-sig"), p.stem)
+            fp = _offline_fingerprint(dossier)
+            if fp:
+                out.add(fp)
+    return frozenset(out)
+
+
+_KNOWN_DEMO_FINGERPRINTS = _known_demo_fingerprints()
 
 app = FastAPI(title="PROVENANCE", docs_url=None, redoc_url=None)
 
@@ -305,13 +357,21 @@ def _dossier_from_request(req: AnalyzeRequest) -> dict:
     return dossier
 
 
-def _is_reference_request(req: AnalyzeRequest) -> bool:
-    """True for a prepared lot, a 'check the work yourself' sample, or the
-    composer's own pre-filled example dossier — all three are demo/reference
-    views opened or clicked repeatedly by every visitor, by design, never a
-    reviewer's own desk submission. Only these are exempt from the seen-lots
-    archive; a genuine paste or dossier still gets archived and checked for
-    reuse."""
+def _is_reference_request(req: AnalyzeRequest, dossier: dict) -> bool:
+    """True for a prepared lot, a 'check the work yourself' sample, the
+    composer's own pre-filled example dossier, or an edited copy of any of
+    those — all are demo/reference views opened, clicked, or tinkered with
+    by every visitor, by design, never a reviewer's own desk submission.
+    Only these are exempt from the seen-lots archive; a genuine paste or
+    dossier still gets archived and checked for reuse.
+
+    A visitor is explicitly invited to edit the pre-filled example to see
+    the pipeline react (change a date, drop the BIS licence line). Exact
+    text/shape matching only recognises an *unedited* resubmission; the
+    fingerprint check below also recognises an edited one, by the same
+    identity-and-goods fields the reuse archive itself keys on — so an edit
+    to a field the fingerprint ignores never reads as a stranger's reused
+    paperwork."""
     if req.case is not None:
         return True
     if req.raw_text is not None and req.raw_text.strip() in _SAMPLE_TEXTS:
@@ -320,13 +380,17 @@ def _is_reference_request(req: AnalyzeRequest) -> bool:
         key = _dossier_key(req.dossier.get("case_id"), req.dossier["documents"])
         if key in _CASE_DOSSIER_SHAPES:
             return True
+    fp = _offline_fingerprint(dossier)
+    if fp and fp in _KNOWN_DEMO_FINGERPRINTS:
+        return True
     return False
 
 
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
-    return pipeline.analyze(_dossier_from_request(req), rules_only=req.rules_only,
-                            archive_run=not _is_reference_request(req))
+    dossier = _dossier_from_request(req)
+    return pipeline.analyze(dossier, rules_only=req.rules_only,
+                            archive_run=not _is_reference_request(req, dossier))
 
 
 @app.get("/api/archive")
@@ -374,7 +438,7 @@ def analyze_stream(req: AnalyzeRequest) -> StreamingResponse:
     transition so the UI can show each agent's real progress. The last line
     carries the full result exactly as /api/analyze would return it."""
     dossier = _dossier_from_request(req)
-    archive_run = not _is_reference_request(req)
+    archive_run = not _is_reference_request(req, dossier)
 
     def lines():
         for event in pipeline.analyze_events(dossier, rules_only=req.rules_only,
